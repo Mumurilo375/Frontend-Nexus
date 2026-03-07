@@ -6,7 +6,7 @@ function NavBar() {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center gap-8">
         <div>
           <a
-            href="#Logo"
+            href="/"
             className=" absolute left-3 top-3  hover:text-blue-600"
           >
             {" "}
@@ -14,14 +14,14 @@ function NavBar() {
           </a>
         </div>
         <div className="flex gap-8">
-          <a href="#loja" className="hover:text-blue-600">
+          <a href="/loja" className="hover:text-blue-600">
             Loja
           </a>
-          <a href="#inicio" className="hover:text-blue-600">
+          <a href="/ofertas" className="hover:text-blue-600">
             Ofertas
           </a>
 
-          <a href="#biblioteca" className="hover:text-blue-600">
+          <a href="/comofunciona" className="hover:text-blue-600">
             {" "}
             Como funciona
           </a>
@@ -51,10 +51,10 @@ function NavBar() {
               <div className="py-1">
                 <MenuItem>
                   <a
-                    href="#"
+                    href="/login"
                     className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                   >
-                    Configurações
+                    Login
                   </a>
                 </MenuItem>
                 <MenuItem>
@@ -62,7 +62,7 @@ function NavBar() {
                     href="#"
                     className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                   >
-                    Support
+                    Configurações
                   </a>
                 </MenuItem>
                 <MenuItem>

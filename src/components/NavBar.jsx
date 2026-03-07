@@ -1,7 +1,8 @@
 import {
   
-  Search, UserRound, ShoppingCart, Library, Heart
+  Search, UserRound, ShoppingCart, Heart
 } from "lucide-react";
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 function NavBar() {
   return (
     <nav className="fixed bg-black/90 top-0 w-full blackdrop-blur-md z-50">
@@ -10,17 +11,65 @@ function NavBar() {
           <div>
             <a href="#Logo" className=" absolute left-3 top-3  hover:text-blue-600"> <img src="logo.png" alt="" /></a>
           </div>
-          <div className="flex gap-8">
-            <a href="#inicio" className="hover:text-blue-600">Inicio</a>
+          <div className="flex gap-8"> 
             <a href="#loja" className="hover:text-blue-600">Loja</a>
-            <a href="#biblioteca" className="hover:text-blue-600">  Biblioteca</a>
+            <a href="#inicio" className="hover:text-blue-600">Ofertas</a>
+           
+            <a href="#biblioteca" className="hover:text-blue-600">  Como funciona</a>
           </div>
-          <div className="absolute right-0 top-1/2 flex -translate-y-1/2 gap-10">
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 gap-6">
             <a href="#Lupa" className="hover:text-blue-600"> <Search/></a>
-            <a href="#perfil" className="hover:text-blue-600"> <UserRound/></a>
+           
               <a href="#favoritos" className="hover:text-blue-600"> <Heart/></a>
             <a href="#loja" className="hover:text-blue-600"><ShoppingCart/></a>
-            <a href="#carrinho" className="hover:text-blue-600"></a>
+             <Menu as="div" className="relative inline-block">
+        <MenuButton className="hover:text-blue-600 focus:outline-none">
+          <UserRound />
+       
+      </MenuButton>
+
+      <MenuItems
+        transition
+        className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+      >
+        <div className="py-1">
+          <MenuItem>
+            <a
+              href="#"
+              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+            >
+              Configurações
+            </a>
+          </MenuItem>
+          <MenuItem>
+            <a
+              href="#"
+              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+            >
+              Support
+            </a>
+          </MenuItem>
+          <MenuItem>
+            <a
+              href="#"
+              className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+            >
+              Minhas Keys
+            </a>
+          </MenuItem>
+          <form action="#" method="POST">
+            <MenuItem>
+              <button
+                type="submit"
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+              >
+                Sair
+              </button>
+            </MenuItem>
+          </form>
+        </div>
+      </MenuItems>
+    </Menu>
           </div>
       </div>
     </nav>

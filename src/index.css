@@ -4,15 +4,24 @@
   * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;}
+    box-sizing: border-box;
   }
+}
 
-  body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #1a1a1a;
-    color: #fff;
-  }
+body {
+  font-family: "Inter", sans-serif;
+  background-color: #1a1a1a;
+  color: #fff;
+}
 
-  html {
-    scroll-behavior: smooth;
+html {
+  scroll-behavior: smooth;
+}
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(90deg, #D1D5DB, #4F46E5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
+}

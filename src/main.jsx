@@ -7,6 +7,7 @@ import Loja from "./pages/Loja.jsx";
 import Ofertas from "./pages/Ofertas.jsx";
 import ComoFunciona from "./pages/ComoFunciona.jsx";
 import Login from "./pages/Login.jsx";
+import Cadastrar from "./pages/Cadastro.js";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -31,6 +32,11 @@ const router = createBrowserRouter([
     path: "/login",
 
     element: <Login />,
+  },
+  {
+    path: "/cadastro",
+
+    element: <Cadastrar />,
   }
 ]);
 createRoot(document.getElementById("root")).render(

@@ -7,21 +7,21 @@ function NavBar() {
         <div>
           <a
             href="/"
-            className=" absolute left-3 top-3  hover:text-blue-600"
+            className=" absolute left-3 top-3  hover:text-blue-600 hover:scale-105 transition-all duration-300"
           >
             {" "}
             <img src="logo.png" alt="" />
           </a>
         </div>
         <div className="flex gap-8">
-          <a href="/loja" className="hover:text-blue-600">
+          <a href="/loja" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
             Loja
           </a>
-          <a href="/ofertas" className="hover:text-blue-600">
+          <a href="/ofertas" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
             Ofertas
           </a>
 
-          <a href="/comofunciona" className="hover:text-blue-600">
+          <a href="/comofunciona" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
             {" "}
             Como funciona
           </a>

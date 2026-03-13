@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+
 
 function Footer() {
   return (
@@ -82,7 +82,7 @@ function Footer() {
         </a>
         <br />
       </div>
-      <div className="flex py-5 px-5"> <ShieldCheck className="size-5 mr-1"/> Todos os direitos reservados</div>
+      
     </footer>
   );
 }

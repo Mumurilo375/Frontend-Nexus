@@ -28,7 +28,8 @@ const router = createBrowserRouter([
     path: "/comofunciona",
 
     element: <ComoFunciona />,
-  }, {
+  },
+  {
     path: "/login",
 
     element: <Login />,
@@ -37,7 +38,7 @@ const router = createBrowserRouter([
     path: "/cadastro",
 
     element: <Cadastrar />,
-  }
+  },
 ]);
 createRoot(document.getElementById("root")).render(
   <StrictMode>

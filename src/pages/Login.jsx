@@ -1,4 +1,23 @@
 function Login() {
+    
+    const emailRef = useRef<HTMLInputElement | null>(null);
+    const passwordRef = useRef<HTMLInputElement | null>(null);
+    const navigate = useNavigate();
+    async function handleSubmit(event) {
+        event.preventDefault();
+        try {
+         const{data:token} = await api.post("/login", {
+           
+            email: emailRef.current?.value ?? "",
+            password: passwordRef.current?.value ?? "",
+          
+          });
+          localStorage.setItem("token", token);
+          navigate("/");
+        } catch (error) {
+          alert("Erro ao logar: " + error);
+        }
+      }
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -18,6 +37,7 @@ function Login() {
               </label>
               <div className="mt-2">
                 <input
+                ref={emailRef}
                 placeholder="email@gmail.com"
                   id="email"
                   name="email"
@@ -43,6 +63,7 @@ function Login() {
               <div className="mt-2">
                 <input
                 placeholder="*****"
+                ref={passwordRef}
                   id="password"
                   name="password"
                   type="password"

@@ -25,6 +25,9 @@ function NavBar() {
             {" "}
             Como funciona
           </a>
+          <a href="/listagem-usuarios" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
+            Teste API
+          </a>
         </div>
         <div className="absolute right-2 top-1/2 flex -translate-y-1/2 gap-6">
           <a href="#Lupa" className="hover:text-blue-600">

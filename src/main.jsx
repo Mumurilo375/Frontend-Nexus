@@ -41,7 +41,7 @@ const router = createBrowserRouter([
     element: <Cadastro />,
   },
   {
-    path: "listagem-usuarios",
+    path: "/listagem-usuarios",
 
     element: <ListagemUsuarios />,
   },

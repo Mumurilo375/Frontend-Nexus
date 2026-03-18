@@ -1,31 +1,127 @@
 import { UserCircleIcon } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidCpf(rawCpf: string): boolean {
+  const cpf = rawCpf.replace(/\D/g, "");
+
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  for (let t = 9; t <= 10; t++) {
+    let sum = 0;
+    for (let i = 0; i < t; i++) {
+      sum += Number(cpf[i]) * (t + 1 - i);
+    }
+    const digit = ((sum * 10) % 11) % 10;
+    if (Number(cpf[t]) !== digit) return false;
+  }
+
+  return true;
+}
+
+function getFriendlyRegisterError(error: any): string {
+  const message = String(error?.response?.data?.message ?? "");
+
+  if (message.includes("Email is already in use")) {
+    return "Este email ja esta em uso.";
+  }
+
+  if (message.includes("Username is already in use")) {
+    return "Este nome de usuario ja esta em uso.";
+  }
+
+  if (message.includes("CPF is already in use")) {
+    return "Este CPF ja esta cadastrado.";
+  }
+
+  if (message.includes("Password must")) {
+    return "A senha deve ter no minimo 8 caracteres, com maiuscula, minuscula, numero e caractere especial.";
+  }
+
+  if (
+    message.includes("Invalid CPF") ||
+    message.includes("CPF must have 11 digits")
+  ) {
+    return "CPF invalido. Verifique os dados informados.";
+  }
+
+  if (message.includes("Network Error")) {
+    return "Nao foi possivel conectar com o servidor.";
+  }
+
+  return (
+    message || "Nao foi possivel concluir o cadastro agora. Tente novamente."
+  );
+}
 
 function Cadastro() {
   const nameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
   const cpfRef = useRef<HTMLInputElement | null>(null);
   const usernameRef = useRef<HTMLInputElement | null>(null);
   const photoRef = useRef<HTMLInputElement | null>(null);
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-try{
-    await api.post("/users", {
-      fullName: nameRef.current?.value ?? "",
-      email: emailRef.current?.value ?? "",
-      password: passwordRef.current?.value ?? "",
-      cpf: cpfRef.current?.value ?? "",
-      username: usernameRef.current?.value ?? "",
-      avatarUrl: photoRef.current?.files?.[0]?.name ?? null,
-    })
-  alert("Usuário criado com sucesso!");}
-    catch(error){
-      alert("Erro ao criar usuário: " + error);
+
+    const fullName = (nameRef.current?.value ?? "").trim();
+    const email = (emailRef.current?.value ?? "").trim().toLowerCase();
+    const password = passwordRef.current?.value ?? "";
+    const confirmPassword = confirmPasswordRef.current?.value ?? "";
+    const cpf = (cpfRef.current?.value ?? "").trim();
+    const username = (usernameRef.current?.value ?? "").trim();
+
+    if (!fullName || !email || !password || !cpf) {
+      setErrorMessage(
+        "Preencha os campos obrigatorios: nome, email, senha e CPF.",
+      );
+      return;
     }
-  
+
+    if (!EMAIL_REGEX.test(email)) {
+      setErrorMessage("Digite um email valido.");
+      return;
+    }
+
+    if (!isValidCpf(cpf)) {
+      setErrorMessage("CPF invalido.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("As senhas nao conferem.");
+      return;
+    }
+
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      await api.post("/users", {
+        fullName,
+        email,
+        password,
+        cpf,
+        username,
+        avatarUrl: photoRef.current?.files?.[0]?.name ?? null,
+      });
+      navigate("/login");
+    } catch (error: any) {
+      setErrorMessage(getFriendlyRegisterError(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -176,13 +272,43 @@ try{
           </div>
 
           <div>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="confirm-password"
+                className="block text-sm/6 font-medium text-gray-100"
+              >
+                Confirmar senha
+              </label>
+            </div>
+            <div className="mt-2">
+              <input
+                ref={confirmPasswordRef}
+                placeholder="*****"
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                required
+                autoComplete="new-password"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          <div>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
-              Criar conta
+              {isSubmitting ? "Criando conta..." : "Criar conta"}
             </button>
           </div>
+
+          {errorMessage && (
+            <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+              {errorMessage}
+            </p>
+          )}
         </form>
 
         <p className="mt-10 text-center text-sm/6 text-gray-400">
@@ -197,5 +323,6 @@ try{
       </div>
     </div>
   );
-}}
+}
+
 export default Cadastro;

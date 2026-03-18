@@ -1,14 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./pages/App.jsx";
+import App from "./pages/App";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Loja from "./pages/Loja.jsx";
-import Ofertas from "./pages/Ofertas.jsx";
-import ComoFunciona from "./pages/ComoFunciona.jsx";
-import Login from "./pages/Login.jsx";
-import Cadastro from "./pages/Cadastro.tsx";
-import ListagemUsuarios from "./pages/listagemUsuarios.tsx";
+import Loja from "./pages/Loja";
+import Ofertas from "./pages/Ofertas";
+import ComoFunciona from "./pages/ComoFunciona";
+import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
+import ListagemUsuarios from "./pages/listagemUsuarios";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
     element: <ListagemUsuarios />,
   },
 ]);
-createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,

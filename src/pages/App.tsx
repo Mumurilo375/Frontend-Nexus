@@ -1,10 +1,9 @@
-import Footer from "../components/Footer";
-import Hero from "../components/Hero";
-import Highlights from "../components/Highlights";
-import Intro from "../components/Intro";
-import NavBar from "../components/NavBar";
-import Plataforms from "../components/Plataforms";
-
+import Footer from "../components/globals/Footer";
+import Hero from "../components/globals/Hero";
+import Highlights from "../components/globals/Highlights";
+import Intro from "../components/globals/Intro";
+import NavBar from "../components/globals/NavBar";
+import Plataforms from "../components/globals/Plataforms";
 
 function App() {
   return (

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, UserRound, ShoppingCart, Heart } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
 
 function NavBar() {
   type GameSuggestion = {

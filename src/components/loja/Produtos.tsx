@@ -3,13 +3,27 @@ import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useSearchParams } from "react-router-dom";
 
-export default function Produtos() {
+type Category = {
+  id: number;
+  name: string;
+};
+
+type ProdutosProps = {
+  selectedCategory: string;
+  onCategoriesLoaded: (categories: string[]) => void;
+};
+
+export default function Produtos({
+  selectedCategory,
+  onCategoriesLoaded,
+}: ProdutosProps) {
   type Game = {
     id: number;
     title: string;
     description: string;
     coverImageUrl?: string;
     price?: number;
+    categories?: Category[];
   };
 
   type GamesResponse = {
@@ -22,13 +36,44 @@ export default function Produtos() {
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
+  const normalize = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+
+  const availableCategories = useMemo(() => {
+    const names = games.flatMap((game) =>
+      (game.categories ?? []).map((category) => category.name),
+    );
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }, [games]);
+
   const filteredGames = useMemo(() => {
+    const categoryFilter = normalize(selectedCategory);
+
+    const categoryFiltered =
+      categoryFilter && categoryFilter !== "todas"
+        ? games.filter((game) =>
+            (game.categories ?? []).some(
+              (category) => normalize(category.name) === categoryFilter,
+            ),
+          )
+        : games;
+
     if (!query) {
-      return games;
+      return categoryFiltered;
     }
 
-    return games.filter((game) => game.title.toLowerCase().includes(query));
-  }, [games, query]);
+    return categoryFiltered.filter((game) =>
+      game.title.toLowerCase().includes(query),
+    );
+  }, [games, query, selectedCategory]);
+
+  useEffect(() => {
+    onCategoriesLoaded(availableCategories);
+  }, [availableCategories, onCategoriesLoaded]);
 
   useEffect(() => {
     const carregarJogos = async () => {
@@ -98,7 +143,9 @@ export default function Produtos() {
         <p className="text-gray-300">Nenhum produto encontrado.</p>
       )}
       {games.length > 0 && filteredGames.length === 0 && (
-        <p className="text-gray-300">Nenhum resultado para sua pesquisa.</p>
+        <p className="text-gray-300">
+          Nenhum resultado para os filtros selecionados.
+        </p>
       )}
     </div>
   );

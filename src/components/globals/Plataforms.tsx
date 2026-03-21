@@ -1,12 +1,13 @@
 import { useState } from "react";
-import playstationIcon from "../assets/playstation.png";
-import xboxIcon from "../assets/xbox.png";
-import nintendoIcon from "../assets/nintendo.png";
-import pcIcon from "../assets/pc.png";
-import PlaystationConsole from "../../public/plataforms/playstationConsole.png";
-import XboxConsole from "../../public/plataforms/xboxConsole.png";
-import NintendoConsole from "../../public/plataforms/nintendoconsole.png";
-import PcConsole from "../../public/plataforms/computador.png";
+import playstationIcon from "../../assets/playstation.png";
+import xboxIcon from "../../assets/xbox.png";
+import nintendoIcon from "../../assets/nintendo.png";
+import pcIcon from "../../assets/pc.png";
+
+const PlaystationConsole = "/plataforms/playstationConsole.png";
+const XboxConsole = "/plataforms/xboxConsole.png";
+const NintendoConsole = "/plataforms/nintendoconsole.png";
+const PcConsole = "/plataforms/computador.png";
 
 export default function Plataforms() {
   const plataforms = [

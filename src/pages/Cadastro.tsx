@@ -2,6 +2,7 @@ import { UserCircleIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Back from "../components/login/Back";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -321,6 +322,7 @@ function Cadastro() {
           </a>
         </p>
       </div>
+      <Back />
     </div>
   );
 }

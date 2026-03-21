@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { Link } from "lucide-react";
+import Back from "../components/login/Back";
+
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -148,6 +151,8 @@ function Login() {
           </a>
         </p>
       </div>
+      <Back />
+     
     </div>
   );
 }

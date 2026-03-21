@@ -1,39 +1,205 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, UserRound, ShoppingCart, Heart } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
+
 function NavBar() {
+  type GameSuggestion = {
+    id: number;
+    title: string;
+    coverImageUrl?: string;
+  };
+
+  type GamesResponse = {
+    items: GameSuggestion[];
+  };
+
+  const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [games, setGames] = useState<GameSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!searchOpen || games.length > 0) {
+      return;
+    }
+
+    const carregarJogos = async () => {
+      try {
+        setLoadingSuggestions(true);
+        setSearchError("");
+
+        const token = localStorage.getItem("token");
+        const { data } = await api.get<GamesResponse>("/games", {
+          params: { page: 1, limit: 100 },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+
+        setGames(data?.items ?? []);
+      } catch {
+        setGames([]);
+        setSearchError(
+          "Nao foi possivel carregar sugestoes. Faca login para pesquisar.",
+        );
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    };
+
+    void carregarJogos();
+  }, [searchOpen, games.length]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!searchBoxRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const filteredSuggestions = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    if (!term) {
+      return games.slice(0, 6);
+    }
+
+    return games
+      .filter((game) => game.title.toLowerCase().includes(term))
+      .slice(0, 6);
+  }, [games, searchTerm]);
+
+  const irParaResultado = (term: string) => {
+    const query = term.trim();
+    if (!query) {
+      return;
+    }
+
+    navigate(`/loja?q=${encodeURIComponent(query)}`);
+    setSearchOpen(false);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    irParaResultado(searchTerm);
+  };
+
   return (
     <nav className="fixed bg-black/90 top-0 w-full blackdrop-blur-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center gap-8">
         <div>
-          <a
-            href="/"
+          <Link
+            to="/"
             className=" absolute left-3 top-3  hover:text-blue-600 hover:scale-105 transition-all duration-300"
           >
             {" "}
             <img src="logo.png" alt="" />
-          </a>
+          </Link>
         </div>
         <div className="flex gap-8">
-          <a href="/loja" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
+          <Link
+            to="/loja"
+            className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+          >
             Loja
-          </a>
-          <a href="/ofertas" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
+          </Link>
+          <Link
+            to="/ofertas"
+            className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+          >
             Ofertas
-          </a>
+          </Link>
 
-          <a href="/comofunciona" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
+          <Link
+            to="/comofunciona"
+            className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+          >
             {" "}
             Como funciona
-          </a>
-          <a href="/listagem-usuarios" className="hover:text-blue-600 hover:scale-105 transition-all duration-300">
+          </Link>
+          <Link
+            to="/listagem-usuarios"
+            className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+          >
             Teste API
-          </a>
+          </Link>
         </div>
         <div className="absolute right-2 top-1/2 flex -translate-y-1/2 gap-6">
-          <a href="#Lupa" className="hover:text-blue-600">
-            {" "}
-            <Search />
-          </a>
+          <div ref={searchBoxRef} className="relative">
+            <button
+              type="button"
+              className="hover:text-blue-600"
+              onClick={() => setSearchOpen((prev) => !prev)}
+              aria-label="Abrir busca"
+            >
+              <Search />
+            </button>
+
+            {searchOpen && (
+              <div className="absolute right-0 top-11 w-80 rounded-xl border border-gray-700 bg-black/95 p-3 shadow-2xl">
+                <form onSubmit={handleSubmit} className="mb-2">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Pesquisar jogos..."
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-600"
+                  />
+                </form>
+
+                {loadingSuggestions && (
+                  <p className="px-1 py-2 text-sm text-gray-300">
+                    Carregando sugestoes...
+                  </p>
+                )}
+
+                {!loadingSuggestions && searchError && (
+                  <p className="px-1 py-2 text-sm text-red-300">
+                    {searchError}
+                  </p>
+                )}
+
+                {!loadingSuggestions && !searchError && (
+                  <ul className="max-h-60 overflow-y-auto">
+                    {filteredSuggestions.map((game) => (
+                      <li key={game.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchTerm(game.title);
+                            irParaResultado(game.title);
+                          }}
+                          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-800"
+                        >
+                          <img
+                            src={game.coverImageUrl || "/logo.png"}
+                            alt={game.title}
+                            className="h-9 w-9 rounded object-cover"
+                          />
+                          <span className="text-sm text-gray-200">
+                            {game.title}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+
+                    {filteredSuggestions.length === 0 && (
+                      <li className="px-2 py-2 text-sm text-gray-400">
+                        Nenhum jogo encontrado para essa pesquisa.
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
 
           <a href="#favoritos" className="hover:text-blue-600">
             {" "}

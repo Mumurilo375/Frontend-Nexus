@@ -13,7 +13,7 @@ function Highlights() {
         <div className="grid grid-cols-2 gap-8 mb-16">
           <div className="bg-gray-900 rounded-3xl p-8 ">
             <img
-              src="../../public/homemaranha.png"
+              src="../../public/games/homemaranha.png"
               alt="wukong-game"
               className="w-full h-64 object-cover rounded-2xl mb-4"
             />
@@ -24,7 +24,7 @@ function Highlights() {
           </div>
           <div className="bg-gray-900 rounded-3xl p-8">
             <img
-              src="../../public/eldenring.jpg"
+              src="../../public/games/eldenring.jpg"
               alt="eldenring-game"
               className="w-full h-64 object-cover rounded-2xl mb-4"
             />

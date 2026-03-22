@@ -4,7 +4,7 @@ function Hero() {
     <section className="relative h-screen overflow-hidden bg-black">
       <div className="absolute  left-0 bottom-0 z-0">
         <img
-          src="../../public/residenthero.jpg"
+          src="../../public/utils/residenthero.jpg"
           alt=""
           className="w-full h-full object-cover opacity-90"
         />

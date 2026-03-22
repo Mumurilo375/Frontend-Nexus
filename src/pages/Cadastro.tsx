@@ -128,7 +128,7 @@ function Cadastro() {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
-          src="../../public/logo.png"
+          src="../../public/utils/logo.png"
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-3xl font-bold tracking-tight text-white">

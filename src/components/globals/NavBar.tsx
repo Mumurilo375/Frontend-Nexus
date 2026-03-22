@@ -22,6 +22,7 @@ function NavBar() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [searchError, setSearchError] = useState("");
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
 
   useEffect(() => {
     if (!searchOpen || games.length > 0) {
@@ -91,6 +92,11 @@ function NavBar() {
     irParaResultado(searchTerm);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
     <nav className="fixed bg-black/90 top-0 w-full blackdrop-blur-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center gap-8">
@@ -100,7 +106,7 @@ function NavBar() {
             className=" absolute left-3 top-3  hover:text-blue-600 hover:scale-105 transition-all duration-300"
           >
             {" "}
-            <img src="logo.png" alt="" />
+            <img src="utils/logo.png" alt="" />
           </Link>
         </div>
         <div className="flex gap-8">
@@ -218,40 +224,45 @@ function NavBar() {
               className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
             >
               <div className="py-1">
-                <MenuItem>
-                  <a
-                    href="/login"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    Login
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    Configurações
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    Minhas Keys
-                  </a>
-                </MenuItem>
-                <form action="#" method="POST">
+                {!isLoggedIn && (
                   <MenuItem>
-                    <button
-                      type="submit"
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                    <a
+                      href="/login"
+                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                     >
-                      Sair
-                    </button>
+                      Login
+                    </a>
                   </MenuItem>
-                </form>
+                )}
+                {isLoggedIn && (
+                  <>
+                    <MenuItem>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                      >
+                        Configurações
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                      >
+                        Minhas Keys
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                      >
+                        Sair
+                      </button>
+                    </MenuItem>
+                  </>
+                )}
               </div>
             </MenuItems>
           </Menu>

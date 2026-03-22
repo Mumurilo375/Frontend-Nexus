@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { Link } from "lucide-react";
 import Back from "../components/login/Back";
-
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +24,7 @@ function Login() {
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,7 +49,10 @@ function Login() {
       });
 
       localStorage.setItem("token", data.token);
-      if (window.history.length > 1) {
+      const from = (location.state as { from?: string } | null)?.from;
+      if (from) {
+        navigate(from);
+      } else if (window.history.length > 1) {
         navigate(-1);
       } else {
         navigate("/");
@@ -156,7 +159,6 @@ function Login() {
         </p>
       </div>
       <Back />
-     
     </div>
   );
 }

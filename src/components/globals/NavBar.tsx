@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, UserRound, ShoppingCart, Heart } from "lucide-react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 function NavBar() {
@@ -16,6 +16,7 @@ function NavBar() {
   };
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [games, setGames] = useState<GameSuggestion[]>([]);
@@ -95,6 +96,17 @@ function NavBar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
+  };
+
+  const handleGoToFavorites = () => {
+    if (!isLoggedIn) {
+      navigate("/login", {
+        state: { from: `${location.pathname}${location.search}` },
+      });
+      return;
+    }
+
+    navigate("/favoritos");
   };
 
   return (
@@ -207,10 +219,14 @@ function NavBar() {
             )}
           </div>
 
-          <a href="#favoritos" className="hover:text-blue-600">
-            {" "}
+          <button
+            type="button"
+            onClick={handleGoToFavorites}
+            className="hover:text-blue-600"
+            aria-label="Ir para favoritos"
+          >
             <Heart />
-          </a>
+          </button>
           <a href="#loja" className="hover:text-blue-600">
             <ShoppingCart />
           </a>

@@ -9,6 +9,7 @@ import ComoFunciona from "./pages/ComoFunciona";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import ListagemUsuarios from "./pages/listagemUsuarios";
+import Favoritos from "./pages/Favoritos";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -44,6 +45,11 @@ const router = createBrowserRouter([
     path: "/listagem-usuarios",
 
     element: <ListagemUsuarios />,
+  },
+  {
+    path: "/favoritos",
+
+    element: <Favoritos />,
   },
 ]);
 createRoot(document.getElementById("root")!).render(

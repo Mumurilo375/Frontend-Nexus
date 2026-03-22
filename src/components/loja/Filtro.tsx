@@ -10,9 +10,8 @@ function Filtro({
   onSelectCategory,
 }: FiltroProps) {
   return (
-    <aside>
-      <nav className="fixed left-5 top-15 w-60 bg-black overflow-y-auto leading-10 text-center text-semibold text-gray-300">
-        {" "}
+    <aside className="w-full lg:w-64 lg:shrink-0 left-0">
+      <nav className="text-semibold sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300">
         <h2 className="font-bold text-2xl  p-4 mb-1">Categorias</h2>
         <ul className="mb-2">
           <li>
@@ -21,8 +20,8 @@ function Filtro({
               onClick={() => onSelectCategory("Todas")}
               className={
                 selectedCategory === "Todas"
-                  ? "font-bold text-white"
-                  : "hover:text-white"
+                  ? "font-bold text-blue-600"
+                  : "hover:text-blue-600"
               }
             >
               Todas
@@ -35,7 +34,7 @@ function Filtro({
                 onClick={() => onSelectCategory(category)}
                 className={
                   selectedCategory === category
-                    ? "font-bold text-white"
+                    ? "font-bold text-blue-600"
                     : "hover:text-white"
                 }
               >

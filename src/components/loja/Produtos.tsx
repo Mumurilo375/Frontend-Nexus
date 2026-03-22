@@ -110,11 +110,11 @@ export default function Produtos({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4 px-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {filteredGames.map((game) => (
         <div
           key={game.id}
-          className=" bg-gray-900 rounded-2xl p-6 my-4 flex flex-col items-start gap-4 hover:bg-gray-700 transition-all duration-300 hover:scale-105"
+          className="relative my-4 flex flex-col items-start gap-4 rounded-2xl bg-gray-900 p-6 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
         >
           <button className="bg-black/80 p-3 rounded-full absolute hover:scale-105 z-20 left-4 top-4">
             <Heart />
@@ -128,10 +128,10 @@ export default function Produtos({
           <h2 className="text-2xl font-bold mb-2 text-left">{game.title}</h2>
           <p className="text-gray-300">{game.description}</p>
           <div className="flex gap-4 justtify-between items-center">
-            <p className="text-gray-300 text-1.5xl">
+            <p className="text-blue-200 text-1.5xl">
               {typeof game.price === "number"
                 ? `R$ ${game.price.toFixed(2)}`
-                : "Preco indisponivel"}
+                : "Escolha a plataforma "}
             </p>
             <button className="bg-blue-900 hover:scale-105 rounded-3xl py-2 px-5">
               Comprar

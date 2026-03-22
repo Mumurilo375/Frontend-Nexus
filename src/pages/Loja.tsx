@@ -13,15 +13,19 @@ function Loja() {
     <div>
       <NavBar />
       <Intro />
-      <Filtro
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-      />
-      <Produtos
-        selectedCategory={selectedCategory}
-        onCategoriesLoaded={setCategories}
-      />
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start">
+        <Filtro
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+        <div className="min-w-0 flex-1">
+          <Produtos
+            selectedCategory={selectedCategory}
+            onCategoriesLoaded={setCategories}
+          />
+        </div>
+      </section>
       <Footer />
     </div>
   );

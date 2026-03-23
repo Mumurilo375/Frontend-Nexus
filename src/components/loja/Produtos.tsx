@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated } from "../../services/auth";
+import AuthRequiredModal from "../globals/AuthRequiredModal";
 import steamLogo from "../../assets/steam.png";
 import playstationLogo from "../../assets/playstation.png";
 import xboxLogo from "../../assets/xbox.png";
@@ -14,57 +15,71 @@ type Category = {
 };
 
 type ProdutosProps = {
-  selectedPlatform: string;
+  selectedPlatforms: string[];
   onPlatformsLoaded: (platforms: string[]) => void;
-  selectedCategory: string;
+  selectedCategories: string[];
   onCategoriesLoaded: (categories: string[]) => void;
 };
 
+type Game = {
+  id: number;
+  title: string;
+  description: string;
+  coverImageUrl?: string;
+  price?: number;
+  categories?: Category[];
+  platforms?: string[];
+};
+
+type GamesResponse = {
+  items: Game[];
+};
+
+type ListingItem = {
+  id: number;
+  gameId?: number;
+  isActive?: boolean;
+  price?: number | string;
+  game?: {
+    id?: number;
+  };
+  platform?: {
+    name?: string;
+  };
+};
+
+type ListingsResponse = {
+  items: ListingItem[];
+};
+
+type WishlistItem = {
+  gameId: number;
+};
+
+type WishlistResponse = {
+  items: WishlistItem[];
+};
+
+const platformLogoByName: Record<string, string> = {
+  steam: steamLogo,
+  playstation: playstationLogo,
+  xbox: xboxLogo,
+  "nintendo switch": nintendoLogo,
+};
+
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
 export default function Produtos({
-  selectedPlatform,
+  selectedPlatforms,
   onPlatformsLoaded,
-  selectedCategory,
+  selectedCategories,
   onCategoriesLoaded,
 }: ProdutosProps) {
-  type Game = {
-    id: number;
-    title: string;
-    description: string;
-    coverImageUrl?: string;
-    price?: number;
-    categories?: Category[];
-    platforms?: string[];
-  };
-
-  type GamesResponse = {
-    items: Game[];
-  };
-
-  type ListingItem = {
-    id: number;
-    gameId?: number;
-    isActive?: boolean;
-    price?: number | string;
-    game?: {
-      id?: number;
-    };
-    platform?: {
-      name?: string;
-    };
-  };
-
-  type ListingsResponse = {
-    items: ListingItem[];
-  };
-
-  type WishlistItem = {
-    gameId: number;
-  };
-
-  type WishlistResponse = {
-    items: WishlistItem[];
-  };
-
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,24 +91,22 @@ export default function Produtos({
   const [listingByGame, setListingByGame] = useState<Map<number, ListingItem[]>>(new Map());
   const [cartListingIds, setCartListingIds] = useState<number[]>([]);
   const [selectedListingByGame, setSelectedListingByGame] = useState<Record<number, number>>({});
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
-  const platformLogoByName: Record<string, string> = {
-    steam: steamLogo,
-    playstation: playstationLogo,
-    xbox: xboxLogo,
-    "nintendo switch": nintendoLogo,
+  const goToLogin = () => {
+    setShowAuthModal(false);
+    navigate("/login", {
+      state: { from: `${location.pathname}${location.search}` },
+    });
   };
 
-  const normalizarTexto = (value: string) =>
-    value
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim()
-      .toLowerCase();
+  const askLogin = () => {
+    setShowAuthModal(true);
+  };
 
   const availableCategories = useMemo(() => {
     const names = games.flatMap((game) =>
@@ -108,23 +121,27 @@ export default function Produtos({
   }, [games]);
 
   const filteredGames = useMemo(() => {
-    const filtroCategoria = normalizarTexto(selectedCategory);
-    const filtroPlataforma = normalizarTexto(selectedPlatform);
+    const filtrosCategoria = new Set(
+      selectedCategories.map((category) => normalizeText(category)),
+    );
+    const filtrosPlataforma = new Set(
+      selectedPlatforms.map((platform) => normalizeText(platform)),
+    );
 
     const jogosFiltradosPorCategoria =
-      filtroCategoria && filtroCategoria !== "todas"
+      filtrosCategoria.size > 0
         ? games.filter((game) =>
             (game.categories ?? []).some(
-              (category) => normalizarTexto(category.name) === filtroCategoria,
+              (category) => filtrosCategoria.has(normalizeText(category.name)),
             ),
           )
         : games;
 
     const jogosFiltrados =
-      filtroPlataforma && filtroPlataforma !== "todas"
+      filtrosPlataforma.size > 0
         ? jogosFiltradosPorCategoria.filter((game) =>
             (game.platforms ?? []).some(
-              (platform) => normalizarTexto(platform) === filtroPlataforma,
+              (platform) => filtrosPlataforma.has(normalizeText(platform)),
             ),
           )
         : jogosFiltradosPorCategoria;
@@ -136,7 +153,7 @@ export default function Produtos({
     return jogosFiltrados.filter((game) =>
       game.title.toLowerCase().includes(query),
     );
-  }, [games, query, selectedCategory, selectedPlatform]);
+  }, [games, query, selectedCategories, selectedPlatforms]);
 
   useEffect(() => {
     onCategoriesLoaded(availableCategories);
@@ -244,9 +261,7 @@ export default function Produtos({
 
   const alternarFavorito = async (gameId: number) => {
     if (!isAuthenticated()) {
-      navigate("/login", {
-        state: { from: `${location.pathname}${location.search}` },
-      });
+      askLogin();
       return;
     }
 
@@ -262,6 +277,8 @@ export default function Produtos({
         await api.post(`/wishlists/${gameId}`, {});
         setFavoriteIds((current) => [...current, gameId]);
       }
+
+      window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setPendingFavoriteId(null);
     }
@@ -269,12 +286,14 @@ export default function Produtos({
 
   const getListingsForGame = (gameId: number) => {
     const list = listingByGame.get(gameId) ?? [];
-    if (selectedPlatform === "Todas") return list;
+    if (selectedPlatforms.length === 0) return list;
+
+    const filtrosPlataforma = new Set(
+      selectedPlatforms.map((platform) => normalizeText(platform)),
+    );
 
     return list.filter(
-      (item) =>
-        String(item.platform?.name ?? "").toLowerCase() ===
-        selectedPlatform.toLowerCase(),
+      (item) => filtrosPlataforma.has(normalizeText(String(item.platform?.name ?? ""))),
     );
   };
 
@@ -295,9 +314,7 @@ export default function Produtos({
 
   const addToCart = async (gameId: number, listingId: number) => {
     if (!isAuthenticated()) {
-      navigate("/login", {
-        state: { from: `${location.pathname}${location.search}` },
-      });
+      askLogin();
       return;
     }
 
@@ -305,6 +322,7 @@ export default function Produtos({
       setPendingCartGameId(gameId);
       await api.post(`/cart/${listingId}`);
       setCartListingIds((current) => (current.includes(listingId) ? current : [...current, listingId]));
+      window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setPendingCartGameId(null);
     }
@@ -319,8 +337,17 @@ export default function Produtos({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {filteredGames.map((game) => {
+    <>
+      <AuthRequiredModal
+        open={showAuthModal}
+        title="Entre para continuar"
+        message="Para adicionar aos favoritos ou ao carrinho, faca login na sua conta."
+        onClose={() => setShowAuthModal(false)}
+        onConfirm={goToLogin}
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {filteredGames.map((game) => {
         const listings = getListingsForGame(game.id);
         const selectedListing = getSelectedListingForGame(game.id);
         const inCart = selectedListing ? cartListingIds.includes(selectedListing.id) : false;
@@ -429,16 +456,17 @@ export default function Produtos({
             </button>
           </div>
         </div>
-        );
-      })}
-      {games.length === 0 && (
-        <p className="text-gray-300">Nenhum produto encontrado.</p>
-      )}
-      {games.length > 0 && filteredGames.length === 0 && (
-        <p className="text-gray-300">
-          Nenhum resultado para os filtros selecionados.
-        </p>
-      )}
-    </div>
+          );
+        })}
+        {games.length === 0 && (
+          <p className="text-gray-300">Nenhum produto encontrado.</p>
+        )}
+        {games.length > 0 && filteredGames.length === 0 && (
+          <p className="text-gray-300">
+            Nenhum resultado para os filtros selecionados.
+          </p>
+        )}
+      </div>
+    </>
   );
 }

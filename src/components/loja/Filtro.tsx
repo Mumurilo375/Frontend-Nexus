@@ -3,20 +3,24 @@ import { useState } from "react";
 
 type FiltroProps = {
   platforms: string[];
-  selectedPlatform: string;
-  onSelectPlatform: (platform: string) => void;
+  selectedPlatforms: string[];
+  onTogglePlatform: (platform: string) => void;
+  onClearPlatforms: () => void;
   categories: string[];
-  selectedCategory: string;
-  onSelectCategory: (category: string) => void;
+  selectedCategories: string[];
+  onToggleCategory: (category: string) => void;
+  onClearCategories: () => void;
 };
 
 function Filtro({
   platforms,
-  selectedPlatform,
-  onSelectPlatform,
+  selectedPlatforms,
+  onTogglePlatform,
+  onClearPlatforms,
   categories,
-  selectedCategory,
-  onSelectCategory,
+  selectedCategories,
+  onToggleCategory,
+  onClearCategories,
 }: FiltroProps) {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
 
@@ -25,13 +29,13 @@ function Filtro({
   };
 
   const selecionarPlataforma = (plataforma: string) => {
-    onSelectPlatform(plataforma);
+    onTogglePlatform(plataforma);
     irParaTopo();
     setMenuAbertoMobile(false);
   };
 
   const selecionarCategoria = (categoria: string) => {
-    onSelectCategory(categoria);
+    onToggleCategory(categoria);
     irParaTopo();
     setMenuAbertoMobile(false);
   };
@@ -50,7 +54,7 @@ function Filtro({
 
       <nav
         id="filtro-categorias"
-        className={`text-semibold max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300 ${
+        className={`nexus-scrollbar text-semibold max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300 ${
           menuAbertoMobile ? "block" : "hidden"
         } lg:block`}
       >
@@ -62,9 +66,13 @@ function Filtro({
           <li>
             <button
               type="button"
-              onClick={() => selecionarPlataforma("Todas")}
+              onClick={() => {
+                onClearPlatforms();
+                irParaTopo();
+                setMenuAbertoMobile(false);
+              }}
               className={
-                selectedPlatform === "Todas"
+                selectedPlatforms.length === 0
                   ? "font-bold text-blue-600"
                   : "hover:text-white"
               }
@@ -78,7 +86,7 @@ function Filtro({
                 type="button"
                 onClick={() => selecionarPlataforma(platform)}
                 className={
-                  selectedPlatform === platform
+                  selectedPlatforms.includes(platform)
                     ? "font-bold text-blue-600"
                     : "hover:text-white"
                 }
@@ -94,9 +102,13 @@ function Filtro({
           <li>
             <button
               type="button"
-              onClick={() => selecionarCategoria("Todas")}
+              onClick={() => {
+                onClearCategories();
+                irParaTopo();
+                setMenuAbertoMobile(false);
+              }}
               className={
-                selectedCategory === "Todas"
+                selectedCategories.length === 0
                   ? "font-bold text-blue-600"
                   : "hover:text-blue-600"
               }
@@ -110,7 +122,7 @@ function Filtro({
                 type="button"
                 onClick={() => selecionarCategoria(category)}
                 className={
-                  selectedCategory === category
+                  selectedCategories.includes(category)
                     ? "font-bold text-blue-600"
                     : "hover:text-white"
                 }

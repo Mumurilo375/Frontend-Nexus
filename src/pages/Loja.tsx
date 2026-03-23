@@ -6,10 +6,23 @@ import Filtro from "../components/loja/Filtro";
 import Produtos from "../components/loja/Produtos";
 
 function Loja() {
-  const [selectedCategory, setSelectedCategory] = useState("Todas");
-  const [selectedPlatform, setSelectedPlatform] = useState("Todas");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
+
+  const toggleSelection = (values: string[], value: string) =>
+    values.includes(value)
+      ? values.filter((current) => current !== value)
+      : [...values, value];
+
+  const togglePlatform = (platform: string) => {
+    setSelectedPlatforms((current) => toggleSelection(current, platform));
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((current) => toggleSelection(current, category));
+  };
 
   return (
     <div>
@@ -18,17 +31,19 @@ function Loja() {
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start lg:px-2 xl:px-0">
         <Filtro
           platforms={platforms}
-          selectedPlatform={selectedPlatform}
-          onSelectPlatform={setSelectedPlatform}
+          selectedPlatforms={selectedPlatforms}
+          onTogglePlatform={togglePlatform}
+          onClearPlatforms={() => setSelectedPlatforms([])}
           categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          selectedCategories={selectedCategories}
+          onToggleCategory={toggleCategory}
+          onClearCategories={() => setSelectedCategories([])}
         />
         <div className="min-w-0 flex-1">
           <Produtos
-            selectedPlatform={selectedPlatform}
+            selectedPlatforms={selectedPlatforms}
             onPlatformsLoaded={setPlatforms}
-            selectedCategory={selectedCategory}
+            selectedCategories={selectedCategories}
             onCategoriesLoaded={setCategories}
           />
         </div>

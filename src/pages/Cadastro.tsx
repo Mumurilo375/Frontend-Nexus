@@ -2,6 +2,7 @@ import { UserCircleIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Back from "../components/login/Back";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -127,7 +128,7 @@ function Cadastro() {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
-          src="../../public/logo.png"
+          src="../../public/utils/logo.png"
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-3xl font-bold tracking-tight text-white">
@@ -321,6 +322,7 @@ function Cadastro() {
           </a>
         </p>
       </div>
+      <Back />
     </div>
   );
 }

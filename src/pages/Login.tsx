@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { Link } from "lucide-react";
+import Back from "../components/login/Back";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,6 +24,7 @@ function Login() {
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,7 +49,14 @@ function Login() {
       });
 
       localStorage.setItem("token", data.token);
-      navigate("/listagem-usuarios");
+      const from = (location.state as { from?: string } | null)?.from;
+      if (from) {
+        navigate(from);
+      } else if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate("/");
+      }
     } catch (error: any) {
       setErrorMessage(getFriendlyLoginError(error));
     } finally {
@@ -59,7 +69,7 @@ function Login() {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
-          src="../../public/logo.png"
+          src="../../public/utils/logo.png"
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">
@@ -148,6 +158,7 @@ function Login() {
           </a>
         </p>
       </div>
+      <Back />
     </div>
   );
 }

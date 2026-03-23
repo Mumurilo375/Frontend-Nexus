@@ -1,7 +1,96 @@
-function Filtro(){
-    return (
-        <div className="bg-blue-950 w-full rounded-2xl px-6">
-        <h1 className="text-2xl">filtros</h1>
-      </div>
-    )
-} export default Filtro
+import { FilterIcon } from "lucide-react";
+import { useState } from "react";
+
+type FiltroProps = {
+  categories: string[];
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
+};
+
+function Filtro({
+  categories,
+  selectedCategory,
+  onSelectCategory,
+}: FiltroProps) {
+  const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
+
+  const selecionarCategoria = (categoria: string) => {
+    onSelectCategory(categoria);
+    setMenuAbertoMobile(false);
+  };
+
+  return (
+    <aside className="w-full lg:w-64  lg:shrink-10 lg:self-start lg:sticky lg:top-24">
+      <button
+        type="button"
+        onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
+        className="mb-3 w-full rounded-xl bg-black/10 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
+        aria-expanded={menuAbertoMobile}
+        aria-controls="filtro-categorias"
+      >
+        {menuAbertoMobile ? "Fechar filtros" : "Abrir filtros"}
+      </button>
+
+      <nav
+        id="filtro-categorias"
+        className={`text-semibold max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300 ${
+          menuAbertoMobile ? "block" : "hidden"
+        } lg:block`}
+      >
+        <h2 className="font-bold text-2xl text p-4 mb-1"> 
+          <FilterIcon className="inline-block mr-2" />
+          Filtros</h2>
+           <h2 className="font-bold text-2xl  p-4 mb-1"> 
+          
+          Categorias:</h2>
+          
+        <ul className="mb-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => selecionarCategoria("Todas")}
+              className={
+                selectedCategory === "Todas"
+                  ? "font-bold text-blue-600"
+                  : "hover:text-blue-600"
+              }
+            >
+              Todas
+            </button>
+          </li>
+          {categories.map((category) => (
+            <li key={category}>
+              <button
+                type="button"
+                onClick={() => selecionarCategoria(category)}
+                className={
+                  selectedCategory === category
+                    ? "font-bold text-blue-600"
+                    : "hover:text-white"
+                }
+              >
+                {category}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <h2 className="font-bold text-2xl  p-4 mb-2">Plataformas</h2>
+        <ul>
+          <li>
+            <a href="#">Playstation</a>
+          </li>
+          <li>
+            <a href="#">Xbox</a>
+          </li>
+          <li>
+            <a href="#">Nintendo</a>
+          </li>
+          <li>
+            <a href="#">PC</a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+export default Filtro;

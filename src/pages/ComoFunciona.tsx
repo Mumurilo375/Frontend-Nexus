@@ -1,14 +1,14 @@
 import Hero from "../components/comofunciona/Hero";
 import Steps from "../components/comofunciona/Steps";
-import NavBar from "../components/NavBar";
+import NavBar from "../components/globals/NavBar";
 
 function ComoFunciona() {
   return (
-    <div >
-      <NavBar/>
-      <Hero/>
-      <Steps/>
-      
+    <div>
+      <NavBar />
+      <Hero />
+      <Steps />
     </div>
   );
-} export default ComoFunciona;
+}
+export default ComoFunciona;

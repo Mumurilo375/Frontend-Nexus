@@ -105,31 +105,7 @@ export default function Carrinho() {
                     <div className="min-w-0 flex-1">
                       <h2 className="truncate text-lg font-semibold">{item.listing?.game?.title || "Jogo"}</h2>
                       <p className="text-sm text-gray-300">Plataforma: {item.listing?.platform?.name || "-"}</p>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-gray-300">
-                        <span>Quantidade:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void removeItem(item.listingId);
-                          }}
-                          disabled={busyListingId !== null}
-                          className="h-6 w-6 rounded bg-gray-700 disabled:opacity-60"
-                        >
-                          -
-                        </button>
-                        <span>1</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void api.post(`/cart/${item.listingId}`);
-                          }}
-                          disabled={busyListingId !== null}
-                          className="h-6 w-6 rounded bg-gray-700 disabled:opacity-60"
-                          title="Cada item representa 1 key"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <p className="mt-1 text-sm text-gray-300">Quantidade: 1</p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">{toMoney(Number(item.listing?.price ?? 0))}</p>

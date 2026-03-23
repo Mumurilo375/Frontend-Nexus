@@ -20,13 +20,19 @@ function Filtro({
 }: FiltroProps) {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
 
+  const irParaTopo = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const selecionarPlataforma = (plataforma: string) => {
     onSelectPlatform(plataforma);
+    irParaTopo();
     setMenuAbertoMobile(false);
   };
 
   const selecionarCategoria = (categoria: string) => {
     onSelectCategory(categoria);
+    irParaTopo();
     setMenuAbertoMobile(false);
   };
 

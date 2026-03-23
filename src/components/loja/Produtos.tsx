@@ -3,6 +3,10 @@ import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated } from "../../services/auth";
+import steamLogo from "../../assets/steam.png";
+import playstationLogo from "../../assets/playstation.png";
+import xboxLogo from "../../assets/xbox.png";
+import nintendoLogo from "../../assets/nintendo.png";
 
 type Category = {
   id: number;
@@ -71,10 +75,18 @@ export default function Produtos({
   const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(null);
   const [listingByGame, setListingByGame] = useState<Map<number, ListingItem[]>>(new Map());
   const [cartListingIds, setCartListingIds] = useState<number[]>([]);
+  const [selectedListingByGame, setSelectedListingByGame] = useState<Record<number, number>>({});
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+
+  const platformLogoByName: Record<string, string> = {
+    steam: steamLogo,
+    playstation: playstationLogo,
+    xbox: xboxLogo,
+    "nintendo switch": nintendoLogo,
+  };
 
   const normalizarTexto = (value: string) =>
     value
@@ -140,14 +152,12 @@ export default function Produtos({
         setLoading(true);
         setError("");
 
-        const token = localStorage.getItem("token");
         const [gamesResponse, listingsResponse] = await Promise.all([
           api.get<GamesResponse>("/games", {
             params: { page: 1, limit: 30 },
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           }),
           api.get<ListingsResponse>("/listings", {
-            params: { page: 1, limit: 200 },
+            params: { page: 1, limit: 100 },
           }),
         ]);
 
@@ -257,25 +267,33 @@ export default function Produtos({
     }
   };
 
-  const getListingForGame = (gameId: number) => {
+  const getListingsForGame = (gameId: number) => {
     const list = listingByGame.get(gameId) ?? [];
-    if (list.length === 0) return null;
+    if (selectedPlatform === "Todas") return list;
 
-    if (selectedPlatform !== "Todas") {
-      const byPlatform = list.find(
-        (item) =>
-          String(item.platform?.name ?? "").toLowerCase() ===
-          selectedPlatform.toLowerCase(),
-      );
-      if (byPlatform) return byPlatform;
-    }
-
-    return list.reduce((best, current) =>
-      Number(current.price ?? 0) < Number(best.price ?? 0) ? current : best,
+    return list.filter(
+      (item) =>
+        String(item.platform?.name ?? "").toLowerCase() ===
+        selectedPlatform.toLowerCase(),
     );
   };
 
-  const addToCart = async (gameId: number) => {
+  const getSelectedListingForGame = (gameId: number) => {
+    const selectedId = selectedListingByGame[gameId];
+    if (!selectedId) return null;
+    return getListingsForGame(gameId).find((item) => item.id === selectedId) ?? null;
+  };
+
+  const selectListing = (gameId: number, listingId: number) => {
+    setSelectedListingByGame((current) => ({ ...current, [gameId]: listingId }));
+  };
+
+  const getPlatformLogo = (platformName?: string) => {
+    const key = String(platformName ?? "").trim().toLowerCase();
+    return platformLogoByName[key] || "/logo.png";
+  };
+
+  const addToCart = async (gameId: number, listingId: number) => {
     if (!isAuthenticated()) {
       navigate("/login", {
         state: { from: `${location.pathname}${location.search}` },
@@ -283,13 +301,10 @@ export default function Produtos({
       return;
     }
 
-    const listing = getListingForGame(gameId);
-    if (!listing?.id) return;
-
     try {
       setPendingCartGameId(gameId);
-      await api.post(`/cart/${listing.id}`);
-      setCartListingIds((current) => (current.includes(listing.id) ? current : [...current, listing.id]));
+      await api.post(`/cart/${listingId}`);
+      setCartListingIds((current) => (current.includes(listingId) ? current : [...current, listingId]));
     } finally {
       setPendingCartGameId(null);
     }
@@ -305,18 +320,17 @@ export default function Produtos({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {filteredGames.map((game) => (
+      {filteredGames.map((game) => {
+        const listings = getListingsForGame(game.id);
+        const selectedListing = getSelectedListingForGame(game.id);
+        const inCart = selectedListing ? cartListingIds.includes(selectedListing.id) : false;
+
+        return (
         // O estado visual do coracao e derivado da wishlist do usuario autenticado.
         <div
           key={game.id}
-          className="relative my-4 flex flex-col items-start gap-4 rounded-2xl bg-gray-900 p-6 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
+          className="relative my-2 flex flex-col items-start gap-3 rounded-2xl bg-gray-900 p-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
         >
-          {(() => {
-            const listing = getListingForGame(game.id);
-            const inCart = listing ? cartListingIds.includes(listing.id) : false;
-
-            return (
-              <>
           <button
             type="button"
             onClick={() => {
@@ -339,13 +353,51 @@ export default function Produtos({
             />
           </button>
 
-          <img
-            src={game.coverImageUrl || "/logo.png"}
-            alt={game.title}
-            className="w-full rounded-lg object-cover"
-          />
-          <h2 className="mb-2 text-left text-2xl font-bold">{game.title}</h2>
-          <p className="text-gray-300">{game.description}</p>
+          <div className="flex h-44 w-full items-center justify-center rounded-lg bg-black/20 p-2">
+            <img
+              src={game.coverImageUrl || "/logo.png"}
+              alt={game.title}
+              className="max-h-full w-[115%] object-contain"
+            />
+          </div>
+          <h2 className="mb-1 text-left text-xl font-bold">{game.title}</h2>
+          <p
+            className="text-sm text-gray-300"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {game.description}
+          </p>
+          <div className="w-full">
+            <p className="mb-2 text-sm text-gray-300">Escolha a plataforma:</p>
+            <div className="flex flex-wrap gap-2">
+              {listings.map((listing) => {
+                const selected = selectedListing?.id === listing.id;
+
+                return (
+                  <button
+                    key={listing.id}
+                    type="button"
+                    onClick={() => {
+                      selectListing(game.id, listing.id);
+                    }}
+                    className={`rounded-lg border p-2 ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-700 bg-black/30"}`}
+                    title={listing.platform?.name || "Plataforma"}
+                  >
+                    <img
+                      src={getPlatformLogo(listing.platform?.name)}
+                      alt={listing.platform?.name || "Plataforma"}
+                      className="h-8 w-8 object-contain"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex w-full items-center justify-between gap-4">
             <p className="text-sm text-gray-300">
               {game.categories
@@ -354,26 +406,31 @@ export default function Produtos({
                 .join(" • ") || "Sem categoria"}
             </p>
             <p className="text-blue-200">
-              {listing?.price
-                ? `R$ ${Number(listing.price).toFixed(2)}`
-                : "Escolha a plataforma"}
+              {selectedListing?.price
+                ? `R$ ${Number(selectedListing.price).toFixed(2)}`
+                : ""}
             </p>
             <button
               type="button"
               onClick={() => {
-                void addToCart(game.id);
+                if (!selectedListing) return;
+                void addToCart(game.id, selectedListing.id);
               }}
-              disabled={pendingCartGameId === game.id || !listing || inCart}
+              disabled={pendingCartGameId === game.id || !selectedListing || inCart}
               className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
             >
-              {inCart ? "No carrinho" : pendingCartGameId === game.id ? "Adicionando..." : "Adicionar"}
+              {!selectedListing
+                ? "Escolha a plataforma"
+                : inCart
+                  ? "No carrinho"
+                  : pendingCartGameId === game.id
+                    ? "Adicionando..."
+                    : "Adicionar"}
             </button>
           </div>
-              </>
-            );
-          })()}
         </div>
-      ))}
+        );
+      })}
       {games.length === 0 && (
         <p className="text-gray-300">Nenhum produto encontrado.</p>
       )}

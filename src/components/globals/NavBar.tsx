@@ -15,7 +15,7 @@ import {
 } from "@headlessui/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { clearAuth } from "../../services/auth";
+import { clearAuth, isAuthenticated } from "../../services/auth";
 
 function NavBar() {
   type GameSuggestion = {
@@ -37,7 +37,7 @@ function NavBar() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [searchError, setSearchError] = useState("");
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const isLoggedIn = Boolean(localStorage.getItem("token"));
+  const isLoggedIn = isAuthenticated();
 
   useEffect(() => {
     if (!searchOpen || games.length > 0) {
@@ -49,10 +49,8 @@ function NavBar() {
         setLoadingSuggestions(true);
         setSearchError("");
 
-        const token = localStorage.getItem("token");
         const { data } = await api.get<GamesResponse>("/games", {
           params: { page: 1, limit: 100 },
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
 
         setGames(data?.items ?? []);
@@ -286,31 +284,31 @@ function NavBar() {
               <div className="py-1">
                 {!isLoggedIn && (
                   <MenuItem>
-                    <a
-                      href="/login"
+                    <Link
+                      to="/login"
                       className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                     >
                       Login
-                    </a>
+                    </Link>
                   </MenuItem>
                 )}
                 {isLoggedIn && (
                   <>
                     <MenuItem>
-                      <a
-                        href="#"
+                      <button
+                        type="button"
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                       >
                         Configurações
-                      </a>
+                      </button>
                     </MenuItem>
                     <MenuItem>
-                      <a
-                        href="/meus-pedidos"
+                      <Link
+                        to="/meus-pedidos"
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                       >
                         Meus pedidos e keys
-                      </a>
+                      </Link>
                     </MenuItem>
                     <MenuItem>
                       <button
@@ -392,12 +390,12 @@ function NavBar() {
               </Link>
             )}
             {!isLoggedIn && (
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
               >
                 <UserRound className="h-4 w-4" /> Login
-              </a>
+              </Link>
             )}
             {isLoggedIn && (
               <button

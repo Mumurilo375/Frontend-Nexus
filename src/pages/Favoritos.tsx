@@ -75,6 +75,7 @@ function Favoritos() {
       });
 
       setItems((current) => current.filter((item) => item.gameId !== gameId));
+      window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setRemovingGameId(null);
     }

@@ -13,7 +13,7 @@ function Loja() {
     <div>
       <NavBar />
       <Intro />
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start lg:px-2 xl:px-0">
         <Filtro
           categories={categories}
           selectedCategory={selectedCategory}

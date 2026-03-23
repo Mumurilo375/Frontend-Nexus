@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, UserRound, ShoppingCart, Heart, AlignJustify, X } from "lucide-react";
+import {
+  Search,
+  UserRound,
+  ShoppingCart,
+  Heart,
+  AlignJustify,
+  X,
+} from "lucide-react";
 import {
   Menu as HeadlessMenu,
   MenuButton,
@@ -127,7 +134,11 @@ function NavBar() {
             to="/"
             className="block hover:scale-105 transition-all duration-300"
           >
-            <img src="utils/logo.png" alt="Logo Nexus" className="h-10 w-auto" />
+            <img
+              src="utils/logo.png"
+              alt="Logo Nexus"
+              className="h-10 w-auto"
+            />
           </Link>
         </div>
 
@@ -254,7 +265,11 @@ function NavBar() {
             <Heart className="h-8 w-8" />
           </button>
 
-          <a href="#loja" className="hidden hover:text-blue-600 md:block" aria-label="Carrinho">
+          <a
+            href="#loja"
+            className="hidden hover:text-blue-600 md:block"
+            aria-label="Carrinho"
+          >
             <ShoppingCart />
           </a>
 

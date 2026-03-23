@@ -1,3 +1,4 @@
+import { FilterIcon } from "lucide-react";
 import { useState } from "react";
 
 type FiltroProps = {
@@ -19,11 +20,11 @@ function Filtro({
   };
 
   return (
-    <aside className="w-full lg:w-64 lg:shrink-0 lg:self-start lg:sticky lg:top-24">
+    <aside className="w-full lg:w-64  lg:shrink-10 lg:self-start lg:sticky lg:top-24">
       <button
         type="button"
         onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
-        className="mb-3 w-full rounded-xl bg-black px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
+        className="mb-3 w-full rounded-xl bg-black/10 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
         aria-expanded={menuAbertoMobile}
         aria-controls="filtro-categorias"
       >
@@ -36,7 +37,13 @@ function Filtro({
           menuAbertoMobile ? "block" : "hidden"
         } lg:block`}
       >
-        <h2 className="font-bold text-2xl  p-4 mb-1">Categorias</h2>
+        <h2 className="font-bold text-2xl text p-4 mb-1"> 
+          <FilterIcon className="inline-block mr-2" />
+          Filtros</h2>
+           <h2 className="font-bold text-2xl  p-4 mb-1"> 
+          
+          Categorias:</h2>
+          
         <ul className="mb-2">
           <li>
             <button

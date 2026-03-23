@@ -2,11 +2,11 @@ import {ArrowDown} from "lucide-react";
 function Hero() {
   return (
     <section className="relative h-screen overflow-hidden bg-black">
-      <div className="absolute  left-0 bottom-0 z-0">
+      <div className="absolute top-5 right-0 left-0 bottom-0 z-0">
         <img
-          src="../../public/utils/residenthero.jpg"
+          src="../../public/utils/teste2.png"
           alt=""
-          className="w-full h-full object-cover opacity-90"
+          className="w-full h-full  object-cover opacity-90"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80"></div>
       </div>

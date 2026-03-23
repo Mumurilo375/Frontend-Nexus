@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, UserRound, ShoppingCart, Heart } from "lucide-react";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Search, UserRound, ShoppingCart, Heart, AlignJustify, X } from "lucide-react";
+import {
+  Menu as HeadlessMenu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from "@headlessui/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -18,6 +23,7 @@ function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [games, setGames] = useState<GameSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -66,6 +72,10 @@ function NavBar() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  useEffect(() => {
+    setMenuMobileAberto(false);
+  }, [location.pathname, location.search]);
+
   const filteredSuggestions = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
@@ -110,18 +120,18 @@ function NavBar() {
   };
 
   return (
-    <nav className="fixed bg-black/90 top-0 w-full blackdrop-blur-md z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center gap-8">
-        <div>
+    <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="shrink-0">
           <Link
             to="/"
-            className=" absolute left-3 top-3  hover:text-blue-600 hover:scale-105 transition-all duration-300"
+            className="block hover:scale-105 transition-all duration-300"
           >
-            {" "}
-            <img src="utils/logo.png" alt="" />
+            <img src="utils/logo.png" alt="Logo Nexus" className="h-10 w-auto" />
           </Link>
         </div>
-        <div className="flex gap-8">
+
+        <div className="hidden items-center gap-8 md:flex">
           <Link
             to="/loja"
             className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
@@ -149,7 +159,23 @@ function NavBar() {
             Teste API
           </Link>
         </div>
-        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 gap-6">
+
+        <div className="flex items-center gap-3 text-sm md:hidden">
+          <Link
+            to="/loja"
+            className="rounded-md px-2 py-1 hover:bg-gray-800 hover:text-blue-500"
+          >
+            Loja
+          </Link>
+          <Link
+            to="/comofunciona"
+            className="rounded-md px-2 py-1 hover:bg-gray-800 hover:text-blue-500"
+          >
+            Como funciona
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-4 sm:gap-6">
           <div ref={searchBoxRef} className="relative">
             <button
               type="button"
@@ -161,7 +187,7 @@ function NavBar() {
             </button>
 
             {searchOpen && (
-              <div className="absolute right-0 top-11 w-80 rounded-xl border border-gray-700 bg-black/95 p-3 shadow-2xl">
+              <div className="absolute right-0 top-11 w-[90vw] max-w-80 rounded-xl border border-gray-700 bg-black/95 p-3 shadow-2xl">
                 <form onSubmit={handleSubmit} className="mb-2">
                   <input
                     type="text"
@@ -222,15 +248,17 @@ function NavBar() {
           <button
             type="button"
             onClick={handleGoToFavorites}
-            className="hover:text-blue-600 -mt-1"
+            className="hidden -mt-1 hover:text-blue-600 md:block"
             aria-label="Ir para favoritos"
           >
-            <Heart className="w-8 h/8 " />
+            <Heart className="h-8 w-8" />
           </button>
-          <a href="#loja" className="hover:text-blue-600">
+
+          <a href="#loja" className="hidden hover:text-blue-600 md:block" aria-label="Carrinho">
             <ShoppingCart />
           </a>
-          <Menu as="div" className="relative inline-block">
+
+          <HeadlessMenu as="div" className="relative hidden md:inline-block">
             <MenuButton className="hover:text-blue-600 focus:outline-none">
               <UserRound />
             </MenuButton>
@@ -281,9 +309,84 @@ function NavBar() {
                 )}
               </div>
             </MenuItems>
-          </Menu>
+          </HeadlessMenu>
+
+          <button
+            type="button"
+            className="rounded-md p-1 hover:text-blue-600 md:hidden"
+            onClick={() => setMenuMobileAberto((valorAtual) => !valorAtual)}
+            aria-label={menuMobileAberto ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuMobileAberto}
+            aria-controls="menu-mobile-navbar"
+          >
+            {menuMobileAberto ? <X /> : <AlignJustify />}
+          </button>
         </div>
       </div>
+
+      {menuMobileAberto && (
+        <div
+          id="menu-mobile-navbar"
+          className="border-t border-gray-800 bg-black/95 px-4 pb-4 pt-2 md:hidden"
+        >
+          <div className="flex flex-col gap-3 text-sm">
+            <Link
+              to="/loja"
+              className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+            >
+              Loja
+            </Link>
+            <Link
+              to="/ofertas"
+              className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+            >
+              Ofertas
+            </Link>
+            <Link
+              to="/comofunciona"
+              className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+            >
+              Como funciona
+            </Link>
+            <Link
+              to="/listagem-usuarios"
+              className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+            >
+              Teste API
+            </Link>
+            <button
+              type="button"
+              onClick={handleGoToFavorites}
+              className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-800 hover:text-blue-500"
+            >
+              <Heart className="h-4 w-4" /> Favoritos
+            </button>
+            <a
+              href="#loja"
+              className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+            >
+              <ShoppingCart className="h-4 w-4" /> Carrinho
+            </a>
+            {!isLoggedIn && (
+              <a
+                href="/login"
+                className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+              >
+                <UserRound className="h-4 w-4" /> Login
+              </a>
+            )}
+            {isLoggedIn && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-800 hover:text-blue-500"
+              >
+                <UserRound className="h-4 w-4" /> Sair
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

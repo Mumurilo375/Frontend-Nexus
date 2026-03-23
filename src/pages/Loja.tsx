@@ -7,7 +7,9 @@ import Produtos from "../components/loja/Produtos";
 
 function Loja() {
   const [selectedCategory, setSelectedCategory] = useState("Todas");
+  const [selectedPlatform, setSelectedPlatform] = useState("Todas");
   const [categories, setCategories] = useState<string[]>([]);
+  const [platforms, setPlatforms] = useState<string[]>([]);
 
   return (
     <div>
@@ -15,12 +17,17 @@ function Loja() {
       <Intro />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start lg:px-2 xl:px-0">
         <Filtro
+          platforms={platforms}
+          selectedPlatform={selectedPlatform}
+          onSelectPlatform={setSelectedPlatform}
           categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />
         <div className="min-w-0 flex-1">
           <Produtos
+            selectedPlatform={selectedPlatform}
+            onPlatformsLoaded={setPlatforms}
             selectedCategory={selectedCategory}
             onCategoriesLoaded={setCategories}
           />

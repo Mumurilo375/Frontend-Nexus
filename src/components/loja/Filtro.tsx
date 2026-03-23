@@ -2,17 +2,28 @@ import { FilterIcon } from "lucide-react";
 import { useState } from "react";
 
 type FiltroProps = {
+  platforms: string[];
+  selectedPlatform: string;
+  onSelectPlatform: (platform: string) => void;
   categories: string[];
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
 };
 
 function Filtro({
+  platforms,
+  selectedPlatform,
+  onSelectPlatform,
   categories,
   selectedCategory,
   onSelectCategory,
 }: FiltroProps) {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
+
+  const selecionarPlataforma = (plataforma: string) => {
+    onSelectPlatform(plataforma);
+    setMenuAbertoMobile(false);
+  };
 
   const selecionarCategoria = (categoria: string) => {
     onSelectCategory(categoria);
@@ -40,9 +51,38 @@ function Filtro({
         <h2 className="font-bold text-2xl text p-4 mb-1"> 
           <FilterIcon className="inline-block mr-2" />
           Filtros</h2>
-           <h2 className="font-bold text-2xl  p-4 mb-1"> 
-          
-          Categorias:</h2>
+        <h2 className="font-bold text-2xl p-4 mb-2">Plataformas</h2>
+        <ul className="mb-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => selecionarPlataforma("Todas")}
+              className={
+                selectedPlatform === "Todas"
+                  ? "font-bold text-blue-600"
+                  : "hover:text-white"
+              }
+            >
+              Todas
+            </button>
+          </li>
+          {platforms.map((platform) => (
+            <li key={platform}>
+              <button
+                type="button"
+                onClick={() => selecionarPlataforma(platform)}
+                className={
+                  selectedPlatform === platform
+                    ? "font-bold text-blue-600"
+                    : "hover:text-white"
+                }
+              >
+                {platform}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <h2 className="font-bold text-2xl p-4 mb-1">Categorias</h2>
           
         <ul className="mb-2">
           <li>
@@ -73,21 +113,6 @@ function Filtro({
               </button>
             </li>
           ))}
-        </ul>
-        <h2 className="font-bold text-2xl  p-4 mb-2">Plataformas</h2>
-        <ul>
-          <li>
-            <a href="#">Playstation</a>
-          </li>
-          <li>
-            <a href="#">Xbox</a>
-          </li>
-          <li>
-            <a href="#">Nintendo</a>
-          </li>
-          <li>
-            <a href="#">PC</a>
-          </li>
         </ul>
       </nav>
     </aside>

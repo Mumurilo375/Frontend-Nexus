@@ -9,11 +9,15 @@ type Category = {
 };
 
 type ProdutosProps = {
+  selectedPlatform: string;
+  onPlatformsLoaded: (platforms: string[]) => void;
   selectedCategory: string;
   onCategoriesLoaded: (categories: string[]) => void;
 };
 
 export default function Produtos({
+  selectedPlatform,
+  onPlatformsLoaded,
   selectedCategory,
   onCategoriesLoaded,
 }: ProdutosProps) {
@@ -24,10 +28,27 @@ export default function Produtos({
     coverImageUrl?: string;
     price?: number;
     categories?: Category[];
+    platforms?: string[];
   };
 
   type GamesResponse = {
     items: Game[];
+  };
+
+  type ListingItem = {
+    gameId?: number;
+    isActive?: boolean;
+    price?: number | string;
+    game?: {
+      id?: number;
+    };
+    platform?: {
+      name?: string;
+    };
+  };
+
+  type ListingsResponse = {
+    items: ListingItem[];
   };
 
   type WishlistItem = {
@@ -64,8 +85,14 @@ export default function Produtos({
     return [...new Set(names)].sort((a, b) => a.localeCompare(b));
   }, [games]);
 
+  const availablePlatforms = useMemo(() => {
+    const names = games.flatMap((game) => game.platforms ?? []);
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }, [games]);
+
   const filteredGames = useMemo(() => {
     const filtroCategoria = normalizarTexto(selectedCategory);
+    const filtroPlataforma = normalizarTexto(selectedPlatform);
 
     const jogosFiltradosPorCategoria =
       filtroCategoria && filtroCategoria !== "todas"
@@ -76,18 +103,31 @@ export default function Produtos({
           )
         : games;
 
+    const jogosFiltrados =
+      filtroPlataforma && filtroPlataforma !== "todas"
+        ? jogosFiltradosPorCategoria.filter((game) =>
+            (game.platforms ?? []).some(
+              (platform) => normalizarTexto(platform) === filtroPlataforma,
+            ),
+          )
+        : jogosFiltradosPorCategoria;
+
     if (!query) {
-      return jogosFiltradosPorCategoria;
+      return jogosFiltrados;
     }
 
-    return jogosFiltradosPorCategoria.filter((game) =>
+    return jogosFiltrados.filter((game) =>
       game.title.toLowerCase().includes(query),
     );
-  }, [games, query, selectedCategory]);
+  }, [games, query, selectedCategory, selectedPlatform]);
 
   useEffect(() => {
     onCategoriesLoaded(availableCategories);
   }, [availableCategories, onCategoriesLoaded]);
+
+  useEffect(() => {
+    onPlatformsLoaded(availablePlatforms);
+  }, [availablePlatforms, onPlatformsLoaded]);
 
   useEffect(() => {
     const carregarJogos = async () => {
@@ -96,17 +136,58 @@ export default function Produtos({
         setError("");
 
         const token = localStorage.getItem("token");
-        const { data } = await api.get<GamesResponse>("/games", {
-          params: { page: 1, limit: 30 },
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+        const [gamesResponse, listingsResponse] = await Promise.all([
+          api.get<GamesResponse>("/games", {
+            params: { page: 1, limit: 30 },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }),
+          api.get<ListingsResponse>("/listings", {
+            params: { page: 1, limit: 200 },
+          }),
+        ]);
 
-        setGames(data?.items ?? []);
+        const listingItems = listingsResponse.data?.items ?? [];
+        const menorPrecoPorJogo = new Map<number, number>();
+        const plataformasPorJogo = new Map<number, Set<string>>();
+
+        for (const listing of listingItems) {
+          if (listing.isActive === false) {
+            continue;
+          }
+
+          const gameId = listing.gameId ?? listing.game?.id;
+          if (!gameId) {
+            continue;
+          }
+
+          const platformName = String(listing.platform?.name ?? "").trim();
+          if (platformName) {
+            const currentSet = plataformasPorJogo.get(gameId) ?? new Set<string>();
+            currentSet.add(platformName);
+            plataformasPorJogo.set(gameId, currentSet);
+          }
+
+          const parsedPrice = Number(listing.price);
+          if (Number.isFinite(parsedPrice)) {
+            const currentMin = menorPrecoPorJogo.get(gameId);
+            if (currentMin === undefined || parsedPrice < currentMin) {
+              menorPrecoPorJogo.set(gameId, parsedPrice);
+            }
+          }
+        }
+
+        const jogosComDadosDePlataforma = (gamesResponse.data?.items ?? []).map(
+          (game) => ({
+            ...game,
+            price: menorPrecoPorJogo.get(game.id) ?? game.price,
+            platforms: Array.from(plataformasPorJogo.get(game.id) ?? []),
+          }),
+        );
+
+        setGames(jogosComDadosDePlataforma);
       } catch {
         setGames([]);
-        setError(
-          "Nao foi possivel carregar os produtos. Faca login para visualizar a loja.",
-        );
+        setError("Nao foi possivel carregar os produtos no momento.");
       } finally {
         setLoading(false);
       }

@@ -10,6 +10,10 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import ListagemUsuarios from "./pages/listagemUsuarios";
 import Favoritos from "./pages/Favoritos";
+import { RequireAdmin, RequireAuth } from "./components/auth/RouteGuards";
+import Carrinho from "./pages/Carrinho";
+import Checkout from "./pages/Checkout";
+import MeusPedidos from "./pages/MeusPedidos";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -43,13 +47,43 @@ const router = createBrowserRouter([
   },
   {
     path: "/listagem-usuarios",
-
-    element: <ListagemUsuarios />,
+    element: (
+      <RequireAdmin>
+        <ListagemUsuarios />
+      </RequireAdmin>
+    ),
   },
   {
     path: "/favoritos",
-
-    element: <Favoritos />,
+    element: (
+      <RequireAuth>
+        <Favoritos />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/carrinho",
+    element: (
+      <RequireAuth>
+        <Carrinho />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/checkout",
+    element: (
+      <RequireAuth>
+        <Checkout />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/meus-pedidos",
+    element: (
+      <RequireAuth>
+        <MeusPedidos />
+      </RequireAuth>
+    ),
   },
 ]);
 createRoot(document.getElementById("root")!).render(

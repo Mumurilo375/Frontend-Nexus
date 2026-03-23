@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { isAuthenticated } from "../../services/auth";
 
 type Category = {
   id: number;
@@ -36,6 +37,7 @@ export default function Produtos({
   };
 
   type ListingItem = {
+    id: number;
     gameId?: number;
     isActive?: boolean;
     price?: number | string;
@@ -66,6 +68,9 @@ export default function Produtos({
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(
     null,
   );
+  const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(null);
+  const [listingByGame, setListingByGame] = useState<Map<number, ListingItem[]>>(new Map());
+  const [cartListingIds, setCartListingIds] = useState<number[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -146,19 +151,22 @@ export default function Produtos({
           }),
         ]);
 
-        const listingItems = listingsResponse.data?.items ?? [];
+        const listingItems = (listingsResponse.data?.items ?? []).filter(
+          (listing) => listing.isActive !== false,
+        );
+        const listingMap = new Map<number, ListingItem[]>();
         const menorPrecoPorJogo = new Map<number, number>();
         const plataformasPorJogo = new Map<number, Set<string>>();
 
         for (const listing of listingItems) {
-          if (listing.isActive === false) {
-            continue;
-          }
-
           const gameId = listing.gameId ?? listing.game?.id;
           if (!gameId) {
             continue;
           }
+
+          const list = listingMap.get(gameId) ?? [];
+          list.push(listing);
+          listingMap.set(gameId, list);
 
           const platformName = String(listing.platform?.name ?? "").trim();
           if (platformName) {
@@ -185,8 +193,10 @@ export default function Produtos({
         );
 
         setGames(jogosComDadosDePlataforma);
+        setListingByGame(listingMap);
       } catch {
         setGames([]);
+        setListingByGame(new Map());
         setError("Nao foi possivel carregar os produtos no momento.");
       } finally {
         setLoading(false);
@@ -198,21 +208,24 @@ export default function Produtos({
 
   useEffect(() => {
     const carregarFavoritos = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      if (!isAuthenticated()) {
         setFavoriteIds([]);
+        setCartListingIds([]);
         return;
       }
 
       try {
-        const { data } = await api.get<WishlistResponse>("/wishlists", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
+          api.get<WishlistResponse>("/wishlists"),
+          api.get<{ items: Array<{ listingId: number }> }>("/cart"),
+        ]);
 
-        const ids = (data.items ?? []).map((item) => item.gameId);
+        const ids = (wishlistData.items ?? []).map((item) => item.gameId);
         setFavoriteIds(ids);
+        setCartListingIds((cartData.items ?? []).map((item) => item.listingId));
       } catch {
         setFavoriteIds([]);
+        setCartListingIds([]);
       }
     };
 
@@ -220,8 +233,7 @@ export default function Produtos({
   }, []);
 
   const alternarFavorito = async (gameId: number) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!isAuthenticated()) {
       navigate("/login", {
         state: { from: `${location.pathname}${location.search}` },
       });
@@ -234,22 +246,52 @@ export default function Produtos({
       setPendingFavoriteId(gameId);
 
       if (isFavorite) {
-        await api.delete(`/wishlists/${gameId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await api.delete(`/wishlists/${gameId}`);
         setFavoriteIds((current) => current.filter((id) => id !== gameId));
       } else {
-        await api.post(
-          `/wishlists/${gameId}`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        await api.post(`/wishlists/${gameId}`, {});
         setFavoriteIds((current) => [...current, gameId]);
       }
     } finally {
       setPendingFavoriteId(null);
+    }
+  };
+
+  const getListingForGame = (gameId: number) => {
+    const list = listingByGame.get(gameId) ?? [];
+    if (list.length === 0) return null;
+
+    if (selectedPlatform !== "Todas") {
+      const byPlatform = list.find(
+        (item) =>
+          String(item.platform?.name ?? "").toLowerCase() ===
+          selectedPlatform.toLowerCase(),
+      );
+      if (byPlatform) return byPlatform;
+    }
+
+    return list.reduce((best, current) =>
+      Number(current.price ?? 0) < Number(best.price ?? 0) ? current : best,
+    );
+  };
+
+  const addToCart = async (gameId: number) => {
+    if (!isAuthenticated()) {
+      navigate("/login", {
+        state: { from: `${location.pathname}${location.search}` },
+      });
+      return;
+    }
+
+    const listing = getListingForGame(gameId);
+    if (!listing?.id) return;
+
+    try {
+      setPendingCartGameId(gameId);
+      await api.post(`/cart/${listing.id}`);
+      setCartListingIds((current) => (current.includes(listing.id) ? current : [...current, listing.id]));
+    } finally {
+      setPendingCartGameId(null);
     }
   };
 
@@ -269,6 +311,12 @@ export default function Produtos({
           key={game.id}
           className="relative my-4 flex flex-col items-start gap-4 rounded-2xl bg-gray-900 p-6 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
         >
+          {(() => {
+            const listing = getListingForGame(game.id);
+            const inCart = listing ? cartListingIds.includes(listing.id) : false;
+
+            return (
+              <>
           <button
             type="button"
             onClick={() => {
@@ -306,14 +354,24 @@ export default function Produtos({
                 .join(" • ") || "Sem categoria"}
             </p>
             <p className="text-blue-200">
-              {typeof game.price === "number"
-                ? `R$ ${game.price.toFixed(2)}`
+              {listing?.price
+                ? `R$ ${Number(listing.price).toFixed(2)}`
                 : "Escolha a plataforma"}
             </p>
-            <button className="rounded-3xl bg-blue-900 px-5 py-2 hover:scale-105">
-              Comprar
+            <button
+              type="button"
+              onClick={() => {
+                void addToCart(game.id);
+              }}
+              disabled={pendingCartGameId === game.id || !listing || inCart}
+              className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
+            >
+              {inCart ? "No carrinho" : pendingCartGameId === game.id ? "Adicionando..." : "Adicionar"}
             </button>
           </div>
+              </>
+            );
+          })()}
         </div>
       ))}
       {games.length === 0 && (

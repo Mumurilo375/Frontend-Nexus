@@ -274,7 +274,7 @@ function NavBar() {
                 )}
 
                 {!loadingSuggestions && !searchError && (
-                  <ul className="max-h-60 overflow-y-auto">
+                  <ul className="max-h-60 overflow-y-auto nexus-scrollbar">
                     {filteredSuggestions.map((game) => (
                       <li key={game.id}>
                         <button

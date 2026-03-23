@@ -16,18 +16,22 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { clearAuth, isAuthenticated } from "../../services/auth";
+import AuthRequiredModal from "./AuthRequiredModal";
+
+type GameSuggestion = {
+  id: number;
+  title: string;
+  coverImageUrl?: string;
+};
+
+type GamesResponse = {
+  items: GameSuggestion[];
+};
+
+const iconButtonClass =
+  "inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-blue-600";
 
 function NavBar() {
-  type GameSuggestion = {
-    id: number;
-    title: string;
-    coverImageUrl?: string;
-  };
-
-  type GamesResponse = {
-    items: GameSuggestion[];
-  };
-
   const navigate = useNavigate();
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -36,8 +40,19 @@ function NavBar() {
   const [games, setGames] = useState<GameSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
   const isLoggedIn = isAuthenticated();
+
+  const openAuthModal = () => setShowAuthModal(true);
+  const goToLogin = () => {
+    setShowAuthModal(false);
+    navigate("/login", {
+      state: { from: `${location.pathname}${location.search}` },
+    });
+  };
 
   useEffect(() => {
     if (!searchOpen || games.length > 0) {
@@ -82,6 +97,37 @@ function NavBar() {
     setMenuMobileAberto(false);
   }, [location.pathname, location.search]);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setWishlistCount(0);
+      setCartCount(0);
+      return;
+    }
+
+    const loadCounts = async () => {
+      try {
+        const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
+          api.get<{ items?: unknown[] }>("/wishlists"),
+          api.get<{ items?: unknown[] }>("/cart"),
+        ]);
+
+        setWishlistCount((wishlistData.items ?? []).length);
+        setCartCount((cartData.items ?? []).length);
+      } catch {
+        setWishlistCount(0);
+        setCartCount(0);
+      }
+    };
+
+    const onCountsUpdated = () => {
+      void loadCounts();
+    };
+
+    void loadCounts();
+    window.addEventListener("nexus:counts-updated", onCountsUpdated);
+    return () => window.removeEventListener("nexus:counts-updated", onCountsUpdated);
+  }, [isLoggedIn, location.pathname, location.search]);
+
   const filteredSuggestions = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
@@ -111,14 +157,12 @@ function NavBar() {
 
   const handleLogout = () => {
     clearAuth();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleGoToFavorites = () => {
     if (!isLoggedIn) {
-      navigate("/login", {
-        state: { from: `${location.pathname}${location.search}` },
-      });
+      openAuthModal();
       return;
     }
 
@@ -126,7 +170,16 @@ function NavBar() {
   };
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-md">
+    <>
+      <AuthRequiredModal
+        open={showAuthModal}
+        title="Entre para continuar"
+        message="Essa acao exige login. Deseja entrar agora?"
+        onClose={() => setShowAuthModal(false)}
+        onConfirm={goToLogin}
+      />
+
+      <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="shrink-0">
           <Link
@@ -189,11 +242,11 @@ function NavBar() {
           <div ref={searchBoxRef} className="relative">
             <button
               type="button"
-              className="hover:text-blue-600"
+              className={iconButtonClass}
               onClick={() => setSearchOpen((prev) => !prev)}
               aria-label="Abrir busca"
             >
-              <Search />
+              <Search className="h-5 w-5" />
             </button>
 
             {searchOpen && (
@@ -258,72 +311,77 @@ function NavBar() {
           <button
             type="button"
             onClick={handleGoToFavorites}
-            className="hidden -mt-1 hover:text-blue-600 md:block"
+            className={`relative hidden md:inline-flex ${iconButtonClass}`}
             aria-label="Ir para favoritos"
           >
-            <Heart className="h-8 w-8" />
+            <Heart className="h-5 w-5" />
+            {isLoggedIn && wishlistCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                {wishlistCount}
+              </span>
+            )}
           </button>
 
           <Link
             to="/carrinho"
-            className="hidden hover:text-blue-600 md:block"
+            className={`relative hidden md:inline-flex ${iconButtonClass}`}
             aria-label="Carrinho"
           >
-            <ShoppingCart />
+            <ShoppingCart className="h-5 w-5" />
+            {isLoggedIn && cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
           </Link>
 
-          <HeadlessMenu as="div" className="relative hidden md:inline-block">
-            <MenuButton className="hover:text-blue-600 focus:outline-none">
-              <UserRound />
-            </MenuButton>
+          {isLoggedIn ? (
+            <HeadlessMenu as="div" className="relative hidden md:inline-flex">
+              <MenuButton className={`${iconButtonClass} focus:outline-none`}>
+                <UserRound className="h-5 w-5" />
+              </MenuButton>
 
-            <MenuItems
-              transition
-              className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-            >
-              <div className="py-1">
-                {!isLoggedIn && (
+              <MenuItems
+                transition
+                className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+              >
+                <div className="py-1">
                   <MenuItem>
-                    <Link
-                      to="/login"
+                    <button
+                      type="button"
                       className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                     >
-                      Login
+                      Configurações
+                    </button>
+                  </MenuItem>
+                  <MenuItem>
+                    <Link
+                      to="/meus-pedidos"
+                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                    >
+                      Meus pedidos e keys
                     </Link>
                   </MenuItem>
-                )}
-                {isLoggedIn && (
-                  <>
-                    <MenuItem>
-                      <button
-                        type="button"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                      >
-                        Configurações
-                      </button>
-                    </MenuItem>
-                    <MenuItem>
-                      <Link
-                        to="/meus-pedidos"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                      >
-                        Meus pedidos e keys
-                      </Link>
-                    </MenuItem>
-                    <MenuItem>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                      >
-                        Sair
-                      </button>
-                    </MenuItem>
-                  </>
-                )}
-              </div>
-            </MenuItems>
-          </HeadlessMenu>
+                  <MenuItem>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                    >
+                      Sair
+                    </button>
+                  </MenuItem>
+                </div>
+              </MenuItems>
+            </HeadlessMenu>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 md:inline-block"
+            >
+              Entrar
+            </Link>
+          )}
 
           <button
             type="button"
@@ -333,7 +391,7 @@ function NavBar() {
             aria-expanded={menuMobileAberto}
             aria-controls="menu-mobile-navbar"
           >
-            {menuMobileAberto ? <X /> : <AlignJustify />}
+              {menuMobileAberto ? <X className="h-5 w-5" /> : <AlignJustify className="h-5 w-5" />}
           </button>
         </div>
       </div>
@@ -373,13 +431,13 @@ function NavBar() {
               onClick={handleGoToFavorites}
               className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-800 hover:text-blue-500"
             >
-              <Heart className="h-4 w-4" /> Favoritos
+              <Heart className="h-4 w-4" /> Favoritos {isLoggedIn ? `(${wishlistCount})` : ""}
             </button>
             <Link
               to="/carrinho"
               className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
             >
-              <ShoppingCart className="h-4 w-4" /> Carrinho
+              <ShoppingCart className="h-4 w-4" /> Carrinho {isLoggedIn ? `(${cartCount})` : ""}
             </Link>
             {isLoggedIn && (
               <Link
@@ -394,7 +452,7 @@ function NavBar() {
                 to="/login"
                 className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
               >
-                <UserRound className="h-4 w-4" /> Login
+                <UserRound className="h-4 w-4" /> Entrar
               </Link>
             )}
             {isLoggedIn && (
@@ -409,7 +467,8 @@ function NavBar() {
           </div>
         </div>
       )}
-    </nav>
+      </nav>
+    </>
   );
 }
 export default NavBar;

@@ -145,7 +145,7 @@ function Cadastro() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm ">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           <div className="">
             <div className="col-span-full">
               <label
@@ -186,10 +186,10 @@ function Cadastro() {
                 ref={usernameRef}
                 placeholder="nome de usuário"
                 id="username"
-                name="username"
+                name="new-username"
                 type="text"
                 required
-                autoComplete="username"
+                autoComplete="off"
                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6  "
               />
             </div>
@@ -271,10 +271,10 @@ function Cadastro() {
                 ref={passwordRef}
                 placeholder="*****"
                 id="password"
-                name="password"
+                name="new-password"
                 type="password"
                 required
-                autoComplete="current-password"
+                autoComplete="new-password"
                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
               />
             </div>
@@ -294,7 +294,7 @@ function Cadastro() {
                 ref={confirmPasswordRef}
                 placeholder="*****"
                 id="confirm-password"
-                name="confirm-password"
+                name="new-password-confirm"
                 type="password"
                 required
                 autoComplete="new-password"

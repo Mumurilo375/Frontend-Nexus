@@ -58,6 +58,7 @@ export default function Carrinho() {
       setBusyListingId(listingId);
       await api.delete(`/cart/${listingId}`);
       setItems((current) => current.filter((item) => item.listingId !== listingId));
+      window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setBusyListingId(null);
     }
@@ -68,6 +69,7 @@ export default function Carrinho() {
       setBusyListingId(-1);
       await api.delete("/cart");
       setItems([]);
+      window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setBusyListingId(null);
     }

@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated } from "../../services/auth";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import steamLogo from "../../assets/steam.png";
-import playstationLogo from "../../assets/playstation.png";
+import playstationLogo from "../../assets/playlogo.png";
 import xboxLogo from "../../assets/xbox.png";
 import nintendoLogo from "../../assets/nintendo.png";
 
@@ -87,10 +87,16 @@ export default function Produtos({
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(
     null,
   );
-  const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(null);
-  const [listingByGame, setListingByGame] = useState<Map<number, ListingItem[]>>(new Map());
+  const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(
+    null,
+  );
+  const [listingByGame, setListingByGame] = useState<
+    Map<number, ListingItem[]>
+  >(new Map());
   const [cartListingIds, setCartListingIds] = useState<number[]>([]);
-  const [selectedListingByGame, setSelectedListingByGame] = useState<Record<number, number>>({});
+  const [selectedListingByGame, setSelectedListingByGame] = useState<
+    Record<number, number>
+  >({});
   const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -131,8 +137,8 @@ export default function Produtos({
     const jogosFiltradosPorCategoria =
       filtrosCategoria.size > 0
         ? games.filter((game) =>
-            (game.categories ?? []).some(
-              (category) => filtrosCategoria.has(normalizeText(category.name)),
+            (game.categories ?? []).some((category) =>
+              filtrosCategoria.has(normalizeText(category.name)),
             ),
           )
         : games;
@@ -140,8 +146,8 @@ export default function Produtos({
     const jogosFiltrados =
       filtrosPlataforma.size > 0
         ? jogosFiltradosPorCategoria.filter((game) =>
-            (game.platforms ?? []).some(
-              (platform) => filtrosPlataforma.has(normalizeText(platform)),
+            (game.platforms ?? []).some((platform) =>
+              filtrosPlataforma.has(normalizeText(platform)),
             ),
           )
         : jogosFiltradosPorCategoria;
@@ -197,7 +203,8 @@ export default function Produtos({
 
           const platformName = String(listing.platform?.name ?? "").trim();
           if (platformName) {
-            const currentSet = plataformasPorJogo.get(gameId) ?? new Set<string>();
+            const currentSet =
+              plataformasPorJogo.get(gameId) ?? new Set<string>();
             currentSet.add(platformName);
             plataformasPorJogo.set(gameId, currentSet);
           }
@@ -292,23 +299,30 @@ export default function Produtos({
       selectedPlatforms.map((platform) => normalizeText(platform)),
     );
 
-    return list.filter(
-      (item) => filtrosPlataforma.has(normalizeText(String(item.platform?.name ?? ""))),
+    return list.filter((item) =>
+      filtrosPlataforma.has(normalizeText(String(item.platform?.name ?? ""))),
     );
   };
 
   const getSelectedListingForGame = (gameId: number) => {
     const selectedId = selectedListingByGame[gameId];
     if (!selectedId) return null;
-    return getListingsForGame(gameId).find((item) => item.id === selectedId) ?? null;
+    return (
+      getListingsForGame(gameId).find((item) => item.id === selectedId) ?? null
+    );
   };
 
   const selectListing = (gameId: number, listingId: number) => {
-    setSelectedListingByGame((current) => ({ ...current, [gameId]: listingId }));
+    setSelectedListingByGame((current) => ({
+      ...current,
+      [gameId]: listingId,
+    }));
   };
 
   const getPlatformLogo = (platformName?: string) => {
-    const key = String(platformName ?? "").trim().toLowerCase();
+    const key = String(platformName ?? "")
+      .trim()
+      .toLowerCase();
     return platformLogoByName[key] || "/logo.png";
   };
 
@@ -321,7 +335,9 @@ export default function Produtos({
     try {
       setPendingCartGameId(gameId);
       await api.post(`/cart/${listingId}`);
-      setCartListingIds((current) => (current.includes(listingId) ? current : [...current, listingId]));
+      setCartListingIds((current) =>
+        current.includes(listingId) ? current : [...current, listingId],
+      );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setPendingCartGameId(null);
@@ -348,114 +364,120 @@ export default function Produtos({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filteredGames.map((game) => {
-        const listings = getListingsForGame(game.id);
-        const selectedListing = getSelectedListingForGame(game.id);
-        const inCart = selectedListing ? cartListingIds.includes(selectedListing.id) : false;
+          const listings = getListingsForGame(game.id);
+          const selectedListing = getSelectedListingForGame(game.id);
+          const inCart = selectedListing
+            ? cartListingIds.includes(selectedListing.id)
+            : false;
 
-        return (
-        // O estado visual do coracao e derivado da wishlist do usuario autenticado.
-        <div
-          key={game.id}
-          className="relative my-2 flex flex-col items-start gap-3 rounded-2xl bg-gray-900 p-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              void alternarFavorito(game.id);
-            }}
-            disabled={pendingFavoriteId === game.id}
-            className="absolute left-4 top-4 z-20 rounded-full bg-black/80 p-3 hover:scale-105 disabled:opacity-60"
-            aria-label={
-              favoriteIds.includes(game.id)
-                ? "Remover dos favoritos"
-                : "Adicionar aos favoritos"
-            }
-          >
-            <Heart
-              className={
-                favoriteIds.includes(game.id)
-                  ? "text-red-500 fill-red-500"
-                  : "text-white"
-              }
-            />
-          </button>
-
-          <div className="flex h-44 w-full items-center justify-center rounded-lg bg-black/20 p-2">
-            <img
-              src={game.coverImageUrl || "/logo.png"}
-              alt={game.title}
-              className="max-h-full w-[115%] object-contain"
-            />
-          </div>
-          <h2 className="mb-1 text-left text-xl font-bold">{game.title}</h2>
-          <p
-            className="text-sm text-gray-300"
-            style={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {game.description}
-          </p>
-          <div className="w-full">
-            <p className="mb-2 text-sm text-gray-300">Escolha a plataforma:</p>
-            <div className="flex flex-wrap gap-2">
-              {listings.map((listing) => {
-                const selected = selectedListing?.id === listing.id;
-
-                return (
-                  <button
-                    key={listing.id}
-                    type="button"
-                    onClick={() => {
-                      selectListing(game.id, listing.id);
-                    }}
-                    className={`rounded-lg border p-2 ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-700 bg-black/30"}`}
-                    title={listing.platform?.name || "Plataforma"}
-                  >
-                    <img
-                      src={getPlatformLogo(listing.platform?.name)}
-                      alt={listing.platform?.name || "Plataforma"}
-                      className="h-8 w-8 object-contain"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex w-full items-center justify-between gap-4">
-            <p className="text-sm text-gray-300">
-              {game.categories
-                ?.slice(0, 2)
-                .map((category) => category.name)
-                .join(" • ") || "Sem categoria"}
-            </p>
-            <p className="text-blue-200">
-              {selectedListing?.price
-                ? `R$ ${Number(selectedListing.price).toFixed(2)}`
-                : ""}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                if (!selectedListing) return;
-                void addToCart(game.id, selectedListing.id);
-              }}
-              disabled={pendingCartGameId === game.id || !selectedListing || inCart}
-              className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
+          return (
+            // O estado visual do coracao e derivado da wishlist do usuario autenticado.
+            <div
+              key={game.id}
+              className="relative my-2 flex flex-col items-start gap-3 rounded-2xl bg-gray-900 p-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
             >
-              {!selectedListing
-                ? "Escolha a plataforma"
-                : inCart
-                  ? "No carrinho"
-                  : pendingCartGameId === game.id
-                    ? "Adicionando..."
-                    : "Adicionar"}
-            </button>
-          </div>
-        </div>
+              <button
+                type="button"
+                onClick={() => {
+                  void alternarFavorito(game.id);
+                }}
+                disabled={pendingFavoriteId === game.id}
+                className="absolute left-4 top-4 z-20 rounded-full bg-black/80 p-3 hover:scale-105 disabled:opacity-60"
+                aria-label={
+                  favoriteIds.includes(game.id)
+                    ? "Remover dos favoritos"
+                    : "Adicionar aos favoritos"
+                }
+              >
+                <Heart
+                  className={
+                    favoriteIds.includes(game.id)
+                      ? "text-red-500 fill-red-500"
+                      : "text-white"
+                  }
+                />
+              </button>
+
+              <div className="flex h-44 w-full items-center justify-center rounded-lg bg-black/20 p-2">
+                <img
+                  src={game.coverImageUrl || "/logo.png"}
+                  alt={game.title}
+                  className="max-h-full w-[115%] object-contain"
+                />
+              </div>
+              <h2 className="mb-1 text-left text-xl font-bold">{game.title}</h2>
+              <p
+                className="text-sm text-gray-300"
+                style={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {game.description}
+              </p>
+              <div className="w-full">
+                <p className="mb-2 text-sm text-gray-300">
+                  Escolha a plataforma:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {listings.map((listing) => {
+                    const selected = selectedListing?.id === listing.id;
+
+                    return (
+                      <button
+                        key={listing.id}
+                        type="button"
+                        onClick={() => {
+                          selectListing(game.id, listing.id);
+                        }}
+                        className={`rounded-lg border p-2 ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-700 bg-black/30"}`}
+                        title={listing.platform?.name || "Plataforma"}
+                      >
+                        <img
+                          src={getPlatformLogo(listing.platform?.name)}
+                          alt={listing.platform?.name || "Plataforma"}
+                          className="h-8 w-8 object-contain"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex w-full items-center justify-between gap-4">
+                <p className="text-sm text-gray-300">
+                  {game.categories
+                    ?.slice(0, 2)
+                    .map((category) => category.name)
+                    .join(" • ") || "Sem categoria"}
+                </p>
+                <p className="text-blue-200">
+                  {selectedListing?.price
+                    ? `R$ ${Number(selectedListing.price).toFixed(2)}`
+                    : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedListing) return;
+                    void addToCart(game.id, selectedListing.id);
+                  }}
+                  disabled={
+                    pendingCartGameId === game.id || !selectedListing || inCart
+                  }
+                  className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
+                >
+                  {!selectedListing
+                    ? "Escolha a plataforma"
+                    : inCart
+                      ? "No carrinho"
+                      : pendingCartGameId === game.id
+                        ? "Adicionando..."
+                        : "Adicionar"}
+                </button>
+              </div>
+            </div>
           );
         })}
         {games.length === 0 && (

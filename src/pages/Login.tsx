@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { Link } from "lucide-react";
 import Back from "../components/login/Back";
+import { saveAuth } from "../services/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,7 +49,7 @@ function Login() {
         password,
       });
 
-      localStorage.setItem("token", data.token);
+      saveAuth(data.token, data.user);
       const from = (location.state as { from?: string } | null)?.from;
       if (from) {
         navigate(from);

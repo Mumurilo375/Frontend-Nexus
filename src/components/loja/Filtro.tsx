@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type FiltroProps = {
   categories: string[];
   selectedCategory: string;
@@ -9,15 +11,37 @@ function Filtro({
   selectedCategory,
   onSelectCategory,
 }: FiltroProps) {
+  const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
+
+  const selecionarCategoria = (categoria: string) => {
+    onSelectCategory(categoria);
+    setMenuAbertoMobile(false);
+  };
+
   return (
-    <aside className="w-full lg:w-64 lg:shrink-0 left-0">
-      <nav className="text-semibold sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300">
+    <aside className="w-full lg:w-64 lg:shrink-0 lg:self-start lg:sticky lg:top-24">
+      <button
+        type="button"
+        onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
+        className="mb-3 w-full rounded-xl bg-black px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
+        aria-expanded={menuAbertoMobile}
+        aria-controls="filtro-categorias"
+      >
+        {menuAbertoMobile ? "Fechar filtros" : "Abrir filtros"}
+      </button>
+
+      <nav
+        id="filtro-categorias"
+        className={`text-semibold max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300 ${
+          menuAbertoMobile ? "block" : "hidden"
+        } lg:block`}
+      >
         <h2 className="font-bold text-2xl  p-4 mb-1">Categorias</h2>
         <ul className="mb-2">
           <li>
             <button
               type="button"
-              onClick={() => onSelectCategory("Todas")}
+              onClick={() => selecionarCategoria("Todas")}
               className={
                 selectedCategory === "Todas"
                   ? "font-bold text-blue-600"
@@ -31,7 +55,7 @@ function Filtro({
             <li key={category}>
               <button
                 type="button"
-                onClick={() => onSelectCategory(category)}
+                onClick={() => selecionarCategoria(category)}
                 className={
                   selectedCategory === category
                     ? "font-bold text-blue-600"

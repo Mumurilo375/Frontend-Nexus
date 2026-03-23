@@ -15,6 +15,7 @@ import {
 } from "@headlessui/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { clearAuth } from "../../services/auth";
 
 function NavBar() {
   type GameSuggestion = {
@@ -111,7 +112,7 @@ function NavBar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    clearAuth();
     navigate("/login");
   };
 
@@ -265,13 +266,13 @@ function NavBar() {
             <Heart className="h-8 w-8" />
           </button>
 
-          <a
-            href="#loja"
+          <Link
+            to="/carrinho"
             className="hidden hover:text-blue-600 md:block"
             aria-label="Carrinho"
           >
             <ShoppingCart />
-          </a>
+          </Link>
 
           <HeadlessMenu as="div" className="relative hidden md:inline-block">
             <MenuButton className="hover:text-blue-600 focus:outline-none">
@@ -305,10 +306,10 @@ function NavBar() {
                     </MenuItem>
                     <MenuItem>
                       <a
-                        href="#"
+                        href="/meus-pedidos"
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                       >
-                        Minhas Keys
+                        Meus pedidos e keys
                       </a>
                     </MenuItem>
                     <MenuItem>
@@ -376,12 +377,20 @@ function NavBar() {
             >
               <Heart className="h-4 w-4" /> Favoritos
             </button>
-            <a
-              href="#loja"
+            <Link
+              to="/carrinho"
               className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
             >
               <ShoppingCart className="h-4 w-4" /> Carrinho
-            </a>
+            </Link>
+            {isLoggedIn && (
+              <Link
+                to="/meus-pedidos"
+                className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+              >
+                <UserRound className="h-4 w-4" /> Meus pedidos e keys
+              </Link>
+            )}
             {!isLoggedIn && (
               <a
                 href="/login"

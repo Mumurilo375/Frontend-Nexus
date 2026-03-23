@@ -2,7 +2,7 @@ import { useState } from "react";
 import playstationIcon from "../../assets/playstation.png";
 import xboxIcon from "../../assets/xbox.png";
 import nintendoIcon from "../../assets/nintendo.png";
-import pcIcon from "../../assets/pc.png";
+import SteamIcon from "../../assets/steam.png";
 
 const PlaystationConsole = "/plataforms/playstationConsole.png";
 const XboxConsole = "/plataforms/xboxConsole.png";
@@ -12,13 +12,13 @@ const PcConsole = "/plataforms/computador.png";
 export default function Plataforms() {
   const plataforms = [
     {
-      id: "PlayStation 4 e 5",
+      id: "PlayStation",
       icon: playstationIcon,
       consoleImage: PlaystationConsole,
       color: "bg-blue-900",
     },
     {
-      id: "Xbox Series X",
+      id: "Xbox",
       icon: xboxIcon,
       consoleImage: XboxConsole,
       color: "bg-green-900",
@@ -30,8 +30,8 @@ export default function Plataforms() {
       color: "bg-red-900",
     },
     {
-      id: "PC",
-      icon: pcIcon,
+      id: "Steam",
+      icon: SteamIcon,
       consoleImage: PcConsole,
       color: "bg-gray-300",
     },

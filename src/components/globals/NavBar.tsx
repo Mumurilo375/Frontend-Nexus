@@ -222,10 +222,10 @@ function NavBar() {
           <button
             type="button"
             onClick={handleGoToFavorites}
-            className="hover:text-blue-600"
+            className="hover:text-blue-600 -mt-1"
             aria-label="Ir para favoritos"
           >
-            <Heart />
+            <Heart className="w-8 h/8 " />
           </button>
           <a href="#loja" className="hover:text-blue-600">
             <ShoppingCart />

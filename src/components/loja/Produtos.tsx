@@ -50,7 +50,7 @@ export default function Produtos({
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
-  const normalize = (value: string) =>
+  const normalizarTexto = (value: string) =>
     value
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -65,22 +65,22 @@ export default function Produtos({
   }, [games]);
 
   const filteredGames = useMemo(() => {
-    const categoryFilter = normalize(selectedCategory);
+    const filtroCategoria = normalizarTexto(selectedCategory);
 
-    const categoryFiltered =
-      categoryFilter && categoryFilter !== "todas"
+    const jogosFiltradosPorCategoria =
+      filtroCategoria && filtroCategoria !== "todas"
         ? games.filter((game) =>
             (game.categories ?? []).some(
-              (category) => normalize(category.name) === categoryFilter,
+              (category) => normalizarTexto(category.name) === filtroCategoria,
             ),
           )
         : games;
 
     if (!query) {
-      return categoryFiltered;
+      return jogosFiltradosPorCategoria;
     }
 
-    return categoryFiltered.filter((game) =>
+    return jogosFiltradosPorCategoria.filter((game) =>
       game.title.toLowerCase().includes(query),
     );
   }, [games, query, selectedCategory]);
@@ -138,7 +138,7 @@ export default function Produtos({
     void carregarFavoritos();
   }, []);
 
-  const handleToggleFavorite = async (gameId: number) => {
+  const alternarFavorito = async (gameId: number) => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login", {
@@ -191,7 +191,7 @@ export default function Produtos({
           <button
             type="button"
             onClick={() => {
-              void handleToggleFavorite(game.id);
+              void alternarFavorito(game.id);
             }}
             disabled={pendingFavoriteId === game.id}
             className="absolute left-4 top-4 z-20 rounded-full bg-black/80 p-3 hover:scale-105 disabled:opacity-60"

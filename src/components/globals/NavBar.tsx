@@ -98,6 +98,13 @@ function NavBar() {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const queryFromUrl = searchParams.get("q") ?? "";
+
+    setSearchTerm(queryFromUrl);
+  }, [location.search]);
+
+  useEffect(() => {
     if (!isLoggedIn) {
       setWishlistCount(0);
       setCartCount(0);
@@ -153,6 +160,23 @@ function NavBar() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     irParaResultado(searchTerm);
+  };
+
+  const handleClearSearchFilter = () => {
+    setSearchTerm("");
+
+    const searchParams = new URLSearchParams(location.search);
+    if (!searchParams.has("q")) {
+      return;
+    }
+
+    searchParams.delete("q");
+    const nextSearch = searchParams.toString();
+
+    navigate({
+      pathname: location.pathname,
+      search: nextSearch ? `?${nextSearch}` : "",
+    });
   };
 
   const handleLogout = () => {
@@ -252,13 +276,27 @@ function NavBar() {
             {searchOpen && (
               <div className="absolute right-0 top-11 w-[90vw] max-w-80 rounded-xl border border-gray-700 bg-black/95 p-3 shadow-2xl">
                 <form onSubmit={handleSubmit} className="mb-2">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Pesquisar jogos..."
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-600"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Pesquisar jogos..."
+                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-600"
+                    />
+
+                    {searchTerm.trim().length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearchFilter}
+                        className="rounded-md border border-gray-700 bg-gray-900 p-2 text-gray-300 transition-colors hover:text-blue-500"
+                        aria-label="Limpar filtro"
+                        title="Limpar filtro"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </form>
 
                 {loadingSuggestions && (

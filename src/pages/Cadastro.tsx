@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import Back from "../components/login/Back";
-import { saveAuth } from "../services/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -117,13 +116,7 @@ function Cadastro() {
         avatarUrl: photoRef.current?.files?.[0]?.name ?? null,
       });
 
-      const { data } = await api.post("/auth/login", {
-        email,
-        password,
-      });
-
-      saveAuth(data.token, data.user);
-      navigate("/");
+      navigate("/login");
     } catch (error: any) {
       setErrorMessage(getFriendlyRegisterError(error));
     } finally {

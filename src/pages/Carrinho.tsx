@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
+import { Trash2Icon } from "lucide-react";
 
 type CartItem = {
   id: number;
@@ -107,19 +108,20 @@ export default function Carrinho() {
                     <div className="min-w-0 flex-1">
                       <h2 className="truncate text-lg font-semibold">{item.listing?.game?.title || "Jogo"}</h2>
                       <p className="text-sm text-gray-300">Plataforma: {item.listing?.platform?.name || "-"}</p>
-                      <p className="mt-1 text-sm text-gray-300">Quantidade: 1</p>
+                     
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{toMoney(Number(item.listing?.price ?? 0))}</p>
+                      <p className="font-semibold text-2xl">{toMoney(Number(item.listing?.price ?? 0))}</p>
                       <button
                         type="button"
                         onClick={() => {
                           void removeItem(item.listingId);
                         }}
                         disabled={busyListingId !== null}
-                        className="mt-2 rounded-md bg-red-700 px-3 py-1 text-sm disabled:opacity-60"
+                        className="mt-2 rounded-md bg-transparent px-3 py-1 text-sm disabled:opacity-60 hover:text-red-500"
                       >
-                        Remover
+                        <Trash2Icon className="h-4 w-4" />
+                        
                       </button>
                     </div>
                   </div>

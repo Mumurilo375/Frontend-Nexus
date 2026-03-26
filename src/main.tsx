@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import MeusPedidos from "./pages/MeusPedidos";
 import RouteScrollToTop from "./components/globals/RouteScrollToTop";
 import UserConfig from "./pages/UserConfig";
+import AddProduto from "./pages/AddProduto";
 
 function RootLayout() {
   return (
@@ -59,6 +60,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAdmin>
             <ListagemUsuarios />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: "/admin/games",
+        element: (
+          <RequireAdmin>
+            <AddProduto />
           </RequireAdmin>
         ),
       },

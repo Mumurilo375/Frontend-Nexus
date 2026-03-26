@@ -132,7 +132,7 @@ export default function Carrinho() {
               <p className="mt-3 text-gray-300">Itens: {items.length}</p>
               <p className="text-gray-100">Subtotal: {toMoney(subtotal)}</p>
               <Link to="/checkout" className="mt-4 block rounded-lg bg-emerald-700 px-4 py-2 text-center font-semibold">
-                Ir para checkout
+                Confirmar pedido
               </Link>
               <button
                 type="button"

@@ -15,6 +15,7 @@ import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
 import MeusPedidos from "./pages/MeusPedidos";
 import RouteScrollToTop from "./components/globals/RouteScrollToTop";
+import UserConfig from "./pages/UserConfig";
 
 function RootLayout() {
   return (
@@ -90,6 +91,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <MeusPedidos />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/configuracoes",
+        element: (
+          <RequireAuth>
+            <UserConfig />
           </RequireAuth>
         ),
       },

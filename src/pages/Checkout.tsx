@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
+import Back from "../components/login/Back";
 
 type CartItem = {
   id: number;
@@ -75,7 +76,7 @@ export default function Checkout() {
     <div>
       <NavBar />
       <main className="mx-auto min-h-screen w-full max-w-4xl px-6 pb-10 pt-28">
-        <h1 className="text-3xl font-bold">Checkout</h1>
+        <h1 className="text-3xl font-bold">Resumo do pedido</h1>
 
         {loading && <p className="mt-4 text-gray-300">Carregando resumo...</p>}
 
@@ -147,13 +148,8 @@ export default function Checkout() {
         {error && <p className="mt-4 text-red-300">{error}</p>}
 
         {!order && (
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="mt-6 rounded-md bg-gray-700 px-4 py-2 text-sm"
-          >
-            Voltar
-          </button>
+          <Back />
+       
         )}
       </main>
       <Footer />

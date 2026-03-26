@@ -15,7 +15,7 @@ import {
 } from "@headlessui/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { clearAuth, isAuthenticated } from "../../services/auth";
+import { clearAuth, getAuthUser, isAuthenticated } from "../../services/auth";
 import AuthRequiredModal from "./AuthRequiredModal";
 
 type GameSuggestion = {
@@ -43,8 +43,15 @@ function NavBar() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
   const isLoggedIn = isAuthenticated();
+  const authUser = getAuthUser();
+  const avatarSrc = authUser?.avatarUrl?.trim() || "";
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [avatarSrc]);
 
   const openAuthModal = () => setShowAuthModal(true);
   const goToLogin = () => {
@@ -377,7 +384,16 @@ function NavBar() {
             {isLoggedIn ? (
               <HeadlessMenu as="div" className="relative hidden md:inline-flex">
                 <MenuButton className={`${iconButtonClass} focus:outline-none`}>
-                  <UserRound className="h-5 w-5" />
+                  {avatarSrc && !avatarBroken ? (
+                    <img
+                      src={avatarSrc}
+                      alt="Foto do usuario"
+                      className="h-8 w-8 rounded-full object-cover"
+                      onError={() => setAvatarBroken(true)}
+                    />
+                  ) : (
+                    <UserRound className="h-5 w-5" />
+                  )}
                 </MenuButton>
 
                 <MenuItems
@@ -386,12 +402,12 @@ function NavBar() {
                 >
                   <div className="py-1">
                     <MenuItem>
-                      <button
-                        type="button"
+                      <Link
+                        to="/configuracoes"
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
                       >
-                        Configurações
-                      </button>
+                        Configuracoes
+                      </Link>
                     </MenuItem>
                     <MenuItem>
                       <Link
@@ -484,6 +500,14 @@ function NavBar() {
                 <ShoppingCart className="h-4 w-4" /> Carrinho{" "}
                 {isLoggedIn ? `(${cartCount})` : ""}
               </Link>
+              {isLoggedIn && (
+                <Link
+                  to="/configuracoes"
+                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+                >
+                  <UserRound className="h-4 w-4 " /> Configuracoes
+                </Link>
+              )}
               {isLoggedIn && (
                 <Link
                   to="/meus-pedidos"

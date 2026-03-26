@@ -2,6 +2,7 @@ type AuthUser = {
   id: number;
   email: string;
   username: string;
+  avatarUrl?: string | null;
   isAdmin?: boolean;
 };
 

@@ -103,7 +103,6 @@ export default function UserConfig() {
   const [cpf, setCpf] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(authUser?.avatarUrl ?? "");
-  const [avatarFileName, setAvatarFileName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState(authUser?.email ?? "");
@@ -154,8 +153,6 @@ export default function UserConfig() {
     if (!file) {
       return;
     }
-
-    setAvatarFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -231,8 +228,7 @@ export default function UserConfig() {
       }
 
       setAvatarUrl(avatarUrl);
-      setAvatarFileName("");
-      navigate(-1);
+      void navigate(-1);
     } catch (error: unknown) {
       setErrorMessage(getFriendlyUpdateError(error));
       setSuccessMessage("");

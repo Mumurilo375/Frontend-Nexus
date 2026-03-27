@@ -105,7 +105,7 @@ export default function Produtos({
 
   const goToLogin = () => {
     setShowAuthModal(false);
-    navigate("/login", {
+    void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };

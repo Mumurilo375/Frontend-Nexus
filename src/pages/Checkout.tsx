@@ -1,9 +1,10 @@
+import { isAxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
-import api from "../services/api";
 import Back from "../components/login/Back";
+import api from "../services/api";
 
 type CartItem = {
   id: number;
@@ -20,18 +21,30 @@ type OrderResponse = {
   id: number;
   orderNumber: string;
   totalAmount: number | string;
+  status: string;
+};
+
+type CheckoutCreateResponse = {
+  order: OrderResponse;
 };
 
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
 }
 
+function getCheckoutErrorMessage(error: unknown, fallback: string): string {
+  if (isAxiosError<{ message?: string }>(error)) {
+    return String(error.response?.data?.message ?? error.message ?? fallback);
+  }
+
+  return fallback;
+}
+
 export default function Checkout() {
-  const navigate = useNavigate();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "pix">("card");
   const [placingOrder, setPlacingOrder] = useState(false);
   const [order, setOrder] = useState<OrderResponse | null>(null);
 
@@ -58,15 +71,20 @@ export default function Checkout() {
     void load();
   }, []);
 
-  const confirmOrder = async () => {
+  const createOrder = async () => {
     try {
       setPlacingOrder(true);
       setError("");
-      const { data } = await api.post<OrderResponse>("/checkout", { paymentMethod });
-      setOrder(data);
+      const { data } = await api.post<CheckoutCreateResponse>("/checkout", {
+        paymentMethod,
+      });
+      setOrder(data.order);
       setItems([]);
-    } catch (e: any) {
-      setError(String(e?.response?.data?.message ?? "Nao foi possivel finalizar o pedido."));
+      window.dispatchEvent(new Event("nexus:counts-updated"));
+    } catch (error: unknown) {
+      setError(
+        getCheckoutErrorMessage(error, "Nao foi possivel finalizar o pedido."),
+      );
     } finally {
       setPlacingOrder(false);
     }
@@ -82,15 +100,52 @@ export default function Checkout() {
 
         {!loading && order && (
           <section className="mt-6 rounded-xl bg-emerald-900/30 p-5">
-            <h2 className="text-2xl font-semibold">Pedido confirmado</h2>
+            <h2 className="text-2xl font-semibold">
+              {order.status === "paid" ? "Pedido confirmado" : "Pedido criado"}
+            </h2>
             <p className="mt-2 text-gray-200">Numero: {order.orderNumber}</p>
-            <p className="text-gray-200">Total: {toMoney(Number(order.totalAmount ?? 0))}</p>
-            <div className="mt-4 flex gap-3">
-              <Link to="/meus-pedidos" className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold">
-                Ver meus pedidos
-              </Link>
-              <Link to="/loja" className="rounded-lg bg-gray-700 px-4 py-2 text-sm">Continuar comprando</Link>
-            </div>
+            <p className="text-gray-200">
+              Total: {toMoney(Number(order.totalAmount ?? 0))}
+            </p>
+
+            {order.status === "pending" && (
+              <p className="mt-2 text-sm text-gray-300">
+                O pedido foi criado, mas ainda nao foi concluido. Se isso for de
+                uma compra antiga, voce pode revisar em meus pedidos.
+              </p>
+            )}
+
+            {order.status === "paid" && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <p className="basis-full text-sm text-emerald-200">
+                  Compra concluida. Suas keys ja foram liberadas na sua
+                  biblioteca.
+                </p>
+                <Link
+                  to="/meus-pedidos"
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold"
+                >
+                  Ver meus pedidos
+                </Link>
+                <Link
+                  to="/loja"
+                  className="rounded-lg bg-gray-700 px-4 py-2 text-sm"
+                >
+                  Continuar comprando
+                </Link>
+              </div>
+            )}
+
+            {order.status === "cancelled" && (
+              <div className="mt-4 flex gap-3">
+                <Link
+                  to="/loja"
+                  className="rounded-lg bg-gray-700 px-4 py-2 text-sm"
+                >
+                  Voltar para loja
+                </Link>
+              </div>
+            )}
           </section>
         )}
 
@@ -99,7 +154,10 @@ export default function Checkout() {
             {items.length === 0 ? (
               <>
                 <p className="text-gray-300">Seu carrinho esta vazio.</p>
-                <Link to="/loja" className="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm">
+                <Link
+                  to="/loja"
+                  className="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm"
+                >
                   Ir para loja
                 </Link>
               </>
@@ -107,10 +165,17 @@ export default function Checkout() {
               <>
                 <ul className="space-y-2">
                   {items.map((item) => (
-                    <li key={item.id} className="flex items-center justify-between rounded-md bg-gray-800 px-3 py-2">
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between rounded-md bg-gray-800 px-3 py-2"
+                    >
                       <div>
-                        <p className="font-medium">{item.listing?.game?.title || "Jogo"}</p>
-                        <p className="text-sm text-gray-300">{item.listing?.platform?.name || "-"}</p>
+                        <p className="font-medium">
+                          {item.listing?.game?.title || "Jogo"}
+                        </p>
+                        <p className="text-sm text-gray-300">
+                          {item.listing?.platform?.name || "-"}
+                        </p>
                       </div>
                       <p>{toMoney(Number(item.listing?.price ?? 0))}</p>
                     </li>
@@ -119,25 +184,32 @@ export default function Checkout() {
 
                 <div className="mt-4 rounded-lg bg-gray-800 p-3">
                   <p className="font-semibold">Total: {toMoney(subtotal)}</p>
-                  <label className="mt-3 block text-sm text-gray-300">Forma de pagamento</label>
+                  <label className="mt-3 block text-sm text-gray-300">
+                    Forma de pagamento
+                  </label>
                   <select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    onChange={(event) =>
+                      setPaymentMethod(event.target.value as "card" | "pix")
+                    }
                     className="mt-1 w-full rounded-md bg-gray-700 px-3 py-2"
                   >
-                    <option value="PIX">PIX</option>
-                    <option value="Cartao">Cartao</option>
-                    <option value="Boleto">Boleto</option>
+                    <option value="card">Cartao</option>
+                    <option value="pix">PIX</option>
                   </select>
+                  <p className="mt-2 text-xs text-gray-400">
+                    O pedido e confirmado diretamente pela plataforma e as keys
+                    sao liberadas logo apos a compra.
+                  </p>
                   <button
                     type="button"
                     onClick={() => {
-                      void confirmOrder();
+                      void createOrder();
                     }}
                     disabled={placingOrder}
                     className="mt-4 w-full rounded-lg bg-emerald-700 px-4 py-2 font-semibold disabled:opacity-60"
                   >
-                    {placingOrder ? "Confirmando..." : "Confirmar pedido"}
+                    {placingOrder ? "Finalizando..." : "Finalizar pedido"}
                   </button>
                 </div>
               </>
@@ -147,10 +219,7 @@ export default function Checkout() {
 
         {error && <p className="mt-4 text-red-300">{error}</p>}
 
-        {!order && (
-          <Back />
-       
-        )}
+        {!order && <Back />}
       </main>
       <Footer />
     </div>

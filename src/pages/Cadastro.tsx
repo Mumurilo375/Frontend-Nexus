@@ -1,8 +1,9 @@
+import { isAxiosError } from "axios";
 import { UserCircleIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { type FormEvent, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Back from "../components/login/Back";
+import api from "../services/api";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,8 +25,10 @@ function isValidCpf(rawCpf: string): boolean {
   return true;
 }
 
-function getFriendlyRegisterError(error: any): string {
-  const message = String(error?.response?.data?.message ?? "");
+function getFriendlyRegisterError(error: unknown): string {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? String(error.response?.data?.message ?? error.message ?? "")
+    : "";
 
   if (message.includes("Email is already in use")) {
     return "Este email ja esta em uso.";
@@ -71,7 +74,7 @@ function Cadastro() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const fullName = (nameRef.current?.value ?? "").trim();
@@ -116,8 +119,8 @@ function Cadastro() {
         avatarUrl: photoRef.current?.files?.[0]?.name ?? null,
       });
 
-      navigate("/login");
-    } catch (error: any) {
+      void navigate("/login");
+    } catch (error: unknown) {
       setErrorMessage(getFriendlyRegisterError(error));
     } finally {
       setIsSubmitting(false);
@@ -128,8 +131,8 @@ function Cadastro() {
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
-          alt="Your Company"
-          src="../../public/utils/logo.png"
+          alt="Logo Nexus"
+          src="/utils/logo.png"
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-3xl font-bold tracking-tight text-white">
@@ -137,9 +140,9 @@ function Cadastro() {
         </h2>
       </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm ">
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-          <div className="">
+          <div>
             <div className="col-span-full">
               <label
                 htmlFor="photo"
@@ -170,20 +173,20 @@ function Cadastro() {
             </div>
             <label
               htmlFor="username"
-              className="block text-sm/6 font-medium text-gray-100 mt-5"
+              className="mt-5 block text-sm/6 font-medium text-gray-100"
             >
-              Nome de usuário
+              Nome de usuario
             </label>
             <div className="mt-2">
               <input
                 ref={usernameRef}
-                placeholder="nome de usuário"
+                placeholder="nome de usuario"
                 id="username"
                 name="new-username"
                 type="text"
                 required
                 autoComplete="off"
-                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6  "
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
@@ -203,11 +206,12 @@ function Cadastro() {
                 name="nomecompleto"
                 type="text"
                 required
-                autoComplete="nomecompleto"
-                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6  "
+                autoComplete="name"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
+
           <div>
             <label
               htmlFor="cpf"
@@ -219,12 +223,12 @@ function Cadastro() {
               <input
                 ref={cpfRef}
                 placeholder="000.000.000-00"
-                id="CPF"
-                name="CPF"
+                id="cpf"
+                name="cpf"
                 type="text"
                 required
-                autoComplete="CPF"
-                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6  "
+                autoComplete="off"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
@@ -245,7 +249,7 @@ function Cadastro() {
                 type="email"
                 required
                 autoComplete="email"
-                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6  "
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
               />
             </div>
           </div>
@@ -315,12 +319,12 @@ function Cadastro() {
 
         <p className="mt-10 text-center text-sm/6 text-gray-400">
           Ja possui uma conta?{" "}
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
             Logar
-          </a>
+          </Link>
         </p>
       </div>
       <Back />

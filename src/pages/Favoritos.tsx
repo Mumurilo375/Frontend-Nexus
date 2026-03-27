@@ -35,7 +35,7 @@ function Favoritos() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login", { state: { from: location.pathname } });
+      void navigate("/login", { state: { from: location.pathname } });
       return;
     }
 
@@ -63,7 +63,7 @@ function Favoritos() {
   const handleRemoveFavorite = async (gameId: number) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login", { state: { from: location.pathname } });
+      void navigate("/login", { state: { from: location.pathname } });
       return;
     }
 

@@ -1,59 +1,32 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
-import App from "./pages/App";
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
-import Loja from "./pages/Loja";
-import Ofertas from "./pages/Ofertas";
-import ComoFunciona from "./pages/ComoFunciona";
-import Login from "./pages/Login";
-import Cadastro from "./pages/Cadastro";
-import ListagemUsuarios from "./pages/listagemUsuarios";
-import Favoritos from "./pages/Favoritos";
 import { RequireAdmin, RequireAuth } from "./components/auth/RouteGuards";
+import RootLayout from "./components/globals/RootLayout";
+import App from "./pages/App";
+import Cadastro from "./pages/Cadastro";
 import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
+import ComoFunciona from "./pages/ComoFunciona";
+import Favoritos from "./pages/Favoritos";
+import ListagemUsuarios from "./pages/listagemUsuarios";
+import Login from "./pages/Login";
+import Loja from "./pages/Loja";
 import MeusPedidos from "./pages/MeusPedidos";
-import RouteScrollToTop from "./components/globals/RouteScrollToTop";
+import Ofertas from "./pages/Ofertas";
 import UserConfig from "./pages/UserConfig";
-
-function RootLayout() {
-  return (
-    <>
-      <RouteScrollToTop />
-      <Outlet />
-    </>
-  );
-}
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      {
-        path: "/",
-        element: <App />,
-      },
-      {
-        path: "/loja",
-        element: <Loja />,
-      },
-      {
-        path: "/ofertas",
-        element: <Ofertas />,
-      },
-      {
-        path: "/comofunciona",
-        element: <ComoFunciona />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/cadastro",
-        element: <Cadastro />,
-      },
+      { path: "/", element: <App /> },
+      { path: "/loja", element: <Loja /> },
+      { path: "/ofertas", element: <Ofertas /> },
+      { path: "/comofunciona", element: <ComoFunciona /> },
+      { path: "/login", element: <Login /> },
+      { path: "/cadastro", element: <Cadastro /> },
       {
         path: "/listagem-usuarios",
         element: (
@@ -105,6 +78,7 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />

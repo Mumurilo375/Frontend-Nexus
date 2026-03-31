@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
-import { Trash2Icon } from "lucide-react";
+import { ArrowRight, ShoppingBag, Trash2Icon } from "lucide-react";
 
 type CartItem = {
   id: number;
@@ -133,6 +133,16 @@ export default function Carrinho() {
               <h2 className="text-xl font-semibold">Resumo</h2>
               <p className="mt-3 text-gray-300">Itens: {items.length}</p>
               <p className="text-gray-100">Subtotal: {toMoney(subtotal)}</p>
+              <Link
+                to="/loja"
+                className="group mt-4 block rounded-xl bg-linear-to-r from-cyan-400 via-blue-500 to-indigo-500 p-px shadow-lg shadow-blue-500/40 transition duration-300 hover:scale-105 hover:shadow-blue-400/60"
+              >
+                <span className="flex items-center justify-center gap-2 rounded-lg bg-zinc-950/80 px-4 py-2.5 text-center text-sm font-extrabold uppercase tracking-wide text-blue-100">
+                  <ShoppingBag className="h-4 w-4 animate-pulse text-cyan-300" />
+                  Continuar comprando
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </Link>
               <Link to="/checkout" className="mt-4 block rounded-lg bg-emerald-700 px-4 py-2 text-center font-semibold">
                 Confirmar pedido
               </Link>

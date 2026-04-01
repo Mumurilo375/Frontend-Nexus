@@ -16,6 +16,8 @@ type UserProfile = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const inputClass =
+  "mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500/70";
 
 function isRenderableAvatar(value: string | null | undefined): boolean {
   if (!value) return false;
@@ -45,6 +47,15 @@ function isValidCpf(rawCpf: string): boolean {
   }
 
   return true;
+}
+
+function formatCpf(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  return digits
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
 }
 
 function getPasswordStrengthError(password: string): string | null {
@@ -266,187 +277,207 @@ export default function UserConfig() {
   };
 
   return (
-    <div>
+    <div className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.1),_transparent_30%),linear-gradient(180deg,#020617_0%,#030712_100%)]">
       <NavBar />
-      <main className="mx-auto min-h-screen w-full max-w-3xl px-6 pb-10 pt-28">
-        <h1 className="text-3xl font-bold">Configuracoes da conta</h1>
-        <p className="mt-2 text-sm text-gray-300">
-          Atualize seus dados. O email nao pode ser alterado.
-        </p>
+      <main className="mx-auto min-h-screen w-full max-w-6xl px-6 pb-10 pt-28">
+        <div className="rounded-[32px] border border-slate-800 bg-slate-950/85 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.4)]">
+          <div className="border-b border-slate-800 pb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
+              Minha conta
+            </p>
+            <h1 className="mt-2 text-3xl font-bold text-white">
+              Configuracoes da conta
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Atualize seus dados com seguranca. O email fica bloqueado para
+              preservar a autenticacao da conta.
+            </p>
+          </div>
 
-        {loading && <p className="mt-6 text-gray-300">Carregando dados...</p>}
+          {loading && <p className="mt-6 text-gray-300">Carregando dados...</p>}
 
-        {!loading && (
-          <form
-            onSubmit={handleSubmit}
-            className="mt-6 space-y-4 rounded-xl bg-gray-900 p-5"
-          >
-            <div>
-              <label
-                htmlFor="fullName"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Nome completo
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
-                required
-              />
-            </div>
+          {!loading && (
+            <div className="mt-6 grid gap-6 lg:grid-cols-[320px,1fr]">
+              <aside className="rounded-[28px] border border-slate-800 bg-slate-900/60 p-6">
+                <div className="flex flex-col items-center text-center">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Preview da foto"
+                      className="h-24 w-24 rounded-full border border-slate-700 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-400">
+                      Sem foto
+                    </div>
+                  )}
+                  <h2 className="mt-4 text-xl font-semibold text-white">
+                    {fullName || authUser?.username || "Usuario Nexus"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    @{username || authUser?.username || "usuario"}
+                  </p>
+                </div>
 
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Nome de usuario
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="cpf"
-                className="block text-sm font-medium text-gray-100"
-              >
-                CPF
-              </label>
-              <input
-                id="cpf"
-                type="text"
-                value={cpf}
-                onChange={(event) => setCpf(event.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="avatarFile"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Foto de perfil
-              </label>
-              <div className="mt-2 flex items-center gap-4">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Preview da foto"
-                    className="h-14 w-14 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-800 text-xs text-gray-400">
-                    Sem foto
+                <div className="mt-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-sm">
+                  <div>
+                    <p className="text-slate-500">Email</p>
+                    <p className="mt-1 text-slate-200">{email || "-"}</p>
                   </div>
+                  <div>
+                    <p className="text-slate-500">CPF</p>
+                    <p className="mt-1 text-slate-200">{cpf || "-"}</p>
+                  </div>
+                  <p className="text-xs leading-6 text-slate-400">
+                    A alteracao de email fica bloqueada. Nome, usuario, CPF,
+                    senha e avatar continuam editaveis.
+                  </p>
+                </div>
+              </aside>
+
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5 rounded-[28px] border border-slate-800 bg-slate-900/50 p-6"
+              >
+                <div className="grid gap-5 md:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-100">
+                    Nome completo
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </label>
+
+                  <label className="text-sm font-medium text-slate-100">
+                    Nome de usuario
+                    <input
+                      id="username"
+                      type="text"
+                      value={username}
+                      onChange={(event) => setUsername(event.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-100">
+                    CPF
+                    <input
+                      id="cpf"
+                      type="text"
+                      value={cpf}
+                      onChange={(event) => setCpf(formatCpf(event.target.value))}
+                      className={inputClass}
+                      maxLength={14}
+                      required
+                    />
+                  </label>
+
+                  <label className="text-sm font-medium text-slate-100">
+                    Email
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      readOnly
+                      disabled
+                      className="mt-2 block w-full cursor-not-allowed rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-500"
+                    />
+                    <p className="mt-2 text-xs text-slate-400">
+                      O email fica bloqueado por regra de seguranca.
+                    </p>
+                  </label>
+                </div>
+
+                <div className="rounded-[24px] border border-slate-800 bg-slate-950/75 p-5">
+                  <label
+                    htmlFor="avatarFile"
+                    className="block text-sm font-medium text-slate-100"
+                  >
+                    Foto de perfil
+                  </label>
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <input
+                      id="avatarFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="avatarFile"
+                      className="inline-flex cursor-pointer rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/60 hover:text-white"
+                    >
+                      Escolher imagem
+                    </label>
+                    <p className="text-xs text-slate-400">
+                      Atualize a imagem usada na navbar e no perfil.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <label className="text-sm font-medium text-slate-100">
+                    Senha
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className={inputClass}
+                      placeholder="Digite sua nova senha"
+                      required
+                    />
+                  </label>
+
+                  <label className="text-sm font-medium text-slate-100">
+                    Confirmar senha
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      className={inputClass}
+                      placeholder="Repita a senha"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <p className="text-xs leading-6 text-slate-400">
+                  A nova senha precisa manter nivel forte: 8 caracteres, letras
+                  maiusculas e minusculas, numero e caractere especial.
+                </p>
+
+                {errorMessage && (
+                  <p className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {errorMessage}
+                  </p>
                 )}
-                <input
-                  id="avatarFile"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarFileChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="avatarFile"
-                  className="block cursor-pointer rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-400"
+
+                {successMessage && (
+                  <p className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                    {successMessage}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Escolher ícone
-                </label>
-              </div>
-              <p className="mt-1 text-xs text-gray-400">
-                Escolha uma imagem para atualizar sua foto no perfil.
-              </p>
+                  {isSubmitting ? "Salvando..." : "Salvar alteracoes"}
+                </button>
+              </form>
             </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                readOnly
-                disabled
-                className="mt-2 block w-full cursor-not-allowed rounded-md bg-gray-800 px-3 py-2 text-sm text-gray-400 outline-1 -outline-offset-1 outline-white/10"
-              />
-              <p className="mt-1 text-xs text-gray-400">
-                O email fica bloqueado por regra de seguranca.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
-                placeholder="Digite sua nova senha"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-100"
-              >
-                Confirmar senha
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
-                placeholder="Repita a senha"
-                required
-              />
-            </div>
-
-            {errorMessage && (
-              <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                {errorMessage}
-              </p>
-            )}
-
-            {successMessage && (
-              <p className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                {successMessage}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSubmitting ? "Salvando..." : "Salvar alteracoes"}
-            </button>
-          </form>
-        )}
+          )}
+        </div>
       </main>
       <Footer />
     </div>

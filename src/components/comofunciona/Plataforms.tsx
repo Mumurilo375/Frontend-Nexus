@@ -3,133 +3,139 @@ import xboxLogo from "../../assets/xbox.png";
 import steamLogo from "../../assets/steam.png";
 import nintendoLogo from "../../assets/nintendo.png";
 
+const platformGuides = [
+  {
+    title: "PlayStation",
+    logo: playLogo,
+    steps: [
+      {
+        heading: "No console",
+        items: [
+          "Abra a PlayStation Store.",
+          'Role o menu lateral ate "Resgatar codigos".',
+          "Digite a key com cuidado e confirme.",
+        ],
+      },
+      {
+        heading: "No site",
+        items: [
+          "Acesse store.playstation.com e faca login.",
+          'Abra o menu do avatar e clique em "Resgatar codigos".',
+          "Cole a key e conclua o resgate.",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Xbox",
+    logo: xboxLogo,
+    steps: [
+      {
+        heading: "No console",
+        items: [
+          "Pressione o botao Xbox para abrir o guia.",
+          'Entre em Store e escolha "Resgatar codigo".',
+          "Digite o codigo de 25 caracteres e confirme.",
+        ],
+      },
+      {
+        heading: "Na Microsoft Store",
+        items: [
+          "Abra a Microsoft Store no PC e faca login.",
+          'Use o menu de opcoes para abrir "Resgatar codigo".',
+          "Cole a key e avance para finalizar.",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Steam",
+    logo: steamLogo,
+    steps: [
+      {
+        heading: "No cliente Steam",
+        items: [
+          "Faca login na sua conta.",
+          'Abra o menu "Jogos" e escolha "Ativar um produto no Steam".',
+          "Aceite os termos, cole a key e conclua o processo.",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Nintendo Switch",
+    logo: nintendoLogo,
+    steps: [
+      {
+        heading: "No console",
+        items: [
+          "Abra a Nintendo eShop no Switch.",
+          "Selecione o usuario desejado.",
+          'No menu lateral, clique em "Inserir codigo".',
+          "Digite a key e confirme.",
+        ],
+      },
+      {
+        heading: "No site",
+        items: [
+          "Entre na sua conta Nintendo.",
+          "Abra a area de resgate de codigo.",
+          "Cole a key e confirme para liberar o jogo.",
+        ],
+      },
+    ],
+  },
+];
+
 export default function Plataforms() {
   return (
-    <section className="w-full bg-blue-950 px-4 py-14 sm:px-6 sm:py-16">
+    <section className="w-full bg-slate-950 px-4 py-14 sm:px-6 sm:py-16">
       <div className="mx-auto w-full max-w-6xl">
-        <h1 className="mb-10 text-center text-3xl font-semibold sm:mb-14 sm:text-5xl lg:text-6xl">
+        <h2 className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
+          Plataformas
+        </h2>
+        <h1 className="mb-10 text-center text-3xl font-semibold text-white sm:mb-14 sm:text-5xl">
           Como resgatar em cada plataforma
         </h1>
 
         <div className="grid grid-cols-1 gap-5 lg:gap-6">
-          <div className="rounded-3xl bg-black p-5 text-left sm:p-7">
-            <div className="mb-4 flex items-center gap-3 sm:gap-4">
-              <img
-                src={playLogo}
-                alt="Logo PlayStation"
-                className="h-10 w-10 sm:h-15 sm:w-15"
-              />
-              <h1 className="text-2xl font-semibold sm:text-3xl">
-                PlayStation
-              </h1>
-            </div>
-            <h2 className="py-2 text-xl font-medium sm:text-2xl">
-              No PlayStation console
-            </h2>
-            <p className="leading-7 text-gray-200">
-              1- Vá para a PlayStation Store <br />
-              2- Role até o final da página lateral e selecione "Resgatar
-              Códigos" <br />
-              3- Digite o código com cuidado e confirme
-            </p>
-            <h2 className="pt-5 text-xl font-medium sm:text-2xl">
-              No site da PlayStation
-            </h2>
-            <p className="pt-2 leading-7 text-gray-200">
-              1- Acesse store.playstation.com e faça login <br />
-              2- Clique no avatar e selecione "Resgatar Códigos" <br />
-              3- Insira o código e clique em "Resgatar"
-            </p>
-          </div>
+          {platformGuides.map((platform) => (
+            <article
+              key={platform.title}
+              className="rounded-[30px] border border-slate-800 bg-slate-950/80 p-5 text-left shadow-[0_18px_45px_rgba(2,6,23,0.3)] sm:p-7"
+            >
+              <div className="mb-6 flex items-center gap-4">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-3">
+                  <img
+                    src={platform.logo}
+                    alt={`Logo ${platform.title}`}
+                    className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+                  />
+                </div>
+                <h3 className="text-2xl font-semibold text-white sm:text-3xl">
+                  {platform.title}
+                </h3>
+              </div>
 
-          <div className="rounded-3xl bg-black p-5 text-left sm:p-7">
-            <div className="mb-4 flex items-center gap-3 sm:gap-4">
-              <img
-                src={xboxLogo}
-                alt="Logo Xbox"
-                className="h-10 w-10 sm:h-12 sm:w-12"
-              />
-              <h1 className="text-2xl font-semibold sm:text-3xl">
-                Xbox (Console ou Microsoft Store)
-              </h1>
-            </div>
-            <h2 className="py-2 text-xl font-medium sm:text-2xl">
-              No Xbox console
-            </h2>
-            <p className="leading-7 text-gray-200">
-              1- Pressione o botão Xbox para abrir o guia <br />
-              2- Selecione "Store" e depois "Resgatar código" <br />
-              3- Digite o código de 25 caracteres e confirme
-            </p>
-            <h2 className="pt-5 text-xl font-medium sm:text-2xl">
-              Na Microsoft Store (PC)
-            </h2>
-            <p className="pt-2 leading-7 text-gray-200">
-              1- Abra a Microsoft Store e faça login <br />
-              2- Clique no ícone de menu (três pontos) e selecione "Resgatar
-              código" <br />
-              3- Cole o código e clique em "Avançar"
-            </p>
-          </div>
-
-          <div className="rounded-3xl bg-black p-5 text-left sm:p-7">
-            <div className="mb-4 flex items-center gap-3 sm:gap-4">
-              <img
-                src={steamLogo}
-                alt="Logo Steam"
-                className="h-10 w-10 sm:h-12 sm:w-12"
-              />
-              <h1 className="text-2xl font-semibold sm:text-3xl">Steam</h1>
-            </div>
-            <p className="leading-7 text-gray-200">
-              1- Abra o cliente Steam e faça login na sua conta <br />
-              2- Clique em "Jogos" no menu superior e selecione "Ativar um
-              produto no Steam" <br />
-              3- Clique em "Avançar" e aceite os termos <br />
-              4- Cole o código da key e clique em "Avançar" <br />
-              5- O jogo será adicionado à sua biblioteca automaticamente
-            </p>
-          </div>
-          
-
-          <div className="rounded-3xl bg-black p-5 text-left sm:p-7">
-            <div className="mb-4 flex items-center gap-3 sm:gap-4">
-              <img
-                src={nintendoLogo}
-                alt="Logo Xbox"
-                className="h-10 w-10 sm:h-12 sm:w-12"
-              />
-              <h1 className="text-2xl font-semibold sm:text-3xl">
-            Nintendo Switch
-              </h1>
-            </div>
-            <h2 className="py-2 text-xl font-medium sm:text-2xl">
-              No console
-            </h2>
-            <p className="leading-7 text-gray-200">
-       1- Acesse a Nintendo eShop no seu Nintendo Switch
-
-2- Selecione o usuário que deseja usar <br />
-
-3- No menu lateral, role para baixo e selecione "Inserir código" <br />
-
-4- Digite o código da key com cuidado <br />
-
-5- Confirme e o jogo será adicionado automaticamente à sua conta <br />
-            </p>
-            <h2 className="pt-5 text-xl font-medium sm:text-2xl">
-             No site
-            </h2>
-            <p className="pt-2 leading-7 text-gray-200">
-            1- Acesse o site da Nintendo e faça login na sua conta  <br></br>
-
-2- Vá até a opção de resgatar código (Nintendo eShop) <br></br>
-
-3- Insira o código e confirme <br></br>
-
-4- O jogo ficará disponível para download no seu console
-            </p>
-          </div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                {platform.steps.map((step) => (
+                  <div
+                    key={`${platform.title}-${step.heading}`}
+                    className="rounded-2xl border border-slate-800 bg-slate-900/55 p-5"
+                  >
+                    <h4 className="text-lg font-medium text-white">
+                      {step.heading}
+                    </h4>
+                    <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-300">
+                      {step.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

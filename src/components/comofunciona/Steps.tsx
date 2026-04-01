@@ -1,38 +1,55 @@
+const steps = [
+  {
+    title: "Compre a key",
+    description:
+      "Escolha o jogo, selecione a plataforma e finalize a compra no checkout da demo.",
+  },
+  {
+    title: "Acesse sua biblioteca",
+    description:
+      "Assim que o pedido e aprovado, a key aparece na sua area de pedidos e biblioteca.",
+  },
+  {
+    title: "Resgate e jogue",
+    description:
+      "Cole o codigo na Steam, Xbox, PlayStation ou Nintendo para ativar o jogo.",
+  },
+];
+
 export default function Steps() {
   return (
-    <section className="w-full bg-blue-950 px-4 py-14 sm:px-6 sm:py-16">
-      <div className="mx-auto w-full max-w-6xl text-center">
-        <h1 className="py-4 text-3xl font-bold sm:text-5xl lg:text-6xl">
-          Passo a passo
-        </h1>
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-8">
-          <div className="rounded-3xl bg-black p-6 text-center">
-            <h2 className="mb-6 text-xl font-bold sm:text-2xl">
-              1. Compre a key
-            </h2>
-            <p className="leading-7 text-gray-200">
-              Escolha seu jogo favorito em nossa loja e finalize a compra. Você
-              receberá a key instantaneamente.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-black p-6 text-center">
-            <h2 className="mb-6 text-xl font-bold sm:text-2xl">
-              2. Copie o código
-            </h2>
-            <p className="leading-7 text-gray-200">
-              Acesse sua biblioteca e copie o código de ativação do jogo que
-              você comprou.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-black p-6 text-center">
-            <h2 className="mb-6 text-xl font-bold sm:text-2xl">
-              3. Resgate e jogue
-            </h2>
-            <p className="leading-7 text-gray-200">
-              Cole o código na plataforma escolhida (Steam, Xbox, PlayStation ou
-              Epic Games) e comece a jogar!
-            </p>
-          </div>
+    <section className="w-full bg-slate-950 px-4 py-16 sm:px-6 sm:py-18">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
+            Passo a passo
+          </p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-5xl">
+            Do carrinho ao resgate
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
+            O processo foi desenhado para ser simples: voce compra, recebe a
+            key e ativa o jogo direto na plataforma correspondente.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6">
+          {steps.map((step, index) => (
+            <article
+              key={step.title}
+              className="rounded-[28px] border border-slate-800 bg-slate-950/80 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.3)]"
+            >
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-sm font-semibold text-blue-100">
+                {index + 1}
+              </span>
+              <h3 className="mt-5 text-xl font-semibold text-white">
+                {step.title}
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                {step.description}
+              </p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

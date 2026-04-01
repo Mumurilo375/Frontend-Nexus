@@ -1,46 +1,46 @@
+const faqItems = [
+  {
+    question: "O que sao keys de jogos?",
+    answer:
+      "Keys sao codigos alfanumericos que liberam jogos digitais em plataformas como Steam, Xbox, PlayStation e Nintendo.",
+  },
+  {
+    question: "O que faco se minha key nao funcionar?",
+    answer:
+      "Como o Nexus e uma demo academica, a entrega e simulada. Em um projeto real, esse seria o ponto de acionar suporte e validar a compra.",
+  },
+  {
+    question: "Posso usar a mesma key em varias contas?",
+    answer:
+      "Nao. Uma key valida normalmente pode ser resgatada apenas uma vez e fica vinculada a uma unica conta.",
+  },
+];
+
 export default function PerguntasFrequentes() {
   return (
-    <section className="relative flex min-h-[60vh] w-full flex-col items-center justify-center  bg-linear-to-r from-blue-900/40 via-transparent to-black/10 px-4 py-16 text-center sm:min-h-[68vh] sm:py-20">
-      <div className="mx-auto w-full max-w-6xl space-y-4 text-center">
-        <h1 className="md:text-7xl text-2xl mb-20">Perguntas Frequentes</h1>
-        <div className="">
-          <details className="mx-auto w-full rounded-lg bg-gray-600 px-8 py-4 md:max-w-5xl">
-            <summary className="cursor-pointer text-lg font-semibold text-gray-200">
-              O que são keys de jogos?
-            </summary>
-            <p className="mt-2 text-gray-300">
-              Keys de jogos são códigos alfanuméricos que permitem ativar e
-              baixar jogos digitais em plataformas como Steam, Xbox, PlayStation
-              e Epic Games. Elas funcionam como um ingresso digital para acessar
-              o conteúdo do jogo.
-            </p>
-          </details>
-        </div>
+    <section className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.1),_transparent_35%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-4 py-18 sm:py-20">
+      <div className="mx-auto w-full max-w-5xl">
+        <h2 className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
+          FAQ
+        </h2>
+        <h1 className="mb-12 mt-4 text-center text-3xl font-bold text-white sm:text-5xl">
+          Perguntas frequentes
+        </h1>
 
-        <div>
-          <details className="mx-auto w-full rounded-lg bg-gray-600 px-8 py-4 md:max-w-5xl">
-            <summary className="cursor-pointer text-lg font-semibold text-gray-200">
-              O que faço se minha key não funcionar?
-            </summary>
-            <p className="mt-2 text-gray-300">
-              Não. Cada key pode ser ativada apenas uma vez em uma única conta.
-              Depois de resgatada, ela fica permanentemente vinculada àquela
-              conta.
-            </p>
-          </details>
-        </div>
-
-        <div>
-          <details className="mx-auto w-full rounded-lg bg-gray-600 px-8 py-4 md:max-w-5xl">
-            <summary className="cursor-pointer text-lg font-semibold text-gray-200">
-              Posso usar a mesma key em várias contas?
-            </summary>
-            <p className="mt-2 text-gray-300">
-              Não. Cada key pode ser ativada apenas uma vez em uma única conta.
-              Depois de resgatada, ela fica permanentemente vinculada àquela
-              conta.
-            </p>
-          </details>
+        <div className="space-y-4">
+          {faqItems.map((item) => (
+            <details
+              key={item.question}
+              className="group rounded-[24px] border border-slate-800 bg-slate-950/80 px-6 py-5 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
+            >
+              <summary className="cursor-pointer list-none text-left text-lg font-semibold text-slate-100">
+                {item.question}
+              </summary>
+              <p className="mt-3 text-left text-sm leading-7 text-slate-300">
+                {item.answer}
+              </p>
+            </details>
+          ))}
         </div>
       </div>
     </section>

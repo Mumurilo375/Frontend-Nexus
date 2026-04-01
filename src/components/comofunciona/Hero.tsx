@@ -1,12 +1,19 @@
 function Hero() {
   return (
-    <section className="relative flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 bg-linear-to-r from-blue-900/40 via-transparent to-black/10 px-4 py-16 text-center sm:min-h-[68vh] sm:py-20">
-      <h1 className="text-3xl font-bold leading-tight sm:text-5xl lg:text-7xl">Como funcionam as Keys?</h1>
-      <p className="max-w-3xl text-sm font-semibold leading-6 text-gray-200 sm:text-base sm:leading-7">
-        Keys são códigos digitais que permitem ativar e baixar jogos diretamente
-        nas principais plataformas de jogos. Compre aqui, resgate lá, jogue em
-        qualquer lugar.
-      </p>
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.16),_transparent_42%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-4 py-20 sm:py-24">
+      <div className="mx-auto flex min-h-[52vh] w-full max-w-5xl flex-col items-center justify-center gap-5 text-center">
+        <span className="rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-blue-100">
+          Guia Nexus
+        </span>
+        <h1 className="text-3xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+          Como funcionam as keys?
+        </h1>
+        <p className="max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+          Keys sao codigos digitais que liberam o jogo diretamente na
+          plataforma escolhida. No Nexus voce compra, recebe a key na hora e
+          faz o resgate na sua conta com poucos passos.
+        </p>
+      </div>
     </section>
   );
 }

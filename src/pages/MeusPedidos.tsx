@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Footer from "../components/globals/Footer";
 import Pagination from "../components/globals/Pagination";
 import NavBar from "../components/globals/NavBar";
@@ -9,27 +10,18 @@ import {
   type PaginationMeta,
 } from "../services/http";
 
-type Order = {
-  id: number;
-  orderNumber: string;
-  status: string;
-  totalAmount: number | string;
-  createdAt?: string;
-  items?: Array<{
-    id: number;
-    price: number | string;
-    listing?: { game?: { title?: string }; platform?: { name?: string } };
-  }>;
-};
-
 type LibraryItem = {
   id: number;
   gameKey?: { keyValue?: string; soldAt?: string };
-  listing?: { game?: { title?: string }; platform?: { name?: string } };
+  listing?: {
+    price?: number | string;
+    game?: { title?: string; coverImageUrl?: string };
+    platform?: { name?: string };
+  };
   order?: { orderNumber?: string };
 };
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 const emptyMeta: PaginationMeta = {
   page: 1,
   limit: PAGE_SIZE,
@@ -41,15 +33,17 @@ function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
 }
 
+function maskKey(value: string) {
+  return value.replace(/[^\s]/g, "*");
+}
+
 export default function MeusPedidos() {
-  const [orders, setOrders] = useState<Order[]>([]);
   const [library, setLibrary] = useState<LibraryItem[]>([]);
-  const [ordersMeta, setOrdersMeta] = useState<PaginationMeta>(emptyMeta);
   const [libraryMeta, setLibraryMeta] = useState<PaginationMeta>(emptyMeta);
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [libraryPage, setLibraryPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [visibleKeys, setVisibleKeys] = useState<number[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -57,28 +51,22 @@ export default function MeusPedidos() {
         setLoading(true);
         setError("");
 
-        const [ordersResponse, libraryResponse] = await Promise.all([
-          api.get<PaginatedResponse<Order>>("/orders", {
-            params: { page: ordersPage, limit: PAGE_SIZE },
-          }),
-          api.get<PaginatedResponse<LibraryItem>>("/library/keys", {
-            params: { page: libraryPage, limit: PAGE_SIZE },
-          }),
-        ]);
+        const { data } = await api.get<PaginatedResponse<LibraryItem>>(
+          "/library/keys",
+          {
+            params: { page, limit: PAGE_SIZE },
+          },
+        );
 
-        setOrders(ordersResponse.data.items ?? []);
-        setOrdersMeta(ordersResponse.data.meta ?? emptyMeta);
-        setLibrary(libraryResponse.data.items ?? []);
-        setLibraryMeta(libraryResponse.data.meta ?? emptyMeta);
+        setLibrary(data.items ?? []);
+        setLibraryMeta(data.meta ?? emptyMeta);
       } catch (requestError) {
-        setOrders([]);
         setLibrary([]);
-        setOrdersMeta(emptyMeta);
         setLibraryMeta(emptyMeta);
         setError(
           getApiErrorMessage(
             requestError,
-            "Nao foi possivel carregar pedidos e chaves.",
+            "Nao foi possivel carregar seus pedidos e keys.",
           ),
         );
       } finally {
@@ -87,66 +75,142 @@ export default function MeusPedidos() {
     };
 
     void load();
-  }, [libraryPage, ordersPage]);
+  }, [page]);
+
+  const totalVisibleItems = useMemo(() => library.length, [library.length]);
+
+  const toggleKeyVisibility = (itemId: number) => {
+    setVisibleKeys((current) =>
+      current.includes(itemId)
+        ? current.filter((id) => id !== itemId)
+        : [...current, itemId],
+    );
+  };
 
   return (
     <div>
       <NavBar />
-      <main className="mx-auto min-h-screen w-full max-w-6xl px-6 pb-10 pt-28">
-        <h1 className="text-3xl font-bold">Meus pedidos</h1>
-        {loading && <p className="mt-4 text-gray-300">Carregando...</p>}
-        {!loading && error && <p className="mt-4 text-red-300">{error}</p>}
+      <main className="mx-auto min-h-screen w-full max-w-5xl px-6 pb-10 pt-28">
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold">Meus pedidos e keys</h1>
+          <p className="mt-2 max-w-2xl text-sm text-gray-300">
+            Aqui ficam suas compras liberadas. Cada item mostra o jogo, o valor
+            pago, o pedido e a key protegida.
+          </p>
+        </header>
+
+        {loading && <p className="text-gray-300">Carregando suas compras...</p>}
+        {!loading && error && (
+          <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            {error}
+          </p>
+        )}
 
         {!loading && !error && (
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <section className="rounded-xl bg-gray-900 p-5">
-              <h2 className="text-xl font-semibold">Pedidos</h2>
-              {orders.length === 0 && <p className="mt-3 text-gray-300">Voce ainda nao tem pedidos.</p>}
-              <ul className="mt-3 space-y-3">
-                {orders.map((order) => (
-                  <li key={order.id} className="rounded-lg bg-gray-800 p-3">
-                    <p className="font-semibold">{order.orderNumber}</p>
-                    <p className="text-sm text-gray-300">Status: {order.status}</p>
-                    <p className="text-sm text-gray-300">Total: {toMoney(Number(order.totalAmount ?? 0))}</p>
-                    <ul className="mt-2 space-y-1 text-sm text-gray-300">
-                      {(order.items ?? []).map((item) => (
-                        <li key={item.id}>
-                          {(item.listing?.game?.title || "Jogo") + " - " + (item.listing?.platform?.name || "Plataforma")}
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-              <Pagination
-                page={ordersMeta.page}
-                totalPages={ordersMeta.totalPages}
-                onPageChange={setOrdersPage}
-              />
-            </section>
+          <section className="rounded-2xl border border-gray-800 bg-gray-950/85 p-5">
+            <div className="flex flex-col gap-2 border-b border-gray-800 pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">
+                  Biblioteca de compras
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {libraryMeta.total} item(ns) encontrado(s)
+                </p>
+              </div>
+              <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
+                Mostrando {totalVisibleItems} nesta pagina
+              </p>
+            </div>
 
-            <section className="rounded-xl bg-gray-900 p-5">
-              <h2 className="text-xl font-semibold">Historico de chaves entregues</h2>
-              {library.length === 0 && <p className="mt-3 text-gray-300">Nenhuma chave entregue ainda.</p>}
-              <ul className="mt-3 space-y-3">
-                {library.map((item) => (
-                  <li key={item.id} className="rounded-lg bg-gray-800 p-3">
-                    <p className="font-semibold">{item.listing?.game?.title || "Jogo"}</p>
-                    <p className="text-sm text-gray-300">Plataforma: {item.listing?.platform?.name || "-"}</p>
-                    <p className="text-sm text-gray-300">Pedido: {item.order?.orderNumber || "-"}</p>
-                    <p className="mt-1 break-all rounded bg-black/40 px-2 py-1 text-xs text-emerald-300">
-                      KEY: {item.gameKey?.keyValue || "-"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-              <Pagination
-                page={libraryMeta.page}
-                totalPages={libraryMeta.totalPages}
-                onPageChange={setLibraryPage}
-              />
-            </section>
-          </div>
+            {library.length === 0 && (
+              <p className="py-8 text-center text-gray-300">
+                Nenhuma key entregue ainda.
+              </p>
+            )}
+
+            {library.length > 0 && (
+              <div className="mt-5 space-y-4">
+                {library.map((item) => {
+                  const isVisible = visibleKeys.includes(item.id);
+                  const keyValue = item.gameKey?.keyValue || "-";
+
+                  return (
+                    <article
+                      key={item.id}
+                      className="flex flex-col gap-4 rounded-2xl border border-gray-800 bg-gray-900/90 p-4 transition hover:border-gray-700"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <img
+                          src={
+                            item.listing?.game?.coverImageUrl || "/utils/logo.png"
+                          }
+                          alt={item.listing?.game?.title || "Jogo"}
+                          className="h-28 w-full rounded-xl object-cover sm:w-20"
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <h3 className="truncate text-xl font-semibold text-white">
+                                {item.listing?.game?.title || "Jogo"}
+                              </h3>
+                              <p className="mt-1 text-sm text-gray-400">
+                                {item.listing?.platform?.name || "Plataforma"}
+                              </p>
+                            </div>
+
+                            <div className="text-left sm:text-right">
+                              <p className="text-lg font-semibold text-blue-200">
+                                {toMoney(Number(item.listing?.price ?? 0))}
+                              </p>
+                              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-gray-500">
+                                Pedido {item.order?.orderNumber || "-"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-gray-800 bg-black/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500">
+                                Key
+                              </p>
+                              <p className="mt-1 break-all font-mono text-sm text-gray-100">
+                                {isVisible ? keyValue : maskKey(keyValue)}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility(item.id)}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 transition hover:border-blue-500 hover:text-white"
+                            >
+                              {isVisible ? (
+                                <>
+                                  <EyeOff className="h-4 w-4" />
+                                  Ocultar
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="h-4 w-4" />
+                                  Mostrar
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            <Pagination
+              page={libraryMeta.page}
+              totalPages={libraryMeta.totalPages}
+              onPageChange={setPage}
+            />
+          </section>
         )}
       </main>
       <Footer />

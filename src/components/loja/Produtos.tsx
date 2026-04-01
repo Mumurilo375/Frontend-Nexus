@@ -320,10 +320,13 @@ export default function Produtos({
   };
 
   const getSelectedListingForGame = (gameId: number) => {
+    const listingsForGame = getListingsForGame(gameId);
     const selectedId = selectedListingByGame[gameId];
-    if (!selectedId) return null;
+    if (!selectedId) return listingsForGame[0] ?? null;
     return (
-      getListingsForGame(gameId).find((item) => item.id === selectedId) ?? null
+      listingsForGame.find((item) => item.id === selectedId) ??
+      listingsForGame[0] ??
+      null
     );
   };
 

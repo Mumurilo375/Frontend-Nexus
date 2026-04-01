@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
-import { Trash2Icon } from "lucide-react";
+import { ArrowRight, ShoppingBag, Trash2Icon } from "lucide-react";
 
 type CartItem = {
   id: number;
@@ -32,7 +32,8 @@ export default function Carrinho() {
   const [busyListingId, setBusyListingId] = useState<number | null>(null);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
+    () =>
+      items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
     [items],
   );
 
@@ -58,7 +59,9 @@ export default function Carrinho() {
     try {
       setBusyListingId(listingId);
       await api.delete(`/cart/${listingId}`);
-      setItems((current) => current.filter((item) => item.listingId !== listingId));
+      setItems((current) =>
+        current.filter((item) => item.listingId !== listingId),
+      );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setBusyListingId(null);
@@ -98,9 +101,7 @@ export default function Carrinho() {
             </div>
           </div>
 
-          {loading && (
-            <p className="mt-6 text-gray-300">Carregando carrinho...</p>
-          )}
+          {loading && <p className="mt-6 text-gray-300">Carregando carrinho...</p>}
           {!loading && error && (
             <p className="mt-6 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
               {error}
@@ -185,8 +186,16 @@ export default function Carrinho() {
                   keys na biblioteca logo apos concluir o pedido.
                 </p>
                 <Link
+                  to="/loja"
+                  className="group mt-5 flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-blue-500/50 hover:text-white"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  Continuar comprando
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
                   to="/checkout"
-                  className="mt-5 block rounded-2xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-500"
+                  className="mt-3 block rounded-2xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-500"
                 >
                   Ir para pagamento
                 </Link>

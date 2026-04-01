@@ -23,6 +23,7 @@ import Loja from "./pages/Loja";
 import MeusPedidos from "./pages/MeusPedidos";
 import Ofertas from "./pages/Ofertas";
 import UserConfig from "./pages/UserConfig";
+import ListingDetails from "./pages/ListingDetails";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: "/comofunciona", element: <ComoFunciona /> },
       { path: "/login", element: <Login /> },
       { path: "/cadastro", element: <Cadastro /> },
+      { path: "/loja/:listingId", element: <ListingDetails /> },
       {
         path: "/admin",
         element: (

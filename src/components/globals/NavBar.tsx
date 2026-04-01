@@ -1,7 +1,12 @@
 import {
   AlignJustify,
+  ChevronDown,
   Heart,
+  LayoutDashboard,
+  LogOut,
+  ReceiptText,
   Search,
+  Settings,
   ShoppingCart,
   UserRound,
   X,
@@ -30,6 +35,8 @@ type GamesResponse = {
 
 const iconButtonClass =
   "inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-blue-600";
+const menuItemClass =
+  "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-slate-200 transition data-focus:bg-slate-900/90 data-focus:text-white data-focus:outline-hidden";
 
 function NavBar() {
   const navigate = useNavigate();
@@ -388,30 +395,66 @@ function NavBar() {
 
             {isLoggedIn ? (
               <HeadlessMenu as="div" className="relative hidden md:inline-flex">
-                <MenuButton className={`${iconButtonClass} focus:outline-none`}>
-                  {avatarSrc && !avatarBroken ? (
-                    <img
-                      src={avatarSrc}
-                      alt="Foto do usuario"
-                      className="h-8 w-8 rounded-full object-cover"
-                      onError={() => setAvatarBroken(true)}
-                    />
-                  ) : (
-                    <UserRound className="h-5 w-5" />
-                  )}
+                <MenuButton className="inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-950/85 px-2 py-1.5 text-left transition hover:border-blue-500/40 hover:bg-slate-900 focus:outline-none">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 text-slate-200">
+                    {avatarSrc && !avatarBroken ? (
+                      <img
+                        src={avatarSrc}
+                        alt="Foto do usuario"
+                        className="h-full w-full object-cover"
+                        onError={() => setAvatarBroken(true)}
+                      />
+                    ) : (
+                      <UserRound className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="hidden min-w-0 sm:block">
+                    <p className="max-w-28 truncate text-sm font-medium text-white">
+                      {authUser?.username || "Minha conta"}
+                    </p>
+                    <p className="max-w-28 truncate text-xs text-slate-400">
+                      {authUser?.email || "Conta Nexus"}
+                    </p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
                 </MenuButton>
 
                 <MenuItems
                   transition
-                  className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                  className="absolute right-0 z-10 mt-3 w-72 origin-top-right rounded-[28px] border border-slate-800 bg-slate-950/96 p-3 shadow-[0_24px_70px_rgba(2,6,23,0.45)] outline-none backdrop-blur-md transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                 >
-                  <div className="py-1">
+                  <div className="rounded-[22px] border border-slate-800 bg-slate-900/65 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-950 text-slate-200">
+                        {avatarSrc && !avatarBroken ? (
+                          <img
+                            src={avatarSrc}
+                            alt="Foto do usuario"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <UserRound className="h-6 w-6" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">
+                          {authUser?.username || "Minha conta"}
+                        </p>
+                        <p className="truncate text-xs text-slate-400">
+                          {authUser?.email || "Conta Nexus"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 space-y-1">
                     {isAdmin && (
                       <MenuItem>
                         <Link
                           to="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                          className={menuItemClass}
                         >
+                          <LayoutDashboard className="h-4 w-4 text-blue-300" />
                           Painel admin
                         </Link>
                       </MenuItem>
@@ -419,16 +462,18 @@ function NavBar() {
                     <MenuItem>
                       <Link
                         to="/configuracoes"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                        className={menuItemClass}
                       >
+                        <Settings className="h-4 w-4 text-blue-300" />
                         Configuracoes
                       </Link>
                     </MenuItem>
                     <MenuItem>
                       <Link
                         to="/meus-pedidos"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                        className={menuItemClass}
                       >
+                        <ReceiptText className="h-4 w-4 text-blue-300" />
                         Meus pedidos e keys
                       </Link>
                     </MenuItem>
@@ -436,8 +481,9 @@ function NavBar() {
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                        className={menuItemClass}
                       >
+                        <LogOut className="h-4 w-4 text-rose-300" />
                         Sair
                       </button>
                     </MenuItem>

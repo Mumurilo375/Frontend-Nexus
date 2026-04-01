@@ -5,50 +5,51 @@ function Intro() {
     {
       value: "Ativação Simples",
       label: "Copie a key, ative e jogue.",
-      color: "text-blue-500",
     },
     {
       value: "Entrega Imediata",
       label: "Receba sua key logo após a compra.",
-      color: "text-green-500",
     },
     {
       value: "Suporte a todo momento",
       label: "Atendimento disponível a qualquer hora",
-      color: "text-yellow-500",
     },
     {
       value: "Grandes jogos para você",
       label: "Explore vários títulos na nossa biblioteca",
-      color: "text-purple-500",
     },
   ];
   return (
-    <section className="bg-black py-20 px-6">
-      <div className="max-w-5xl mx-auto text-center">
-        <h1 className="text-6xl md:text-8xl font-bold mb-6 ">NEXUS </h1>
-        <p className="text-2xl md:text-4xl mb-4 text-gradient font-bold">
+    <section className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_34%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-6 py-20">
+      <div className="mx-auto max-w-5xl text-center">
+        <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-blue-100">
+          Nexus Store
+        </span>
+        <h1 className="mb-6 mt-5 text-6xl font-bold text-white md:text-8xl">
+          NEXUS
+        </h1>
+        <p className="mb-4 text-2xl font-bold text-blue-100 md:text-4xl">
           Entre no próximo nível
         </p>
-        <p className="text-lg md:text-1xl ">
+        <p className="text-lg leading-8 text-slate-300 md:text-xl">
           Descubra novos mundos, encontre grandes jogos e tenha acesso rápido às
           suas keys para ativar e jogar quando quiser
         </p>
       </div>
-      <div className="mt-8 flex justify-center gap-4 mb-16">
-        <Link to="/loja" className="px-6 hover:opacity-70 py-3 font-medium transition-all duration-300 rounded-full bg-blue-500 text-black font-semibold hover:scale-105 shadow-lg cursor-pointer">
+      <div className="mb-16 mt-8 flex justify-center gap-4">
+        <Link to="/loja" className="rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-950/30 transition-all duration-300 hover:scale-105 hover:bg-blue-500">
           Comprar Agora
         </Link>
-        <Link to="/comofunciona" className="px-8 font-medium transition-all duration-300 py-3 border border-white font-semibold rounded-full hover:scale-105 shadow-lg cursor-pointer hover:bg-white hover:text-black">
+        <Link to="/comofunciona" className="rounded-full border border-slate-700 bg-slate-950/70 px-8 py-3 font-semibold text-slate-200 shadow-lg transition-all duration-300 hover:scale-105 hover:border-blue-500/50 hover:text-white">
           Saiba Mais
         </Link>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mx-auto max-w-5xl">
+      <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 md:grid-cols-4">
         {specs.map((spec, index) => (
-            <div key={index} className="bg-gray-900 rounded-2xl p-6 hover:bg-gray-700 transition-all duration-300 hover:scale-105">
-                <p className={`mb-2 text-2xl font-bold ${spec.color}`}>{spec.value}</p>
-                <p>{spec.label}</p>
-            </div>
+          <div key={index} className="rounded-[28px] border border-slate-800 bg-slate-950/80 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30">
+            <p className="mb-2 text-2xl font-bold text-white">{spec.value}</p>
+            <p className="text-slate-300">{spec.label}</p>
+          </div>
         ))}
       </div>
     </section>

@@ -15,44 +15,43 @@ export default function Plataforms() {
       id: "PlayStation",
       icon: playstationIcon,
       consoleImage: PlaystationConsole,
-      color: "bg-blue-900",
     },
     {
       id: "Xbox",
       icon: xboxIcon,
       consoleImage: XboxConsole,
-      color: "bg-green-900",
     },
     {
       id: "Nintendo Switch",
       icon: nintendoIcon,
       consoleImage: NintendoConsole,
-      color: "bg-red-900",
     },
     {
       id: "Steam",
       icon: SteamIcon,
       consoleImage: PcConsole,
-      color: "bg-gray-300",
     },
   ];
   const [selected, setSelected] = useState(plataforms[0].id);
   const selectedPlataform =
     plataforms.find((plataform) => plataform.id === selected) || plataforms[0];
   return (
-    <section id="plataforms" className="bg-black py-15 px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl mb:text-6xl font-bold mb-4f">
+    <section
+      id="plataforms"
+      className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-8 py-16"
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 text-center">
+          <h2 className="text-5xl font-bold text-white mb:text-6xl">
             Escolha sua plataforma
           </h2>
-          <p className="text-xl text-gray-400 mb-4">
+          <p className="mb-4 text-xl text-slate-400">
             4 plataformas para jogar{" "}
           </p>
         </div>
         <div className="flex justify-center mb-8">
-          <div className="relative w-full max-w-3xl">
-            <div className="relative flex itens-center  justify-center min-h-70">
+          <div className="relative w-full max-w-3xl rounded-[32px] border border-slate-800 bg-slate-950/78 p-6 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">
+            <div className="relative flex min-h-70 items-center justify-center">
               <img
                 src={selectedPlataform.consoleImage}
                 alt="PlataformIcon"
@@ -60,8 +59,8 @@ export default function Plataforms() {
               />
             </div>
             <div className="absolute bottom-8 left-0 right-0 text-center">
-              <div className="px-8 py-4 rounded-full bg-black/40 backdrop-blur-md inline-block ">
-                <h3 className="text-2xl font-semibold">
+              <div className="inline-block rounded-full border border-slate-700 bg-slate-950/70 px-8 py-4 backdrop-blur-md">
+                <h3 className="text-2xl font-semibold text-white">
                   {selectedPlataform.id}
                 </h3>
               </div>
@@ -74,12 +73,16 @@ export default function Plataforms() {
               <button
                 key={plataform.id}
                 onClick={() => setSelected(plataform.id)}
-                className={`relative transition-all duration-300${
+                className={`relative transition-all duration-300 ${
                   selected === plataform.id ? "scale-110" : "scale-100"
                 }`}
               >
                 <div
-                  className={`w-16 h-16 rounded-full overflow-hidden p-1  hover:scale-105 border-4 ${plataform.color} ${selected === plataform.id ? "border-white" : "border-gray-500"} `}
+                  className={`h-16 w-16 overflow-hidden rounded-full border p-1 shadow-lg ${
+                    selected === plataform.id
+                      ? "border-blue-400 bg-blue-500/10"
+                      : "border-slate-700 bg-slate-950/80"
+                  }`}
                 >
                   <img
                     src={plataform.icon}

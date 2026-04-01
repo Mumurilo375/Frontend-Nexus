@@ -1,35 +1,35 @@
 function Highlights() {
   return (
-    <section className="bg-black py-20 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-1">
-          <h2 className="text-6xl font-bold mb-4">
+    <section className="bg-[linear-gradient(180deg,#020617_0%,#030712_100%)] px-6 py-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 text-center">
+          <h2 className="mb-4 text-5xl font-bold text-white md:text-6xl">
             Para Todos os Tipos de Jogador
           </h2>
-          <p className="text-xl text-gray-400 my-7">
+          <p className="my-7 text-xl text-slate-400">
             Descubra jogos de diferentes gêneros e estilos em um só lugar
           </p>
         </div>
         <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="bg-gray-900 rounded-3xl p-8 ">
+          <div className="rounded-[30px] border border-slate-800 bg-slate-950/78 p-8 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">
             <img
               src="/games/homemaranha.png"
               alt="wukong-game"
-              className="w-full h-64 object-cover rounded-2xl mb-4"
+              className="mb-4 h-64 w-full rounded-2xl border border-slate-800 object-cover"
             />
-            <h3 className="font-bold mb-2 text-3xl">Ação e Aventura</h3>
-            <p className="text-gray-300">
+            <h3 className="mb-2 text-3xl font-bold text-white">Ação e Aventura</h3>
+            <p className="text-slate-300">
               Enfrente desafios intensos e explore novos mundos
             </p>
           </div>
-          <div className="bg-gray-900 rounded-3xl p-8">
+          <div className="rounded-[30px] border border-slate-800 bg-slate-950/78 p-8 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">
             <img
               src="/games/eldenring.jpg"
               alt="eldenring-game"
-              className="w-full h-64 object-cover rounded-2xl mb-4"
+              className="mb-4 h-64 w-full rounded-2xl border border-slate-800 object-cover"
             />
-            <h3 className="font-bold mb-2 text-3xl">Estratégia e RPG</h3>
-            <p className="text-gray-300">
+            <h3 className="mb-2 text-3xl font-bold text-white">Estratégia e RPG</h3>
+            <p className="text-slate-300">
               Planeje cada movimento e construa sua jornada.
             </p>
           </div>

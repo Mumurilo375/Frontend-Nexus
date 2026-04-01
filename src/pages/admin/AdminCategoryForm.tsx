@@ -88,18 +88,30 @@ export default function AdminCategoryForm() {
       {!loading && (
         <form
           onSubmit={handleSubmit}
-          className="grid gap-4 rounded-xl border border-gray-800 bg-gray-900 p-5"
+          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
         >
-          <label className="text-sm text-gray-200">
-            Nome
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-              required
-            />
-          </label>
+          <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
+            <label className="text-sm text-gray-200">
+              Nome
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70"
+                required
+              />
+            </label>
+
+            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
+                Estrutura
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Use nomes curtos e claros para manter os filtros da loja e do
+                painel mais organizados.
+              </p>
+            </aside>
+          </div>
 
           {error && (
             <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -111,13 +123,13 @@ export default function AdminCategoryForm() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>
             <Link
               to="/admin/categories"
-              className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-200 transition hover:border-gray-500"
+              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
             >
               Cancelar
             </Link>

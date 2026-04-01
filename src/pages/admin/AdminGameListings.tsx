@@ -121,7 +121,7 @@ export default function AdminGameListings() {
         gameId ? (
           <Link
             to={`/admin/games/${gameId}/listings/new`}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+            className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
           >
             Novo listing
           </Link>
@@ -147,32 +147,37 @@ export default function AdminGameListings() {
             {listings.map((listing) => (
               <article
                 key={listing.id}
-                className="rounded-xl border border-gray-800 bg-gray-900 p-5"
+                className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-5 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold">
                       {listing.platform?.name || "Plataforma"}
                     </h2>
-                    <p className="mt-1 text-sm text-blue-200">
+                    <p className="mt-2 text-2xl font-semibold text-blue-100">
                       R$ {Number(listing.price ?? 0).toFixed(2)}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       listing.isActive === false
-                        ? "bg-rose-500/20 text-rose-200"
-                        : "bg-emerald-500/20 text-emerald-200"
+                        ? "border border-slate-700 bg-slate-900 text-slate-300"
+                        : "border border-blue-500/20 bg-blue-500/10 text-blue-100"
                     }`}
                   >
                     {listing.isActive === false ? "Inativo" : "Ativo"}
                   </span>
                 </div>
 
+                <p className="mt-4 text-sm leading-6 text-slate-300">
+                  Listing vinculado ao jogo atual. A plataforma nao se repete no
+                  cadastro para evitar combinacoes duplicadas.
+                </p>
+
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link
                     to={`/admin/games/${gameId}/listings/${listing.id}/edit`}
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-500"
+                    className="rounded-full bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
                   >
                     Editar
                   </Link>
@@ -182,7 +187,7 @@ export default function AdminGameListings() {
                       void handleDelete(listing.id);
                     }}
                     disabled={deletingId === listing.id}
-                    className="rounded-md bg-rose-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full bg-rose-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {deletingId === listing.id ? "Excluindo..." : "Excluir"}
                   </button>

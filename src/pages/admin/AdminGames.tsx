@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminLayout from "../../components/admin/AdminLayout";
@@ -18,7 +19,7 @@ type GameItem = {
   isActive?: boolean;
 };
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 9;
 const emptyMeta: PaginationMeta = {
   page: 1,
   limit: PAGE_SIZE,
@@ -27,12 +28,13 @@ const emptyMeta: PaginationMeta = {
 };
 
 const actionClass =
-  "rounded-md px-3 py-2 text-sm font-medium transition";
+  "rounded-full px-4 py-2.5 text-sm font-medium transition";
 
 export default function AdminGames() {
   const [games, setGames] = useState<GameItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -43,7 +45,11 @@ export default function AdminGames() {
       setError("");
 
       const { data } = await api.get<PaginatedResponse<GameItem>>("/games", {
-        params: { page: nextPage, limit: PAGE_SIZE },
+        params: {
+          page: nextPage,
+          limit: PAGE_SIZE,
+          q: searchTerm.trim() || undefined,
+        },
       });
 
       setGames(data.items ?? []);
@@ -57,11 +63,15 @@ export default function AdminGames() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, searchTerm]);
 
   useEffect(() => {
     void loadGames();
   }, [loadGames]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const handleDelete = async (gameId: number) => {
     const confirmed = window.confirm("Deseja excluir este jogo?");
@@ -98,12 +108,33 @@ export default function AdminGames() {
       actions={
         <Link
           to="/admin/games/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+          className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
         >
           Novo jogo
         </Link>
       }
     >
+      <div className="rounded-[28px] border border-slate-800 bg-slate-950/75 p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <label className="block text-sm font-medium text-gray-200">
+            Buscar jogo
+          </label>
+          <span className="text-sm text-slate-400">
+            {meta.total} resultado{meta.total === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="relative mt-2">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Pesquisar por titulo..."
+            className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-blue-500/70"
+          />
+        </div>
+      </div>
+
       {loading && <p className="text-gray-300">Carregando jogos...</p>}
       {!loading && error && (
         <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -113,7 +144,9 @@ export default function AdminGames() {
 
       {!loading && !error && games.length === 0 && (
         <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-gray-300">
-          Nenhum jogo cadastrado.
+          {searchTerm.trim()
+            ? "Nenhum jogo encontrado para essa busca."
+            : "Nenhum jogo cadastrado."}
         </p>
       )}
 
@@ -123,12 +156,12 @@ export default function AdminGames() {
             {games.map((game) => (
               <article
                 key={game.id}
-                className="rounded-xl border border-gray-800 bg-gray-900 p-4"
+                className="overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950/78 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.3)]"
               >
                 <img
                   src={game.coverImageUrl || "/utils/logo.png"}
                   alt={game.title}
-                  className="h-44 w-full rounded-lg object-cover"
+                  className="h-48 w-full rounded-[22px] border border-slate-800 object-cover"
                 />
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
@@ -140,14 +173,16 @@ export default function AdminGames() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       game.isActive === false
-                        ? "bg-rose-500/20 text-rose-200"
-                        : "bg-emerald-500/20 text-emerald-200"
+                        ? "border border-slate-700 bg-slate-900 text-slate-300"
+                        : "border border-blue-500/20 bg-blue-500/10 text-blue-100"
                     }`}
                   >
                     {game.isActive === false ? "Inativo" : "Ativo"}
                   </span>
                 </div>
-                <p className="mt-3 text-sm text-gray-300">{game.description}</p>
+                <p className="mt-3 min-h-16 text-sm leading-6 text-gray-300">
+                  {game.description}
+                </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link
@@ -158,9 +193,9 @@ export default function AdminGames() {
                   </Link>
                   <Link
                     to={`/admin/games/${game.id}/listings`}
-                    className={`${actionClass} bg-emerald-600 text-white hover:bg-emerald-500`}
+                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-200 hover:border-blue-500/50 hover:text-white`}
                   >
-                    Listings
+                    Gerenciar listings
                   </Link>
                   <button
                     type="button"

@@ -31,6 +31,8 @@ const initialForm: GameFormState = {
   coverImageUrl: "",
   isActive: true,
 };
+const inputClass =
+  "mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70";
 
 export default function AdminGameForm() {
   const navigate = useNavigate();
@@ -131,73 +133,94 @@ export default function AdminGameForm() {
       {!loading && (
         <form
           onSubmit={handleSubmit}
-          className="grid gap-4 rounded-xl border border-gray-800 bg-gray-900 p-5"
+          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
         >
-          <label className="text-sm text-gray-200">
-            Titulo
-            <input
-              type="text"
-              value={form.title}
-              onChange={(event) => handleChange("title", event.target.value)}
-              className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-              required
-            />
-          </label>
+          <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
+            <div className="space-y-5">
+              <label className="text-sm text-gray-200">
+                Titulo
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(event) => handleChange("title", event.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </label>
 
-          <label className="text-sm text-gray-200">
-            Descricao curta
-            <textarea
-              value={form.description}
-              onChange={(event) =>
-                handleChange("description", event.target.value)
-              }
-              className="mt-2 min-h-24 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-              required
-            />
-          </label>
+              <label className="text-sm text-gray-200">
+                Descricao curta
+                <textarea
+                  value={form.description}
+                  onChange={(event) =>
+                    handleChange("description", event.target.value)
+                  }
+                  className={`${inputClass} min-h-24`}
+                  required
+                />
+              </label>
 
-          <label className="text-sm text-gray-200">
-            Descricao longa
-            <textarea
-              value={form.longDescription}
-              onChange={(event) =>
-                handleChange("longDescription", event.target.value)
-              }
-              className="mt-2 min-h-32 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-              required
-            />
-          </label>
+              <label className="text-sm text-gray-200">
+                Descricao longa
+                <textarea
+                  value={form.longDescription}
+                  onChange={(event) =>
+                    handleChange("longDescription", event.target.value)
+                  }
+                  className={`${inputClass} min-h-36`}
+                  required
+                />
+              </label>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-gray-200">
-              Data de lancamento
-              <input
-                type="date"
-                value={form.releaseDate}
-                onChange={(event) =>
-                  handleChange("releaseDate", event.target.value)
-                }
-                className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-                required
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="text-sm text-gray-200">
+                  Data de lancamento
+                  <input
+                    type="date"
+                    value={form.releaseDate}
+                    onChange={(event) =>
+                      handleChange("releaseDate", event.target.value)
+                    }
+                    className={inputClass}
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-gray-200">
+                  URL da capa
+                  <input
+                    type="url"
+                    value={form.coverImageUrl}
+                    onChange={(event) =>
+                      handleChange("coverImageUrl", event.target.value)
+                    }
+                    className={inputClass}
+                    required
+                  />
+                </label>
+              </div>
+            </div>
+
+            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
+                Preview
+              </p>
+              <img
+                src={form.coverImageUrl.trim() || "/utils/logo.png"}
+                alt={form.title || "Preview do jogo"}
+                className="mt-4 h-56 w-full rounded-[20px] border border-slate-800 object-cover"
               />
-            </label>
-
-            <label className="text-sm text-gray-200">
-              URL da capa
-              <input
-                type="url"
-                value={form.coverImageUrl}
-                onChange={(event) =>
-                  handleChange("coverImageUrl", event.target.value)
-                }
-                className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-                required
-              />
-            </label>
+              <h2 className="mt-4 text-lg font-semibold text-white">
+                {form.title || "Titulo do jogo"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                {form.description || "A descricao curta aparece aqui como apoio visual."}
+              </p>
+            </aside>
           </div>
 
           {isEditMode && (
-            <label className="flex items-center gap-3 text-sm text-gray-200">
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-gray-200">
               <input
                 type="checkbox"
                 checked={form.isActive}
@@ -219,13 +242,13 @@ export default function AdminGameForm() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>
             <Link
               to="/admin/games"
-              className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-200 transition hover:border-gray-500"
+              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
             >
               Cancelar
             </Link>

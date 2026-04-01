@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "../../components/admin/AdminLayout";
 import api from "../../services/api";
@@ -10,6 +10,10 @@ import {
 type GameDetails = {
   id: number;
   title: string;
+  platformListings?: Array<{
+    id: number;
+    platform?: Platform;
+  }>;
 };
 
 type Platform = {
@@ -35,6 +39,8 @@ const initialForm: ListingFormState = {
   price: "",
   isActive: true,
 };
+const inputClass =
+  "mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70";
 
 export default function AdminListingForm() {
   const navigate = useNavigate();
@@ -46,6 +52,25 @@ export default function AdminListingForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const availablePlatforms = useMemo(() => {
+    const usedPlatformIds = new Set(
+      (game?.platformListings ?? [])
+        .map((listing) => listing.platform?.id)
+        .filter((platformId): platformId is number => Boolean(platformId)),
+    );
+
+    if (isEditMode) {
+      const currentPlatformId = Number(form.platformId);
+
+      return platforms.filter(
+        (platform) =>
+          !usedPlatformIds.has(platform.id) || platform.id === currentPlatformId,
+      );
+    }
+
+    return platforms.filter((platform) => !usedPlatformIds.has(platform.id));
+  }, [form.platformId, game?.platformListings, isEditMode, platforms]);
 
   useEffect(() => {
     if (!gameId) {
@@ -112,6 +137,11 @@ export default function AdminListingForm() {
       return;
     }
 
+    if (!isEditMode && availablePlatforms.length === 0) {
+      setError("Este jogo ja possui listings em todas as plataformas disponiveis.");
+      return;
+    }
+
     if (!gameId) {
       setError("Jogo invalido.");
       return;
@@ -163,62 +193,89 @@ export default function AdminListingForm() {
       {!loading && (
         <form
           onSubmit={handleSubmit}
-          className="grid gap-4 rounded-xl border border-gray-800 bg-gray-900 p-5"
+          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
         >
-          <label className="text-sm text-gray-200">
-            Jogo
-            <input
-              type="text"
-              value={game?.title ?? ""}
-              readOnly
-              disabled
-              className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-gray-400"
-            />
-          </label>
+          <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
+            <div className="space-y-5">
+              <label className="text-sm text-gray-200">
+                Jogo
+                <input
+                  type="text"
+                  value={game?.title ?? ""}
+                  readOnly
+                  disabled
+                  className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-400"
+                />
+              </label>
 
-          <label className="text-sm text-gray-200">
-            Plataforma
-            <select
-              value={form.platformId}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  platformId: event.target.value,
-                }))
-              }
-              disabled={isEditMode}
-              className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white disabled:text-gray-400"
-              required
-            >
-              <option value="">Selecione</option>
-              {platforms.map((platform) => (
-                <option key={platform.id} value={platform.id}>
-                  {platform.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label className="text-sm text-gray-200">
+                Plataforma
+                <select
+                  value={form.platformId}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      platformId: event.target.value,
+                    }))
+                  }
+                  disabled={isEditMode}
+                  className={`${inputClass} disabled:text-gray-400`}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {availablePlatforms.map((platform) => (
+                    <option key={platform.id} value={platform.id}>
+                      {platform.name}
+                    </option>
+                  ))}
+                </select>
+                {!isEditMode && availablePlatforms.length === 0 && (
+                  <p className="mt-2 text-xs text-amber-300">
+                    Todas as plataformas ja possuem listing para este jogo.
+                  </p>
+                )}
+                {!isEditMode && availablePlatforms.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-400">
+                    So aparecem plataformas ainda nao usadas neste jogo.
+                  </p>
+                )}
+              </label>
 
-          <label className="text-sm text-gray-200">
-            Preco
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={form.price}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  price: event.target.value,
-                }))
-              }
-              className="mt-2 w-full rounded-md bg-gray-800 px-3 py-2 text-white"
-              required
-            />
-          </label>
+              <label className="text-sm text-gray-200">
+                Preco
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.price}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      price: event.target.value,
+                    }))
+                  }
+                  className={inputClass}
+                  required
+                />
+              </label>
+            </div>
+
+            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
+                Resumo
+              </p>
+              <h2 className="mt-4 text-lg font-semibold text-white">
+                {game?.title || "Jogo selecionado"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Use esta tela para controlar a combinacao de plataforma e preco
+                sem duplicar listings do mesmo jogo.
+              </p>
+            </aside>
+          </div>
 
           {isEditMode && (
-            <label className="flex items-center gap-3 text-sm text-gray-200">
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-gray-200">
               <input
                 type="checkbox"
                 checked={form.isActive}
@@ -242,14 +299,14 @@ export default function AdminListingForm() {
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={saving || (!isEditMode && availablePlatforms.length === 0)}
+              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>
             <Link
               to={gameId ? `/admin/games/${gameId}/listings` : "/admin/games"}
-              className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-200 transition hover:border-gray-500"
+              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
             >
               Cancelar
             </Link>

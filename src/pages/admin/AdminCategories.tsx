@@ -100,7 +100,7 @@ export default function AdminCategories() {
       actions={
         <Link
           to="/admin/categories/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+          className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
         >
           Nova categoria
         </Link>
@@ -121,44 +121,52 @@ export default function AdminCategories() {
 
       {!loading && !error && categories.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-800">
-            <table className="min-w-full divide-y divide-gray-800 bg-gray-900 text-sm">
-              <thead className="bg-gray-950 text-left text-gray-300">
-                <tr>
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Nome</th>
-                  <th className="px-4 py-3 text-right">Acoes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {categories.map((category) => (
-                  <tr key={category.id}>
-                    <td className="px-4 py-3 text-gray-400">{category.id}</td>
-                    <td className="px-4 py-3 font-medium">{category.name}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <Link
-                          to={`/admin/categories/${category.id}/edit`}
-                          className="rounded-md bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-500"
-                        >
-                          Editar
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void handleDelete(category.id);
-                          }}
-                          disabled={deletingId === category.id}
-                          className="rounded-md bg-rose-600 px-3 py-2 text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {deletingId === category.id ? "Excluindo..." : "Excluir"}
-                        </button>
-                      </div>
-                    </td>
+          <div className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-4">
+            <div className="flex items-center justify-between pb-4">
+              <p className="text-sm text-slate-300">
+                {meta.total} categoria{meta.total === 1 ? "" : "s"} cadastrada
+                {meta.total === 1 ? "" : "s"}
+              </p>
+            </div>
+            <div className="overflow-hidden rounded-[24px] border border-slate-800">
+              <table className="min-w-full divide-y divide-slate-800 bg-slate-950 text-sm">
+                <thead className="bg-slate-900 text-left text-gray-300">
+                  <tr>
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">Nome</th>
+                    <th className="px-4 py-3 text-right">Acoes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {categories.map((category) => (
+                    <tr key={category.id}>
+                      <td className="px-4 py-4 text-gray-400">{category.id}</td>
+                      <td className="px-4 py-4 font-medium">{category.name}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            to={`/admin/categories/${category.id}/edit`}
+                            className="rounded-full bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
+                          >
+                            Editar
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleDelete(category.id);
+                            }}
+                            disabled={deletingId === category.id}
+                            className="rounded-full bg-rose-600 px-4 py-2 text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingId === category.id ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <Pagination

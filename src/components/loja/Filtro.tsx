@@ -45,7 +45,7 @@ function Filtro({
       <button
         type="button"
         onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
-        className="mb-3 w-full rounded-xl bg-black/10 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
+        className="mb-3 w-full rounded-2xl border border-slate-800 bg-slate-950/85 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
         aria-expanded={menuAbertoMobile}
         aria-controls="filtro-categorias"
       >
@@ -54,14 +54,15 @@ function Filtro({
 
       <nav
         id="filtro-categorias"
-        className={`nexus-scrollbar text-semibold max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl bg-black p-4 leading-10 text-gray-300 ${
+        className={`nexus-scrollbar max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[28px] border border-slate-800 bg-slate-950/88 p-5 leading-10 text-gray-300 shadow-[0_18px_45px_rgba(2,6,23,0.32)] ${
           menuAbertoMobile ? "block" : "hidden"
         } lg:block`}
       >
-        <h2 className="font-bold text-2xl text p-4 mb-1"> 
+        <h2 className="mb-1 p-4 text-2xl font-bold text-white">
           <FilterIcon className="inline-block mr-2" />
-          Filtros</h2>
-        <h2 className="font-bold text-2xl p-4 mb-2">Plataformas</h2>
+          Filtros
+        </h2>
+        <h2 className="mb-2 p-4 text-2xl font-bold text-white">Plataformas</h2>
         <ul className="mb-2">
           <li>
             <button
@@ -73,7 +74,7 @@ function Filtro({
               }}
               className={
                 selectedPlatforms.length === 0
-                  ? "font-bold text-blue-600"
+                  ? "font-bold text-blue-300"
                   : "hover:text-white"
               }
             >
@@ -87,7 +88,7 @@ function Filtro({
                 onClick={() => selecionarPlataforma(platform)}
                 className={
                   selectedPlatforms.includes(platform)
-                    ? "font-bold text-blue-600"
+                    ? "font-bold text-blue-300"
                     : "hover:text-white"
                 }
               >
@@ -96,7 +97,7 @@ function Filtro({
             </li>
           ))}
         </ul>
-        <h2 className="font-bold text-2xl p-4 mb-1">Categorias</h2>
+        <h2 className="mb-1 p-4 text-2xl font-bold text-white">Categorias</h2>
           
         <ul className="mb-2">
           <li>
@@ -109,8 +110,8 @@ function Filtro({
               }}
               className={
                 selectedCategories.length === 0
-                  ? "font-bold text-blue-600"
-                  : "hover:text-blue-600"
+                  ? "font-bold text-blue-300"
+                  : "hover:text-white"
               }
             >
               Todas
@@ -123,7 +124,7 @@ function Filtro({
                 onClick={() => selecionarCategoria(category)}
                 className={
                   selectedCategories.includes(category)
-                    ? "font-bold text-blue-600"
+                    ? "font-bold text-blue-300"
                     : "hover:text-white"
                 }
               >

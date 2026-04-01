@@ -25,7 +25,7 @@ function Loja() {
   };
 
   return (
-    <div>
+    <div className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_30%),linear-gradient(180deg,#020617_0%,#030712_100%)]">
       <NavBar />
       <Intro />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-10 lg:flex-row lg:items-start lg:px-2 xl:px-0">

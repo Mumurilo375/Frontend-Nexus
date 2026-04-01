@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Search,
-  UserRound,
-  ShoppingCart,
-  Heart,
   AlignJustify,
+  Heart,
+  Search,
+  ShoppingCart,
+  UserRound,
   X,
 } from "lucide-react";
 import {
@@ -13,9 +12,10 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
-import { clearAuth, getAuthUser, isAuthenticated } from "../../services/auth";
 import AuthRequiredModal from "./AuthRequiredModal";
 
 type GameSuggestion = {
@@ -45,8 +45,12 @@ function NavBar() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [avatarBroken, setAvatarBroken] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const isLoggedIn = isAuthenticated();
-  const authUser = getAuthUser();
+  const {
+    isAdmin,
+    isAuthenticated: isLoggedIn,
+    logout,
+    user: authUser,
+  } = useAuth();
   const avatarSrc = authUser?.avatarUrl?.trim() || "";
 
   useEffect(() => {
@@ -54,9 +58,10 @@ function NavBar() {
   }, [avatarSrc]);
 
   const openAuthModal = () => setShowAuthModal(true);
+
   const goToLogin = () => {
     setShowAuthModal(false);
-    navigate("/login", {
+    void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };
@@ -161,11 +166,11 @@ function NavBar() {
       return;
     }
 
-    navigate(`/loja?q=${encodeURIComponent(query)}`);
+    void navigate(`/loja?q=${encodeURIComponent(query)}`);
     setSearchOpen(false);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     irParaResultado(searchTerm);
   };
@@ -181,15 +186,15 @@ function NavBar() {
     searchParams.delete("q");
     const nextSearch = searchParams.toString();
 
-    navigate({
+    void navigate({
       pathname: location.pathname,
       search: nextSearch ? `?${nextSearch}` : "",
     });
   };
 
   const handleLogout = () => {
-    clearAuth();
-    navigate("/");
+    logout();
+    void navigate("/");
   };
 
   const handleGoToFavorites = () => {
@@ -198,7 +203,7 @@ function NavBar() {
       return;
     }
 
-    navigate("/favoritos");
+    void navigate("/favoritos");
   };
 
   return (
@@ -213,13 +218,13 @@ function NavBar() {
 
       <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="shrink-0 ">
+          <div className="shrink-0">
             <Link
               to="/"
-              className="block hover:scale-105 transition-all duration-300"
+              className="block transition-all duration-300 hover:scale-105"
             >
               <img
-                src="utils/logo.png"
+                src="/utils/logo.png"
                 alt="Logo Nexus"
                 className="h-10 w-auto"
               />
@@ -229,30 +234,30 @@ function NavBar() {
           <div className="hidden items-center gap-8 md:flex">
             <Link
               to="/loja"
-              className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
             >
               Loja
             </Link>
             <Link
               to="/ofertas"
-              className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
             >
               Ofertas
             </Link>
-
             <Link
               to="/comofunciona"
-              className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
+              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
             >
-              {" "}
               Como funciona
             </Link>
-            <Link
-              to="/listagem-usuarios"
-              className="hover:text-blue-600 hover:scale-105 transition-all duration-300"
-            >
-              Teste API
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
+              >
+                Painel admin
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3 text-sm md:hidden">
@@ -320,7 +325,7 @@ function NavBar() {
                   )}
 
                   {!loadingSuggestions && !searchError && (
-                    <ul className="max-h-60 overflow-y-auto nexus-scrollbar">
+                    <ul className="nexus-scrollbar max-h-60 overflow-y-auto">
                       {filteredSuggestions.map((game) => (
                         <li key={game.id}>
                           <button
@@ -332,7 +337,7 @@ function NavBar() {
                             className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-800"
                           >
                             <img
-                              src={game.coverImageUrl || "/logo.png"}
+                              src={game.coverImageUrl || "/utils/logo.png"}
                               alt={game.title}
                               className="h-9 w-9 rounded object-cover"
                             />
@@ -401,6 +406,16 @@ function NavBar() {
                   className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                 >
                   <div className="py-1">
+                    {isAdmin && (
+                      <MenuItem>
+                        <Link
+                          to="/admin"
+                          className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                        >
+                          Painel admin
+                        </Link>
+                      </MenuItem>
+                    )}
                     <MenuItem>
                       <Link
                         to="/configuracoes"
@@ -479,12 +494,14 @@ function NavBar() {
               >
                 Como funciona
               </Link>
-              <Link
-                to="/listagem-usuarios"
-                className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
-                Teste API
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+                >
+                  Painel admin
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleGoToFavorites}
@@ -505,7 +522,7 @@ function NavBar() {
                   to="/configuracoes"
                   className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
                 >
-                  <UserRound className="h-4 w-4 " /> Configuracoes
+                  <UserRound className="h-4 w-4" /> Configuracoes
                 </Link>
               )}
               {isLoggedIn && (
@@ -513,7 +530,7 @@ function NavBar() {
                   to="/meus-pedidos"
                   className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
                 >
-                  <UserRound className="h-4 w-4 " /> Meus pedidos e keys
+                  <UserRound className="h-4 w-4" /> Meus pedidos e keys
                 </Link>
               )}
               {!isLoggedIn && (
@@ -540,4 +557,5 @@ function NavBar() {
     </>
   );
 }
+
 export default NavBar;

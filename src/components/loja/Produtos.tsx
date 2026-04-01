@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { isAuthenticated } from "../../services/auth";
+import { useAuth } from "../../contexts/useAuth";
+import Pagination from "../globals/Pagination";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import steamLogo from "../../assets/steam.png";
 import playstationLogo from "../../assets/playlogo.png";
@@ -60,6 +61,8 @@ type WishlistResponse = {
   items: WishlistItem[];
 };
 
+const PAGE_SIZE = 6;
+
 const platformLogoByName: Record<string, string> = {
   steam: steamLogo,
   playstation: playstationLogo,
@@ -98,14 +101,16 @@ export default function Produtos({
     Record<number, number>
   >({});
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated: isLoggedIn } = useAuth();
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
   const goToLogin = () => {
     setShowAuthModal(false);
-    navigate("/login", {
+    void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };
@@ -161,6 +166,12 @@ export default function Produtos({
     );
   }, [games, query, selectedCategories, selectedPlatforms]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredGames.length / PAGE_SIZE));
+  const paginatedGames = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredGames.slice(start, start + PAGE_SIZE);
+  }, [filteredGames, page]);
+
   useEffect(() => {
     onCategoriesLoaded(availableCategories);
   }, [availableCategories, onCategoriesLoaded]);
@@ -168,6 +179,10 @@ export default function Produtos({
   useEffect(() => {
     onPlatformsLoaded(availablePlatforms);
   }, [availablePlatforms, onPlatformsLoaded]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [games, query, selectedCategories, selectedPlatforms]);
 
   useEffect(() => {
     const carregarJogos = async () => {
@@ -242,7 +257,7 @@ export default function Produtos({
 
   useEffect(() => {
     const carregarFavoritos = async () => {
-      if (!isAuthenticated()) {
+      if (!isLoggedIn) {
         setFavoriteIds([]);
         setCartListingIds([]);
         return;
@@ -264,10 +279,10 @@ export default function Produtos({
     };
 
     void carregarFavoritos();
-  }, []);
+  }, [isLoggedIn]);
 
   const alternarFavorito = async (gameId: number) => {
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       askLogin();
       return;
     }
@@ -330,7 +345,7 @@ export default function Produtos({
   };
 
   const addToCart = async (gameId: number, listingId: number) => {
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       askLogin();
       return;
     }
@@ -365,148 +380,146 @@ export default function Produtos({
         onConfirm={goToLogin}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {filteredGames.map((game) => {
-          const listings = getListingsForGame(game.id);
-          const selectedListing = getSelectedListingForGame(game.id);
-          const inCart = selectedListing
-            ? cartListingIds.includes(selectedListing.id)
-            : false;
+      {games.length === 0 && (
+        <p className="text-gray-300">Nenhum produto encontrado.</p>
+      )}
+      {games.length > 0 && filteredGames.length === 0 && (
+        <p className="text-gray-300">
+          Nenhum resultado para os filtros selecionados.
+        </p>
+      )}
+      {filteredGames.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {paginatedGames.map((game) => {
+              const listings = getListingsForGame(game.id);
+              const selectedListing = getSelectedListingForGame(game.id);
+              const inCart = selectedListing
+                ? cartListingIds.includes(selectedListing.id)
+                : false;
 
-          return (
-            // O estado visual do coracao e derivado da wishlist do usuario autenticado.
-            <div
-              key={game.id}
-              className="relative my-2 flex flex-col items-start gap-3 rounded-2xl bg-gray-900 p-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  void alternarFavorito(game.id);
-                }}
-                disabled={pendingFavoriteId === game.id}
-                className="absolute left-4 top-4 z-20 rounded-full bg-black/80 p-3 hover:scale-105 disabled:opacity-60"
-                aria-label={
-                  favoriteIds.includes(game.id)
-                    ? "Remover dos favoritos"
-                    : "Adicionar aos favoritos"
-                }
-              >
-                <Heart
-                  className={
-                    favoriteIds.includes(game.id)
-                      ? "text-red-500 fill-red-500"
-                      : "text-white"
-                  }
-                />
-              </button>
+              return (
+                <div
+                  key={game.id}
+                  className="relative my-2 flex flex-col items-start gap-3 rounded-2xl bg-gray-900 p-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void alternarFavorito(game.id);
+                    }}
+                    disabled={pendingFavoriteId === game.id}
+                    className="absolute left-4 top-4 z-20 rounded-full bg-black/80 p-3 hover:scale-105 disabled:opacity-60"
+                    aria-label={
+                      favoriteIds.includes(game.id)
+                        ? "Remover dos favoritos"
+                        : "Adicionar aos favoritos"
+                    }
+                  >
+                    <Heart
+                      className={
+                        favoriteIds.includes(game.id)
+                          ? "text-red-500 fill-red-500"
+                          : "text-white"
+                      }
+                    />
+                  </button>
 
-              <div className="flex h-44 w-full items-center justify-center rounded-lg bg-black/20 p-2">
-                <img
-                  src={game.coverImageUrl || "/logo.png"}
-                  alt={game.title}
-                  className="max-h-full w-[115%] object-contain"
-                />
-              </div>
-              <h2 className="mb-1 text-left text-xl font-bold">{game.title}</h2>
-              <p
-                className="text-sm text-gray-300"
-                style={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
-                {game.description}
-              </p>
-              <div className="w-full">
-                <p className="mb-2 text-sm text-gray-300">
-                  Escolha a plataforma:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {listings.map((listing) => {
-                    const selected = selectedListing?.id === listing.id;
+                  <div className="flex h-44 w-full items-center justify-center rounded-lg bg-black/20 p-2">
+                    <img
+                      src={game.coverImageUrl || "/logo.png"}
+                      alt={game.title}
+                      className="max-h-full w-[115%] object-contain"
+                    />
+                  </div>
+                  <h2 className="mb-1 text-left text-xl font-bold">
+                    {game.title}
+                  </h2>
+                  <p
+                    className="text-sm text-gray-300"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {game.description}
+                  </p>
+                  <div className="w-full">
+                    <p className="mb-2 text-sm text-gray-300">
+                      Escolha a plataforma:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {listings.map((listing) => {
+                        const selected = selectedListing?.id === listing.id;
 
-                    return (
-                      <button
-                        key={listing.id}
-                        type="button"
-                        onClick={() => {
-                          selectListing(game.id, listing.id);
-                        }}
-                        className={`rounded-lg border p-2 ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-700 bg-black/30"}`}
-                        title={listing.platform?.name || "Plataforma"}
-                      >
-                        <img
-                          src={getPlatformLogo(listing.platform?.name)}
-                          alt={listing.platform?.name || "Plataforma"}
-                          className="h-8 w-8 object-contain"
-                        />
-                      </button>
-                    );
-                  })}
+                        return (
+                          <button
+                            key={listing.id}
+                            type="button"
+                            onClick={() => {
+                              selectListing(game.id, listing.id);
+                            }}
+                            className={`rounded-lg border p-2 ${selected ? "border-blue-500 bg-blue-500/20" : "border-gray-700 bg-black/30"}`}
+                            title={listing.platform?.name || "Plataforma"}
+                          >
+                            <img
+                              src={getPlatformLogo(listing.platform?.name)}
+                              alt={listing.platform?.name || "Plataforma"}
+                              className="h-8 w-8 object-contain"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <p className="text-sm text-gray-300">
+                      {game.categories
+                        ?.slice(0, 2)
+                        .map((category) => category.name)
+                        .join(" • ") || "Sem categoria"}
+                    </p>
+                    <p className="text-blue-200">
+                      {selectedListing?.price
+                        ? `R$ ${Number(selectedListing.price).toFixed(2)}`
+                        : ""}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!selectedListing) return;
+                        void addToCart(game.id, selectedListing.id);
+                      }}
+                      disabled={
+                        pendingCartGameId === game.id ||
+                        !selectedListing ||
+                        inCart
+                      }
+                      className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
+                    >
+                      {!selectedListing
+                        ? "Escolha a plataforma"
+                        : inCart
+                          ? "No carrinho"
+                          : pendingCartGameId === game.id
+                            ? "Adicionando..."
+                            : "Adicionar"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex w-full items-center justify-between gap-4">
-                <p className="text-sm text-gray-300">
-                  {game.categories
-                    ?.slice(0, 2)
-                    .map((category) => category.name)
-                    .join(" • ") || "Sem categoria"}
-                </p>
-                <p className="text-blue-200">
-                  {selectedListing?.price
-                    ? `R$ ${Number(selectedListing.price).toFixed(2)}`
-                    : ""}
-                </p>
-              </div>
+              );
+            })}
+          </div>
 
-              <div className="flex w-full gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!selectedListing) return;
-                    navigate(`/loja/${selectedListing.id}`);
-                  }}
-                  disabled={!selectedListing}
-                  className="rounded-3xl border border-blue-400/45 bg-blue-500/10 px-5 py-2 text-sm font-semibold text-blue-100 transition hover:scale-105 hover:bg-blue-500/20 disabled:opacity-60"
-                >
-                  Ver detalhes
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!selectedListing) return;
-                    void addToCart(game.id, selectedListing.id);
-                  }}
-                  disabled={
-                    pendingCartGameId === game.id || !selectedListing || inCart
-                  }
-                  className="rounded-3xl bg-blue-900 px-5 py-2 text-sm hover:scale-105 disabled:opacity-60"
-                >
-                  {!selectedListing
-                    ? "Escolha a plataforma"
-                    : inCart
-                      ? "No carrinho"
-                      : pendingCartGameId === game.id
-                        ? "Adicionando..."
-                        : "Adicionar"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-        {games.length === 0 && (
-          <p className="text-gray-300">Nenhum produto encontrado.</p>
-        )}
-        {games.length > 0 && filteredGames.length === 0 && (
-          <p className="text-gray-300">
-            Nenhum resultado para os filtros selecionados.
-          </p>
-        )}
-      </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </>
   );
 }

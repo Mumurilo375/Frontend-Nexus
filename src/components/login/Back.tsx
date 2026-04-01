@@ -5,11 +5,11 @@ export default function Back() {
 
   const handleBack = () => {
     if (window.history.length > 1) {
-      navigate(-1);
+      void navigate(-1);
       return;
     }
 
-    navigate("/");
+    void navigate("/");
   };
 
   return (

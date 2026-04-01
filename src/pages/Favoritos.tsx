@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
 import NavBar from "../components/globals/NavBar";
 import Footer from "../components/globals/Footer";
 import api from "../services/api";
@@ -26,6 +27,7 @@ type WishlistResponse = {
 function Favoritos() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +35,8 @@ function Favoritos() {
   const [removingGameId, setRemovingGameId] = useState<number | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login", { state: { from: location.pathname } });
+    if (!isAuthenticated) {
+      void navigate("/login", { state: { from: location.pathname } });
       return;
     }
 
@@ -44,9 +45,7 @@ function Favoritos() {
         setLoading(true);
         setError("");
 
-        const { data } = await api.get<WishlistResponse>("/wishlists", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await api.get<WishlistResponse>("/wishlists");
 
         setItems(data.items ?? []);
       } catch {
@@ -58,21 +57,18 @@ function Favoritos() {
     };
 
     void carregarFavoritos();
-  }, [location.pathname, navigate]);
+  }, [isAuthenticated, location.pathname, navigate]);
 
   const handleRemoveFavorite = async (gameId: number) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login", { state: { from: location.pathname } });
+    if (!isAuthenticated) {
+      void navigate("/login", { state: { from: location.pathname } });
       return;
     }
 
     try {
       setRemovingGameId(gameId);
 
-      await api.delete(`/wishlists/${gameId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/wishlists/${gameId}`);
 
       setItems((current) => current.filter((item) => item.gameId !== gameId));
       window.dispatchEvent(new Event("nexus:counts-updated"));

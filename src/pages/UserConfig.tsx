@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/globals/Footer";
+import { useAuth } from "../contexts/useAuth";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
-import { getAuthUser, getToken, saveAuth } from "../services/auth";
 
 type UserProfile = {
   id: number;
@@ -45,6 +45,30 @@ function isValidCpf(rawCpf: string): boolean {
   }
 
   return true;
+}
+
+function getPasswordStrengthError(password: string): string | null {
+  if (password.length < 8) {
+    return "A senha deve ter no minimo 8 caracteres.";
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return "A senha deve ter ao menos uma letra minuscula.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "A senha deve ter ao menos uma letra maiuscula.";
+  }
+
+  if (!/\d/.test(password)) {
+    return "A senha deve ter ao menos um numero.";
+  }
+
+  if (!/[^a-zA-Z0-9]/.test(password)) {
+    return "A senha deve ter ao menos um caractere especial.";
+  }
+
+  return null;
 }
 
 function getFriendlyUpdateError(error: unknown): string {
@@ -92,7 +116,7 @@ function getFriendlyUpdateError(error: unknown): string {
 
 export default function UserConfig() {
   const navigate = useNavigate();
-  const authUser = useMemo(() => getAuthUser(), []);
+  const { syncUser, user: authUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -103,7 +127,6 @@ export default function UserConfig() {
   const [cpf, setCpf] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(authUser?.avatarUrl ?? "");
-  const [avatarFileName, setAvatarFileName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState(authUser?.email ?? "");
@@ -155,8 +178,6 @@ export default function UserConfig() {
       return;
     }
 
-    setAvatarFileName(file.name);
-
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
@@ -185,6 +206,13 @@ export default function UserConfig() {
 
     if (!isValidCpf(cpf)) {
       setErrorMessage("CPF invalido.");
+      setSuccessMessage("");
+      return;
+    }
+
+    const passwordStrengthError = getPasswordStrengthError(password);
+    if (passwordStrengthError) {
+      setErrorMessage(passwordStrengthError);
       setSuccessMessage("");
       return;
     }
@@ -219,20 +247,16 @@ export default function UserConfig() {
         payload,
       );
 
-      const token = getToken();
-      if (token) {
-        saveAuth(token, {
-          id: data.id,
-          email: data.email,
-          username: data.username,
-          avatarUrl: avatarPreview || data.avatarUrl || null,
-          isAdmin: data.isAdmin,
-        });
-      }
+      syncUser({
+        id: data.id,
+        email: data.email,
+        username: data.username,
+        avatarUrl: avatarPreview || data.avatarUrl || null,
+        isAdmin: data.isAdmin,
+      });
 
       setAvatarUrl(avatarUrl);
-      setAvatarFileName("");
-      navigate(-1);
+      void navigate(-1);
     } catch (error: unknown) {
       setErrorMessage(getFriendlyUpdateError(error));
       setSuccessMessage("");

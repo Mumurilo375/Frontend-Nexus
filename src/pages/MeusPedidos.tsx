@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import Footer from "../components/globals/Footer";
+import Pagination from "../components/globals/Pagination";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
+import {
+  getApiErrorMessage,
+  type PaginatedResponse,
+  type PaginationMeta,
+} from "../services/http";
 
 type Order = {
   id: number;
@@ -16,8 +22,6 @@ type Order = {
   }>;
 };
 
-type OrderListResponse = { items: Order[] };
-
 type LibraryItem = {
   id: number;
   gameKey?: { keyValue?: string; soldAt?: string };
@@ -25,7 +29,13 @@ type LibraryItem = {
   order?: { orderNumber?: string };
 };
 
-type LibraryResponse = { items: LibraryItem[] };
+const PAGE_SIZE = 5;
+const emptyMeta: PaginationMeta = {
+  page: 1,
+  limit: PAGE_SIZE,
+  total: 0,
+  totalPages: 1,
+};
 
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
@@ -34,6 +44,10 @@ function toMoney(value: number) {
 export default function MeusPedidos() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [library, setLibrary] = useState<LibraryItem[]>([]);
+  const [ordersMeta, setOrdersMeta] = useState<PaginationMeta>(emptyMeta);
+  const [libraryMeta, setLibraryMeta] = useState<PaginationMeta>(emptyMeta);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [libraryPage, setLibraryPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,23 +58,36 @@ export default function MeusPedidos() {
         setError("");
 
         const [ordersResponse, libraryResponse] = await Promise.all([
-          api.get<OrderListResponse>("/orders", { params: { page: 1, limit: 20 } }),
-          api.get<LibraryResponse>("/library/keys", { params: { page: 1, limit: 20 } }),
+          api.get<PaginatedResponse<Order>>("/orders", {
+            params: { page: ordersPage, limit: PAGE_SIZE },
+          }),
+          api.get<PaginatedResponse<LibraryItem>>("/library/keys", {
+            params: { page: libraryPage, limit: PAGE_SIZE },
+          }),
         ]);
 
         setOrders(ordersResponse.data.items ?? []);
+        setOrdersMeta(ordersResponse.data.meta ?? emptyMeta);
         setLibrary(libraryResponse.data.items ?? []);
-      } catch {
+        setLibraryMeta(libraryResponse.data.meta ?? emptyMeta);
+      } catch (requestError) {
         setOrders([]);
         setLibrary([]);
-        setError("Nao foi possivel carregar pedidos e chaves.");
+        setOrdersMeta(emptyMeta);
+        setLibraryMeta(emptyMeta);
+        setError(
+          getApiErrorMessage(
+            requestError,
+            "Nao foi possivel carregar pedidos e chaves.",
+          ),
+        );
       } finally {
         setLoading(false);
       }
     };
 
     void load();
-  }, []);
+  }, [libraryPage, ordersPage]);
 
   return (
     <div>
@@ -91,6 +118,11 @@ export default function MeusPedidos() {
                   </li>
                 ))}
               </ul>
+              <Pagination
+                page={ordersMeta.page}
+                totalPages={ordersMeta.totalPages}
+                onPageChange={setOrdersPage}
+              />
             </section>
 
             <section className="rounded-xl bg-gray-900 p-5">
@@ -108,6 +140,11 @@ export default function MeusPedidos() {
                   </li>
                 ))}
               </ul>
+              <Pagination
+                page={libraryMeta.page}
+                totalPages={libraryMeta.totalPages}
+                onPageChange={setLibraryPage}
+              />
             </section>
           </div>
         )}

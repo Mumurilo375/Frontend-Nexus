@@ -10,10 +10,10 @@ function Highlights() {
             Descubra jogos de diferentes gêneros e estilos em um só lugar
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-8 mb-16">
+        <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="bg-gray-900 rounded-3xl p-8 ">
             <img
-              src="../../public/games/homemaranha.png"
+              src="/games/homemaranha.png"
               alt="wukong-game"
               className="w-full h-64 object-cover rounded-2xl mb-4"
             />
@@ -24,7 +24,7 @@ function Highlights() {
           </div>
           <div className="bg-gray-900 rounded-3xl p-8">
             <img
-              src="../../public/games/eldenring.jpg"
+              src="/games/eldenring.jpg"
               alt="eldenring-game"
               className="w-full h-64 object-cover rounded-2xl mb-4"
             />

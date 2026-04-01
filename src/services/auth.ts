@@ -1,4 +1,4 @@
-type AuthUser = {
+export type AuthUser = {
   id: number;
   email: string;
   username: string;
@@ -8,8 +8,13 @@ type AuthUser = {
 
 const TOKEN_KEY = "token";
 const USER_KEY = "authUser";
+export const AUTH_CHANGED_EVENT = "nexus:auth-changed";
 
-export function getToken() {
+function notifyAuthChange(): void {
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+}
+
+export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
@@ -25,22 +30,26 @@ export function getAuthUser(): AuthUser | null {
   }
 }
 
-export function saveAuth(token: string, user?: AuthUser | null) {
+export function saveAuth(token: string, user?: AuthUser | null): void {
   localStorage.setItem(TOKEN_KEY, token);
   if (user) {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(USER_KEY);
   }
+  notifyAuthChange();
 }
 
-export function clearAuth() {
+export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  notifyAuthChange();
 }
 
-export function isAuthenticated() {
+export function isAuthenticated(): boolean {
   return Boolean(getToken());
 }
 
-export function isAdminUser() {
+export function isAdminUser(): boolean {
   return Boolean(getAuthUser()?.isAdmin);
 }

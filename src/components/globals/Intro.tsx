@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Intro() {
   const specs = [
     {
@@ -34,17 +36,17 @@ function Intro() {
         </p>
       </div>
       <div className="mt-8 flex justify-center gap-4 mb-16">
-        <a href="/loja" className="px-6 hover:opacity-70 py-3 font-medium transition-all duration-300 rounded-full bg-blue-500 text-black font-semibold hover:scale-105 shadow-lg cursor-pointer">
+        <Link to="/loja" className="px-6 hover:opacity-70 py-3 font-medium transition-all duration-300 rounded-full bg-blue-500 text-black font-semibold hover:scale-105 shadow-lg cursor-pointer">
           Comprar Agora
-        </a>
-        <a href="/comofunciona" className="px-8  font-medium transition-all duration-300 py-3 rounded border border-white font-semibold rounded-full hover:scale-105 shadow-lg cursor-pointer hover:bg-white hover:text-black">
+        </Link>
+        <Link to="/comofunciona" className="px-8 font-medium transition-all duration-300 py-3 border border-white font-semibold rounded-full hover:scale-105 shadow-lg cursor-pointer hover:bg-white hover:text-black">
           Saiba Mais
-        </a>
+        </Link>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mx-auto max-w-5xl">
         {specs.map((spec, index) => (
             <div key={index} className="bg-gray-900 rounded-2xl p-6 hover:bg-gray-700 transition-all duration-300 hover:scale-105">
-                <p className="text-2xl font-bold text-blue-500 mb-">{spec.value}</p>
+                <p className={`mb-2 text-2xl font-bold ${spec.color}`}>{spec.value}</p>
                 <p>{spec.label}</p>
             </div>
         ))}

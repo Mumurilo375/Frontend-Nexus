@@ -1,14 +1,22 @@
-import { useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
+import { type FormEvent, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { Link } from "lucide-react";
 import Back from "../components/login/Back";
-import { saveAuth } from "../services/auth";
+import { useAuth } from "../contexts/useAuth";
+import { type AuthUser } from "../services/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function getFriendlyLoginError(error: any): string {
-  const message = String(error?.response?.data?.message ?? "");
+type LoginResponse = {
+  token: string;
+  user: AuthUser;
+};
+
+function getFriendlyLoginError(error: unknown): string {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? String(error.response?.data?.message ?? error.message ?? "")
+    : "";
 
   if (message.includes("Invalid email or password")) {
     return "Email ou senha incorretos.";
@@ -26,10 +34,11 @@ function Login() {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const email = (emailRef.current?.value ?? "").trim().toLowerCase();
@@ -44,21 +53,21 @@ function Login() {
     setIsSubmitting(true);
 
     try {
-      const { data } = await api.post("/auth/login", {
+      const { data } = await api.post<LoginResponse>("/auth/login", {
         email,
         password,
       });
 
-      saveAuth(data.token, data.user);
+      login(data.token, data.user);
       const from = (location.state as { from?: string } | null)?.from;
       if (from) {
-        navigate(from);
+        void navigate(from);
       } else if (window.history.length > 1) {
-        navigate(-1);
+        void navigate(-1);
       } else {
-        navigate("/");
+        void navigate("/");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrorMessage(getFriendlyLoginError(error));
     } finally {
       setIsSubmitting(false);
@@ -70,7 +79,7 @@ function Login() {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
-          src="../../public/utils/logo.png"
+          src="/utils/logo.png"
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">
@@ -110,12 +119,7 @@ function Login() {
                 Senha
               </label>
               <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-semibold text-indigo-400 hover:text-indigo-300"
-                >
-                  Esqueceu a senha?
-                </a>
+                <span className="font-semibold text-gray-400">Recuperacao em breve</span>
               </div>
             </div>
             <div className="mt-2">
@@ -151,12 +155,12 @@ function Login() {
 
         <p className="mt-10 text-center text-sm/6 text-gray-400">
           Nao possui conta?{" "}
-          <a
-            href="/cadastro"
+          <Link
+            to="/cadastro"
             className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
             Registre-se
-          </a>
+          </Link>
         </p>
       </div>
       <Back />

@@ -1,4 +1,4 @@
-import {ArrowDown} from "lucide-react";
+import { ArrowDown } from "lucide-react";
 
 function Hero() {
   return (
@@ -27,9 +27,10 @@ function Hero() {
           </div>
 
           <p className="mt-4 text-sm leading-relaxed text-zinc-200 sm:text-base">
-            Resident Evil Requiem é um survival horror que mistura terror e ação,
-            focado em uma nova investigação ligada ao desastre de Raccoon City,
-            conectando eventos antigos com uma história mais sombria e atual.
+            Resident Evil Requiem é um survival horror que mistura terror e
+            ação, focado em uma nova investigação ligada ao desastre de Raccoon
+            City, conectando eventos antigos com uma história mais sombria e
+            atual.
           </p>
 
           <button

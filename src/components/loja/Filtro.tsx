@@ -61,7 +61,7 @@ function Filtro({
         <h2 className="font-bold text-2xl text p-4 mb-1"> 
           <FilterIcon className="inline-block mr-2" />
           Filtros</h2>
-        <h2 className="font-bold text-2xl p-4 mb-2">Plataformas</h2>
+        <h2 className="font-bold justify-start text-2xl p-4 mb-2">Plataformas</h2>
         <ul className="mb-2">
           <li>
             <button

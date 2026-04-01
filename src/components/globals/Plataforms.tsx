@@ -114,7 +114,9 @@ export default function Plataforms() {
                 <span
                   key={platform.id}
                   className={`h-2.5 rounded-full transition-all duration-500 ${
-                    index === currentIndex ? "w-8 bg-blue-400" : "w-2.5 bg-zinc-600"
+                    index === currentIndex
+                      ? "w-8 bg-blue-400"
+                      : "w-2.5 bg-zinc-600"
                   }`}
                   aria-hidden="true"
                 ></span>

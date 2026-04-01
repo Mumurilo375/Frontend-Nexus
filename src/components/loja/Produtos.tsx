@@ -305,10 +305,13 @@ export default function Produtos({
   };
 
   const getSelectedListingForGame = (gameId: number) => {
+    const listingsForGame = getListingsForGame(gameId);
     const selectedId = selectedListingByGame[gameId];
-    if (!selectedId) return null;
+    if (!selectedId) return listingsForGame[0] ?? null;
     return (
-      getListingsForGame(gameId).find((item) => item.id === selectedId) ?? null
+      listingsForGame.find((item) => item.id === selectedId) ??
+      listingsForGame[0] ??
+      null
     );
   };
 
@@ -457,6 +460,21 @@ export default function Produtos({
                     ? `R$ ${Number(selectedListing.price).toFixed(2)}`
                     : ""}
                 </p>
+              </div>
+
+              <div className="flex w-full gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedListing) return;
+                    navigate(`/loja/${selectedListing.id}`);
+                  }}
+                  disabled={!selectedListing}
+                  className="rounded-3xl border border-blue-400/45 bg-blue-500/10 px-5 py-2 text-sm font-semibold text-blue-100 transition hover:scale-105 hover:bg-blue-500/20 disabled:opacity-60"
+                >
+                  Ver detalhes
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {

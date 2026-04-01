@@ -16,7 +16,7 @@ import Checkout from "./pages/Checkout";
 import MeusPedidos from "./pages/MeusPedidos";
 import RouteScrollToTop from "./components/globals/RouteScrollToTop";
 import UserConfig from "./pages/UserConfig";
-
+import ListingDetails from "./pages/ListingDetails";
 
 function RootLayout() {
   return (
@@ -38,6 +38,10 @@ const router = createBrowserRouter([
       {
         path: "/loja",
         element: <Loja />,
+      },
+      {
+        path: "/loja/:listingId",
+        element: <ListingDetails />,
       },
       {
         path: "/ofertas",

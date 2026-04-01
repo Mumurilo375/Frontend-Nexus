@@ -32,7 +32,8 @@ export default function Carrinho() {
   const [busyListingId, setBusyListingId] = useState<number | null>(null);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
+    () =>
+      items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
     [items],
   );
 
@@ -58,7 +59,9 @@ export default function Carrinho() {
     try {
       setBusyListingId(listingId);
       await api.delete(`/cart/${listingId}`);
-      setItems((current) => current.filter((item) => item.listingId !== listingId));
+      setItems((current) =>
+        current.filter((item) => item.listingId !== listingId),
+      );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } finally {
       setBusyListingId(null);
@@ -82,13 +85,18 @@ export default function Carrinho() {
       <main className="mx-auto min-h-screen w-full max-w-6xl px-6 pb-10 pt-28">
         <h1 className="text-3xl font-bold">Carrinho</h1>
 
-        {loading && <p className="mt-4 text-gray-300">Carregando carrinho...</p>}
+        {loading && (
+          <p className="mt-4 text-gray-300">Carregando carrinho...</p>
+        )}
         {!loading && error && <p className="mt-4 text-red-300">{error}</p>}
 
         {!loading && !error && items.length === 0 && (
           <div className="mt-6 rounded-xl bg-gray-900 p-5">
             <p className="text-gray-300">Seu carrinho esta vazio.</p>
-            <Link to="/loja" className="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm">
+            <Link
+              to="/loja"
+              className="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm"
+            >
               Ir para loja
             </Link>
           </div>
@@ -106,12 +114,17 @@ export default function Carrinho() {
                       className="h-20 w-20 rounded-lg object-cover"
                     />
                     <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-lg font-semibold">{item.listing?.game?.title || "Jogo"}</h2>
-                      <p className="text-sm text-gray-300">Plataforma: {item.listing?.platform?.name || "-"}</p>
-                     
+                      <h2 className="truncate text-lg font-semibold">
+                        {item.listing?.game?.title || "Jogo"}
+                      </h2>
+                      <p className="text-sm text-gray-300">
+                        Plataforma: {item.listing?.platform?.name || "-"}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-2xl">{toMoney(Number(item.listing?.price ?? 0))}</p>
+                      <p className="font-semibold text-2xl">
+                        {toMoney(Number(item.listing?.price ?? 0))}
+                      </p>
                       <button
                         type="button"
                         onClick={() => {
@@ -121,7 +134,6 @@ export default function Carrinho() {
                         className="mt-2 rounded-md bg-transparent px-3 py-1 text-sm disabled:opacity-60 hover:text-red-500"
                       >
                         <Trash2Icon className="h-4 w-4" />
-                        
                       </button>
                     </div>
                   </div>
@@ -143,7 +155,10 @@ export default function Carrinho() {
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </Link>
-              <Link to="/checkout" className="mt-4 block rounded-lg bg-emerald-700 px-4 py-2 text-center font-semibold">
+              <Link
+                to="/checkout"
+                className="mt-4 block rounded-lg bg-emerald-700 px-4 py-2 text-center font-semibold"
+              >
                 Confirmar pedido
               </Link>
               <button

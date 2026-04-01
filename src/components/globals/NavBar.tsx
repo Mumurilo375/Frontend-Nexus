@@ -14,8 +14,8 @@ import {
 } from "@headlessui/react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
-import { clearAuth, getAuthUser, isAuthenticated } from "../../services/auth";
 import AuthRequiredModal from "./AuthRequiredModal";
 
 type GameSuggestion = {
@@ -45,8 +45,12 @@ function NavBar() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [avatarBroken, setAvatarBroken] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
-  const isLoggedIn = isAuthenticated();
-  const authUser = getAuthUser();
+  const {
+    isAdmin,
+    isAuthenticated: isLoggedIn,
+    logout,
+    user: authUser,
+  } = useAuth();
   const avatarSrc = authUser?.avatarUrl?.trim() || "";
 
   useEffect(() => {
@@ -189,7 +193,7 @@ function NavBar() {
   };
 
   const handleLogout = () => {
-    clearAuth();
+    logout();
     void navigate("/");
   };
 
@@ -246,12 +250,14 @@ function NavBar() {
             >
               Como funciona
             </Link>
-            <Link
-              to="/listagem-usuarios"
-              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
-            >
-              Teste API
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
+              >
+                Painel admin
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-3 text-sm md:hidden">
@@ -400,6 +406,16 @@ function NavBar() {
                   className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-gray-300 shadow-lg outline-1 outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                 >
                   <div className="py-1">
+                    {isAdmin && (
+                      <MenuItem>
+                        <Link
+                          to="/admin"
+                          className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
+                        >
+                          Painel admin
+                        </Link>
+                      </MenuItem>
+                    )}
                     <MenuItem>
                       <Link
                         to="/configuracoes"
@@ -478,12 +494,14 @@ function NavBar() {
               >
                 Como funciona
               </Link>
-              <Link
-                to="/listagem-usuarios"
-                className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
-                Teste API
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
+                >
+                  Painel admin
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleGoToFavorites}

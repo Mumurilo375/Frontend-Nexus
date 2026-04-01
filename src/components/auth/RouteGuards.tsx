@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { isAdminUser, isAuthenticated } from "../../services/auth";
+import { useAuth } from "../../contexts/useAuth";
 
 type GuardProps = {
   children: ReactNode;
@@ -8,8 +8,9 @@ type GuardProps = {
 
 export function RequireAuth({ children }: GuardProps) {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated()) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
@@ -18,12 +19,13 @@ export function RequireAuth({ children }: GuardProps) {
 
 export function RequireAdmin({ children }: GuardProps) {
   const location = useLocation();
+  const { isAdmin, isAuthenticated } = useAuth();
 
-  if (!isAuthenticated()) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (!isAdminUser()) {
+  if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 

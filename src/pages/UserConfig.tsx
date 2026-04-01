@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/globals/Footer";
+import { useAuth } from "../contexts/useAuth";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
-import { getAuthUser, getToken, saveAuth } from "../services/auth";
 
 type UserProfile = {
   id: number;
@@ -45,6 +45,30 @@ function isValidCpf(rawCpf: string): boolean {
   }
 
   return true;
+}
+
+function getPasswordStrengthError(password: string): string | null {
+  if (password.length < 8) {
+    return "A senha deve ter no minimo 8 caracteres.";
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return "A senha deve ter ao menos uma letra minuscula.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "A senha deve ter ao menos uma letra maiuscula.";
+  }
+
+  if (!/\d/.test(password)) {
+    return "A senha deve ter ao menos um numero.";
+  }
+
+  if (!/[^a-zA-Z0-9]/.test(password)) {
+    return "A senha deve ter ao menos um caractere especial.";
+  }
+
+  return null;
 }
 
 function getFriendlyUpdateError(error: unknown): string {
@@ -92,7 +116,7 @@ function getFriendlyUpdateError(error: unknown): string {
 
 export default function UserConfig() {
   const navigate = useNavigate();
-  const authUser = useMemo(() => getAuthUser(), []);
+  const { syncUser, user: authUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -186,6 +210,13 @@ export default function UserConfig() {
       return;
     }
 
+    const passwordStrengthError = getPasswordStrengthError(password);
+    if (passwordStrengthError) {
+      setErrorMessage(passwordStrengthError);
+      setSuccessMessage("");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMessage("As senhas nao conferem.");
       setSuccessMessage("");
@@ -216,16 +247,13 @@ export default function UserConfig() {
         payload,
       );
 
-      const token = getToken();
-      if (token) {
-        saveAuth(token, {
-          id: data.id,
-          email: data.email,
-          username: data.username,
-          avatarUrl: avatarPreview || data.avatarUrl || null,
-          isAdmin: data.isAdmin,
-        });
-      }
+      syncUser({
+        id: data.id,
+        email: data.email,
+        username: data.username,
+        avatarUrl: avatarPreview || data.avatarUrl || null,
+        isAdmin: data.isAdmin,
+      });
 
       setAvatarUrl(avatarUrl);
       void navigate(-1);

@@ -3,7 +3,8 @@ import { type FormEvent, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import Back from "../components/login/Back";
-import { type AuthUser, saveAuth } from "../services/auth";
+import { useAuth } from "../contexts/useAuth";
+import { type AuthUser } from "../services/auth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,6 +34,7 @@ function Login() {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,7 +58,7 @@ function Login() {
         password,
       });
 
-      saveAuth(data.token, data.user);
+      login(data.token, data.user);
       const from = (location.state as { from?: string } | null)?.from;
       if (from) {
         void navigate(from);

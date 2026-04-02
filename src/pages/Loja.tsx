@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import NavBar from "../components/globals/NavBar";
 import Footer from "../components/globals/Footer";
 import Intro from "../components/loja/Intro";
@@ -6,8 +7,18 @@ import Filtro from "../components/loja/Filtro";
 import Produtos from "../components/loja/Produtos";
 
 function Loja() {
+  const [searchParams] = useSearchParams();
+  const initialPlatforms = useMemo(
+    () =>
+      searchParams
+        .getAll("platform")
+        .map((platform) => platform.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] =
+    useState<string[]>(initialPlatforms);
   const [categories, setCategories] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const PlaystationConsole = "/plataforms/playstationConsole.png";
 const XboxConsole = "/plataforms/xboxConsole.png";
@@ -10,22 +11,22 @@ const platforms = [
   {
     id: "PlayStation",
     consoleImage: PlaystationConsole,
-    accent: "from-blue-500/20 to-blue-950/15",
+    accent: "from-blue-500/7 via-blue-900/5 to-transparent",
   },
   {
     id: "Xbox",
     consoleImage: XboxConsole,
-    accent: "from-green-500/20 to-green-950/15",
+    accent: "from-green-500/7 via-green-900/5 to-transparent",
   },
   {
     id: "Nintendo Switch",
     consoleImage: NintendoConsole,
-    accent: "from-red-500/20 to-red-950/15",
+    accent: "from-red-500/7 via-red-900/5 to-transparent",
   },
   {
     id: "Steam",
     consoleImage: PcConsole,
-    accent: "from-zinc-300/20 to-zinc-900/20",
+    accent: "from-slate-200/7 via-slate-700/5 to-transparent",
   },
 ];
 
@@ -45,7 +46,7 @@ export default function Plataforms() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setCurrentIndex((previous) => (previous + 1) % platforms.length);
-    }, 3500);
+    }, 5250);
 
     return () => window.clearInterval(intervalId);
   }, []);
@@ -90,21 +91,27 @@ export default function Plataforms() {
               {platforms.map((platform) => {
                 return (
                   <article key={platform.id} className="relative min-w-full">
-                    <div
-                      className={`absolute inset-0 bg-linear-to-b ${platform.accent}`}
-                    ></div>
+                    <Link
+                      to={`/loja?platform=${encodeURIComponent(platform.id)}`}
+                      className="group block"
+                      aria-label={`Ir para loja com filtro de ${platform.id}`}
+                    >
+                      <div
+                        className={`absolute inset-0 bg-linear-to-b ${platform.accent}`}
+                      ></div>
 
-                    <img
-                      src={platform.consoleImage}
-                      alt={platform.id}
-                      className="mx-auto h-90 w-full object-contain p-8 sm:h-105"
-                    />
+                      <img
+                        src={platform.consoleImage}
+                        alt={platform.id}
+                        className="mx-auto h-90 w-full object-contain p-8 transition duration-300 group-hover:scale-[1.02] sm:h-105"
+                      />
 
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-7 py-3 backdrop-blur-sm">
-                      <h3 className="text-xl font-semibold text-white sm:text-2xl">
-                        {platform.id}
-                      </h3>
-                    </div>
+                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-black/45 px-7 py-3 backdrop-blur-sm">
+                        <h3 className="text-xl font-semibold text-white sm:text-2xl">
+                          {platform.id}
+                        </h3>
+                      </div>
+                    </Link>
                   </article>
                 );
               })}

@@ -36,16 +36,6 @@ function isValidCpf(rawCpf: string): boolean {
 
   if (cpf.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-  for (let t = 9; t <= 10; t++) {
-    let sum = 0;
-    for (let i = 0; i < t; i++) {
-      sum += Number(cpf[i]) * (t + 1 - i);
-    }
-    const digit = ((sum * 10) % 11) % 10;
-    if (Number(cpf[t]) !== digit) return false;
-  }
-
   return true;
 }
 

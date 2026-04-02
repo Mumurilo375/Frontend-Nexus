@@ -23,16 +23,6 @@ function isValidCpf(rawCpf: string): boolean {
 
   if (cpf.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-  for (let t = 9; t <= 10; t++) {
-    let sum = 0;
-    for (let i = 0; i < t; i++) {
-      sum += Number(cpf[i]) * (t + 1 - i);
-    }
-    const digit = ((sum * 10) % 11) % 10;
-    if (Number(cpf[t]) !== digit) return false;
-  }
-
   return true;
 }
 
@@ -74,46 +64,45 @@ function getFriendlyRegisterError(error: unknown): string {
 }
 
 function Cadastro() {
-  const nameRef = useRef<HTMLInputElement | null>(null);
-  const emailRef = useRef<HTMLInputElement | null>(null);
-  const passwordRef = useRef<HTMLInputElement | null>(null);
-  const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
-  const cpfRef = useRef<HTMLInputElement | null>(null);
-  const usernameRef = useRef<HTMLInputElement | null>(null);
   const photoRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [username, setUsername] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPhotoName, setSelectedPhotoName] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const cleanFullName = fullName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
+    const cleanConfirmPassword = confirmPassword;
+    const cleanCpf = cpf.trim();
+    const cleanUsername = username.trim();
 
-    const fullName = (nameRef.current?.value ?? "").trim();
-    const email = (emailRef.current?.value ?? "").trim().toLowerCase();
-    const password = passwordRef.current?.value ?? "";
-    const confirmPassword = confirmPasswordRef.current?.value ?? "";
-    const cpf = (cpfRef.current?.value ?? "").trim();
-    const username = (usernameRef.current?.value ?? "").trim();
-
-    if (!fullName || !email || !password || !cpf) {
+    if (!cleanFullName || !cleanEmail || !cleanPassword || !cleanCpf) {
       setErrorMessage(
         "Preencha os campos obrigatorios: nome, email, senha e CPF.",
       );
       return;
     }
 
-    if (!EMAIL_REGEX.test(email)) {
+    if (!EMAIL_REGEX.test(cleanEmail)) {
       setErrorMessage("Digite um email valido.");
       return;
     }
 
-    if (!isValidCpf(cpf)) {
+    if (!isValidCpf(cleanCpf)) {
       setErrorMessage("CPF invalido.");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       setErrorMessage("As senhas nao conferem.");
       return;
     }
@@ -123,11 +112,11 @@ function Cadastro() {
 
     try {
       await api.post("/users", {
-        fullName,
-        email,
-        password,
-        cpf,
-        username,
+        fullName: cleanFullName,
+        email: cleanEmail,
+        password: cleanPassword,
+        cpf: cleanCpf.replace(/\D/g, ""),
+        username: cleanUsername,
         avatarUrl: photoRef.current?.files?.[0]?.name ?? null,
       });
 
@@ -140,34 +129,10 @@ function Cadastro() {
   }
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_38%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-6 py-12 lg:px-8">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[0.92fr,1.08fr] lg:items-start">
-        <section className="hidden rounded-[32px] border border-slate-800 bg-slate-950/70 p-8 shadow-[0_26px_75px_rgba(2,6,23,0.45)] lg:block">
-          <img alt="Logo Nexus" src="/utils/logo.png" className="h-11 w-auto" />
-          <p className="mt-10 text-xs font-semibold uppercase tracking-[0.3em] text-blue-200/80">
-            Bem-vindo
-          </p>
-          <h1 className="mt-4 text-4xl font-bold text-white">
-            Crie sua conta e monte sua biblioteca digital.
-          </h1>
-          <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">
-            O cadastro libera favoritos, carrinho, checkout e a area onde as
-            keys compradas ficam disponiveis depois do pedido.
-          </p>
-          <div className="mt-8 rounded-[28px] border border-slate-800 bg-slate-900/65 p-5">
-            <p className="text-sm font-medium text-slate-100">
-              O cadastro desta demo pede:
-            </p>
-            <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-300">
-              <li>Nome completo, email, senha forte e CPF valido.</li>
-              <li>Nome de usuario para aparecer no perfil.</li>
-              <li>Uma foto opcional para personalizar a conta.</li>
-            </ul>
-          </div>
-        </section>
-
-        <div className="rounded-[32px] border border-slate-800 bg-slate-950/85 p-7 shadow-[0_26px_75px_rgba(2,6,23,0.45)] sm:p-8">
-          <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
+    <div className="nexus-page-shell min-h-full px-6 py-12 lg:px-8">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="nexus-panel p-7 sm:p-8">
+          <div className="mx-auto w-full max-w-2xl">
             <img
               alt="Logo Nexus"
               src="/utils/logo.png"
@@ -177,16 +142,128 @@ function Cadastro() {
               Criar conta
             </h2>
             <p className="mt-2 text-center text-sm text-slate-400">
-              Preencha os dados para entrar no ecossistema Nexus.
+              Preencha os dados para continuar.
             </p>
           </div>
 
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5"
-              autoComplete="off"
-            >
+          <div className="mt-8 mx-auto w-full max-w-2xl">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-100">
+                  Nome de usuario
+                  <input
+                    value={username}
+                    onChange={(event) => {
+                      setUsername(event.target.value);
+                      setErrorMessage("");
+                    }}
+                    placeholder="nome de usuario"
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    autoComplete="username"
+                    className={inputClass}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-100">
+                  Nome completo
+                  <input
+                    value={fullName}
+                    onChange={(event) => {
+                      setFullName(event.target.value);
+                      setErrorMessage("");
+                    }}
+                    placeholder="Digite seu nome completo"
+                    id="nomecompleto"
+                    name="nomecompleto"
+                    type="text"
+                    required
+                    autoComplete="name"
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-100">
+                  CPF
+                  <input
+                    value={cpf}
+                    onChange={(event) => {
+                      setCpf(formatCpf(event.target.value));
+                      setErrorMessage("");
+                    }}
+                    placeholder="000.000.000-00"
+                    id="cpf"
+                    name="cpf"
+                    type="text"
+                    required
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={14}
+                    className={inputClass}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-100">
+                  Email
+                  <input
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setErrorMessage("");
+                    }}
+                    placeholder="email@gmail.com"
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-medium text-slate-100">
+                  Senha
+                  <input
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setErrorMessage("");
+                    }}
+                    placeholder="*****"
+                    id="password"
+                    name="new-password"
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    className={inputClass}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-100">
+                  Confirmar senha
+                  <input
+                    value={confirmPassword}
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value);
+                      setErrorMessage("");
+                    }}
+                    placeholder="*****"
+                    id="confirm-password"
+                    name="new-password-confirm"
+                    type="password"
+                    required
+                    autoComplete="new-password"
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+
               <div className="rounded-[28px] border border-slate-800 bg-slate-900/45 p-5">
                 <label
                   htmlFor="file-upload"
@@ -223,100 +300,6 @@ function Cadastro() {
                 </div>
               </div>
 
-              <div className="grid gap-5 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-100">
-                  Nome de usuario
-                  <input
-                    ref={usernameRef}
-                    placeholder="nome de usuario"
-                    id="username"
-                    name="new-username"
-                    type="text"
-                    required
-                    autoComplete="off"
-                    className={inputClass}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-slate-100">
-                  Nome completo
-                  <input
-                    ref={nameRef}
-                    placeholder="Digite seu nome completo"
-                    id="nomecompleto"
-                    name="nomecompleto"
-                    type="text"
-                    required
-                    autoComplete="name"
-                    className={inputClass}
-                  />
-                </label>
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-100">
-                  CPF
-                  <input
-                    ref={cpfRef}
-                    placeholder="000.000.000-00"
-                    id="cpf"
-                    name="cpf"
-                    type="text"
-                    required
-                    autoComplete="off"
-                    maxLength={14}
-                    className={inputClass}
-                    onChange={(event) => {
-                      event.target.value = formatCpf(event.target.value);
-                    }}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-slate-100">
-                  Email
-                  <input
-                    ref={emailRef}
-                    placeholder="email@gmail.com"
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    className={inputClass}
-                  />
-                </label>
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-100">
-                  Senha
-                  <input
-                    ref={passwordRef}
-                    placeholder="*****"
-                    id="password"
-                    name="new-password"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    className={inputClass}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-slate-100">
-                  Confirmar senha
-                  <input
-                    ref={confirmPasswordRef}
-                    placeholder="*****"
-                    id="confirm-password"
-                    name="new-password-confirm"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    className={inputClass}
-                  />
-                </label>
-              </div>
-
               {errorMessage && (
                 <p className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                   {errorMessage}
@@ -338,7 +321,7 @@ function Cadastro() {
                 to="/login"
                 className="font-semibold text-blue-300 transition hover:text-blue-200"
               >
-                Logar
+                Entrar
               </Link>
             </p>
           </div>

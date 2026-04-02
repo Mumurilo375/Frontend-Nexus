@@ -77,46 +77,24 @@ function Login() {
   }
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.14),_transparent_38%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-6 py-12 lg:px-8">
-      <div className="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[0.95fr,1.05fr] lg:items-center">
-        <section className="hidden rounded-[32px] border border-slate-800 bg-slate-950/70 p-8 shadow-[0_26px_75px_rgba(2,6,23,0.45)] lg:block">
-          <img alt="Logo Nexus" src="/utils/logo.png" className="h-11 w-auto" />
-          <p className="mt-10 text-xs font-semibold uppercase tracking-[0.3em] text-blue-200/80">
-            Acesso rapido
-          </p>
-          <h1 className="mt-4 text-4xl font-bold text-white">
-            Entre para acessar sua biblioteca Nexus.
-          </h1>
-          <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">
-            Continue de onde parou, acompanhe pedidos, revele suas keys e
-            gerencie sua conta em um painel mais limpo e direto.
-          </p>
-          <div className="mt-8 grid gap-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-4 text-sm text-slate-300">
-              Biblioteca, favoritos e checkout ficam reunidos na mesma conta.
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-4 text-sm text-slate-300">
-              Seu progresso e sincronizado automaticamente apos o login.
-            </div>
-          </div>
-        </section>
-
-        <div className="rounded-[32px] border border-slate-800 bg-slate-950/85 p-7 shadow-[0_26px_75px_rgba(2,6,23,0.45)] sm:p-8">
-          <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+    <div className="nexus-page-shell min-h-full px-6 py-12 lg:px-8">
+      <div className="mx-auto w-full max-w-md">
+        <div className="nexus-panel p-7 sm:p-8">
+          <div className="mx-auto w-full max-w-sm">
             <img
               alt="Logo Nexus"
               src="/utils/logo.png"
               className="mx-auto h-10 w-auto"
             />
             <h2 className="mt-8 text-center text-3xl font-bold tracking-tight text-white">
-              Entre na sua conta
+              Entrar
             </h2>
             <p className="mt-2 text-center text-sm text-slate-400">
-              Acesse seus jogos, pedidos e configuracoes da conta.
+              Entre com seu email e senha.
             </p>
           </div>
 
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
+          <div className="mx-auto mt-8 w-full max-w-sm">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label
@@ -133,22 +111,18 @@ function Login() {
                   type="email"
                   required
                   autoComplete="email"
+                  onChange={() => setErrorMessage("")}
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-slate-100"
-                  >
-                    Senha
-                  </label>
-                  <span className="text-xs font-medium text-slate-500">
-                    Recuperacao em breve
-                  </span>
-                </div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-slate-100"
+                >
+                  Senha
+                </label>
                 <input
                   placeholder="*****"
                   ref={passwordRef}
@@ -157,6 +131,7 @@ function Login() {
                   type="password"
                   required
                   autoComplete="current-password"
+                  onChange={() => setErrorMessage("")}
                   className={inputClass}
                 />
               </div>
@@ -172,7 +147,7 @@ function Login() {
                 disabled={isSubmitting}
                 className="flex w-full justify-center rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSubmitting ? "Entrando..." : "Logar"}
+                {isSubmitting ? "Entrando..." : "Entrar"}
               </button>
             </form>
 
@@ -182,7 +157,7 @@ function Login() {
                 to="/cadastro"
                 className="font-semibold text-blue-300 transition hover:text-blue-200"
               >
-                Registre-se
+                Criar conta
               </Link>
             </p>
           </div>

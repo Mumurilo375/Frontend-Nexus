@@ -364,7 +364,7 @@ export default function Produtos({
 
   if (loading) {
     return (
-      <p className="rounded-[28px] border border-slate-800 bg-slate-950/78 px-6 py-5 text-gray-300">
+      <p className="nexus-card px-6 py-5 text-gray-300">
         Carregando produtos...
       </p>
     );
@@ -372,7 +372,7 @@ export default function Produtos({
 
   if (error) {
     return (
-      <p className="rounded-[28px] border border-rose-500/30 bg-rose-500/10 px-6 py-5 text-rose-200">
+      <p className="rounded-[26px] border border-rose-500/30 bg-rose-500/10 px-6 py-5 text-rose-200">
         {error}
       </p>
     );
@@ -389,12 +389,12 @@ export default function Produtos({
       />
 
       {games.length === 0 && (
-        <p className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6 text-gray-300">
+        <p className="nexus-card p-6 text-gray-300">
           Nenhum produto encontrado.
         </p>
       )}
       {games.length > 0 && filteredGames.length === 0 && (
-        <p className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6 text-gray-300">
+        <p className="nexus-card p-6 text-gray-300">
           Nenhum resultado para os filtros selecionados.
         </p>
       )}
@@ -411,7 +411,7 @@ export default function Produtos({
               return (
                 <div
                   key={game.id}
-                  className="relative my-2 flex flex-col items-start gap-3 rounded-[28px] border border-slate-800 bg-slate-950/78 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30"
+                  className="nexus-card relative my-1 flex flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
                 >
                   <button
                     type="button"
@@ -419,7 +419,7 @@ export default function Produtos({
                       void alternarFavorito(game.id);
                     }}
                     disabled={pendingFavoriteId === game.id}
-                    className="absolute left-4 top-4 z-20 rounded-full border border-slate-700 bg-slate-950/90 p-3 transition hover:border-blue-500/40 disabled:opacity-60"
+                    className="absolute left-4 top-4 z-20 rounded-full border border-slate-700 bg-slate-950/90 p-2.5 transition hover:border-slate-500 disabled:opacity-60"
                     aria-label={
                       favoriteIds.includes(game.id)
                         ? "Remover dos favoritos"
@@ -429,17 +429,17 @@ export default function Produtos({
                     <Heart
                       className={
                         favoriteIds.includes(game.id)
-                          ? "text-red-500 fill-red-500"
-                          : "text-white"
+                          ? "fill-red-500 text-red-500"
+                          : "text-slate-100"
                       }
                     />
                   </button>
 
-                  <div className="flex h-44 w-full items-center justify-center rounded-[22px] border border-slate-800 bg-black/20 p-2">
+                  <div className="flex h-44 w-full items-center justify-center rounded-[20px] border border-slate-800 bg-black/15 p-3">
                     <img
                       src={game.coverImageUrl || "/logo.png"}
                       alt={game.title}
-                      className="max-h-full w-[115%] object-contain"
+                      className="max-h-full w-full object-contain"
                     />
                   </div>
                   <h2 className="mb-1 text-left text-xl font-bold">
@@ -471,7 +471,7 @@ export default function Produtos({
                             onClick={() => {
                               selectListing(game.id, listing.id);
                             }}
-                            className={`rounded-xl border p-2 transition ${selected ? "border-blue-500/70 bg-blue-500/15" : "border-slate-700 bg-slate-950/90 hover:border-slate-500"}`}
+                            className={`rounded-xl border p-2 transition ${selected ? "border-slate-500 bg-slate-800/90" : "border-slate-700 bg-slate-950/85 hover:border-slate-500"}`}
                             title={listing.platform?.name || "Plataforma"}
                           >
                             <img
@@ -491,7 +491,7 @@ export default function Produtos({
                         .map((category) => category.name)
                         .join(" • ") || "Sem categoria"}
                     </p>
-                    <p className="text-blue-100">
+                    <p className="text-sm font-semibold text-white">
                       {selectedListing?.price
                         ? `R$ ${Number(selectedListing.price).toFixed(2)}`
                         : ""}
@@ -507,7 +507,7 @@ export default function Produtos({
                         !selectedListing ||
                         inCart
                       }
-                      className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                      className="rounded-full bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
                     >
                       {!selectedListing
                         ? "Escolha a plataforma"

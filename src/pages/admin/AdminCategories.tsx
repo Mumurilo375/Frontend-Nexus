@@ -114,14 +114,14 @@ export default function AdminCategories() {
       )}
 
       {!loading && !error && categories.length === 0 && (
-        <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-gray-300">
+        <p className="nexus-card p-5 text-gray-300">
           Nenhuma categoria cadastrada.
         </p>
       )}
 
       {!loading && !error && categories.length > 0 && (
         <>
-          <div className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-4">
+          <div className="nexus-card p-4">
             <div className="flex items-center justify-between pb-4">
               <p className="text-sm text-slate-300">
                 {meta.total} categoria{meta.total === 1 ? "" : "s"} cadastrada

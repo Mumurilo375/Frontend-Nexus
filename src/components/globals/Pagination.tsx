@@ -1,7 +1,5 @@
 import type { ChangeEvent } from "react";
 import MuiPagination from "@mui/material/Pagination";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 
 type PaginationProps = {
   page: number;
@@ -23,24 +21,7 @@ export default function Pagination({
   };
 
   return (
-    <Stack
-      spacing={1.5}
-      sx={{
-        mt: 4,
-        alignItems: "center",
-      }}
-    >
-      <Typography
-        sx={{
-          color: "rgb(148 163 184)",
-          fontSize: "0.85rem",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}
-      >
-        Pagina {page} de {totalPages}
-      </Typography>
-
+    <div className="mt-4 flex justify-center">
       <MuiPagination
         count={totalPages}
         page={page}
@@ -82,6 +63,6 @@ export default function Pagination({
           },
         }}
       />
-    </Stack>
+    </div>
   );
 }

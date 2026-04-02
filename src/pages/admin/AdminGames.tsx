@@ -28,7 +28,20 @@ const emptyMeta: PaginationMeta = {
 };
 
 const actionClass =
-  "rounded-full px-4 py-2.5 text-sm font-medium transition";
+  "inline-flex flex-1 items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium transition";
+
+function formatReleaseDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return "-";
+  }
+
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
+    "pt-BR",
+    { timeZone: "UTC" },
+  );
+}
 
 export default function AdminGames() {
   const [games, setGames] = useState<GameItem[]>([]);
@@ -114,7 +127,7 @@ export default function AdminGames() {
         </Link>
       }
     >
-      <div className="rounded-[28px] border border-slate-800 bg-slate-950/75 p-4">
+      <div className="nexus-card p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <label className="block text-sm font-medium text-gray-200">
             Buscar jogo
@@ -130,7 +143,7 @@ export default function AdminGames() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Pesquisar por titulo..."
-            className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-blue-500/70"
+            className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-slate-500"
           />
         </div>
       </div>
@@ -143,7 +156,7 @@ export default function AdminGames() {
       )}
 
       {!loading && !error && games.length === 0 && (
-        <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-gray-300">
+        <p className="nexus-card p-5 text-gray-300">
           {searchTerm.trim()
             ? "Nenhum jogo encontrado para essa busca."
             : "Nenhum jogo cadastrado."}
@@ -156,7 +169,7 @@ export default function AdminGames() {
             {games.map((game) => (
               <article
                 key={game.id}
-                className="overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950/78 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.3)]"
+                className="nexus-card flex flex-col overflow-hidden p-4"
               >
                 <img
                   src={game.coverImageUrl || "/utils/logo.png"}
@@ -167,7 +180,7 @@ export default function AdminGames() {
                   <div>
                     <h2 className="text-lg font-semibold">{game.title}</h2>
                     <p className="mt-1 text-xs text-gray-400">
-                      Lancamento: {game.releaseDate}
+                      Lancamento: {formatReleaseDate(game.releaseDate)}
                     </p>
                   </div>
                   <span
@@ -184,16 +197,16 @@ export default function AdminGames() {
                   {game.description}
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2 pt-2">
                   <Link
                     to={`/admin/games/${game.id}/edit`}
-                    className={`${actionClass} bg-blue-600 text-white hover:bg-blue-500`}
+                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-200 hover:border-slate-500 hover:text-white`}
                   >
                     Editar
                   </Link>
                   <Link
                     to={`/admin/games/${game.id}/listings`}
-                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-200 hover:border-blue-500/50 hover:text-white`}
+                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:text-white`}
                   >
                     Gerenciar listings
                   </Link>
@@ -203,7 +216,7 @@ export default function AdminGames() {
                       void handleDelete(game.id);
                     }}
                     disabled={deletingId === game.id}
-                    className={`${actionClass} bg-rose-600 text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`${actionClass} border border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {deletingId === game.id ? "Excluindo..." : "Excluir"}
                   </button>

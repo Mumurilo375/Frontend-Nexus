@@ -41,11 +41,11 @@ function Filtro({
   };
 
   return (
-    <aside className="w-full lg:w-64  lg:shrink-10 lg:self-start lg:sticky lg:top-24">
+    <aside className="w-full lg:w-64 lg:shrink-10 lg:self-start lg:sticky lg:top-24">
       <button
         type="button"
         onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
-        className="mb-3 w-full rounded-2xl border border-slate-800 bg-slate-950/85 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
+        className="mb-3 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
         aria-expanded={menuAbertoMobile}
         aria-controls="filtro-categorias"
       >
@@ -54,12 +54,12 @@ function Filtro({
 
       <nav
         id="filtro-categorias"
-        className={`nexus-scrollbar max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[28px] border border-slate-800 bg-slate-950/88 p-5 leading-10 text-gray-300 shadow-[0_18px_45px_rgba(2,6,23,0.32)] ${
+        className={`nexus-card nexus-scrollbar max-h-[calc(100vh-7rem)] overflow-y-auto p-5 leading-10 text-gray-300 ${
           menuAbertoMobile ? "block" : "hidden"
         } lg:block`}
       >
         <h2 className="mb-1 p-4 text-2xl font-bold text-white">
-          <FilterIcon className="inline-block mr-2" />
+          <FilterIcon className="mr-2 inline-block" />
           Filtros
         </h2>
         <h2 className="mb-2 p-4 text-2xl font-bold text-white">Plataformas</h2>
@@ -98,7 +98,7 @@ function Filtro({
           ))}
         </ul>
         <h2 className="mb-1 p-4 text-2xl font-bold text-white">Categorias</h2>
-          
+
         <ul className="mb-2">
           <li>
             <button

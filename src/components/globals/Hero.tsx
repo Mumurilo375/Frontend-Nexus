@@ -5,7 +5,7 @@ function Hero() {
     <section className="relative h-screen overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
         <img
-          src="/utils/residenthero1.jpg"
+          src="/utils/residenthero.jpg"
           alt="Resident Evil Requiem"
           className="h-full w-full object-cover opacity-80"
         />
@@ -27,8 +27,9 @@ function Hero() {
           </div>
 
           <p className="mt-4 text-sm leading-relaxed text-zinc-200 sm:text-base">
-            Resident Evil Requiem e um survival horror que mistura terror e acao,
-            focado em uma nova investigacao ligada ao desastre de Raccoon City.
+            Resident Evil Requiem e um survival horror que mistura terror e
+            acao, focado em uma nova investigacao ligada ao desastre de Raccoon
+            City.
           </p>
 
           <Link

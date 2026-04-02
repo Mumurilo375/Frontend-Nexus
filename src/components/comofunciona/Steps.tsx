@@ -18,9 +18,9 @@ const steps = [
 
 export default function Steps() {
   return (
-    <section className="w-full bg-slate-950 px-4 py-16 sm:px-6 sm:py-18">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="max-w-2xl">
+    <section className="w-full -mt-15 bg-slate-950 px-4 py-16 sm:px-6 sm:py-18">
+      <div className="mx-auto justify-center w-full max-w-6xl">
+        <div className="max-w-2xl text-center mx-auto mb-20">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
             Passo a passo
           </p>

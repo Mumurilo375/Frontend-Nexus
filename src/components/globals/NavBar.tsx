@@ -2,7 +2,6 @@ import {
   AlignJustify,
   ChevronDown,
   Heart,
-  LayoutDashboard,
   LogOut,
   ReceiptText,
   Search,
@@ -10,6 +9,7 @@ import {
   ShoppingCart,
   UserRound,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Menu as HeadlessMenu,
@@ -33,10 +33,34 @@ type GamesResponse = {
   items: GameSuggestion[];
 };
 
+type NavLinkItem = {
+  to: string;
+  label: string;
+  adminOnly?: boolean;
+};
+
+type MenuAction = {
+  label: string;
+  icon: LucideIcon;
+  to?: string;
+  onSelect?: () => void;
+  danger?: boolean;
+};
+
+const navLinks: NavLinkItem[] = [
+  { to: "/loja", label: "Loja" },
+  { to: "/ofertas", label: "Ofertas" },
+  { to: "/comofunciona", label: "Como funciona" },
+  { to: "/admin", label: "Painel admin", adminOnly: true },
+];
+
 const iconButtonClass =
-  "inline-flex h-8 w-8 items-center justify-center rounded-md hover:text-blue-600";
+  "relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-950/75 text-slate-200 transition hover:border-slate-600 hover:text-white";
+const navLinkClass = "text-sm text-slate-300 transition hover:text-white";
+const mobileItemClass =
+  "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white";
 const menuItemClass =
-  "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-slate-200 transition data-focus:bg-slate-900/90 data-focus:text-white data-focus:outline-hidden";
+  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-200 transition data-focus:bg-slate-900 data-focus:text-white data-focus:outline-hidden";
 
 function NavBar() {
   const navigate = useNavigate();
@@ -59,6 +83,8 @@ function NavBar() {
     user: authUser,
   } = useAuth();
   const avatarSrc = authUser?.avatarUrl?.trim() || "";
+  const profileLabel = authUser?.username || "Minha conta";
+  const visibleNavLinks = navLinks.filter((link) => !link.adminOnly || isAdmin);
 
   useEffect(() => {
     setAvatarBroken(false);
@@ -200,17 +226,71 @@ function NavBar() {
   };
 
   const handleLogout = () => {
+    setMenuMobileAberto(false);
     logout();
     void navigate("/");
   };
 
   const handleGoToFavorites = () => {
+    setMenuMobileAberto(false);
+
     if (!isLoggedIn) {
       openAuthModal();
       return;
     }
 
     void navigate("/favoritos");
+  };
+
+  const accountActions: MenuAction[] = isLoggedIn
+    ? [
+        {
+          label: "Configuracoes",
+          to: "/configuracoes",
+          icon: Settings,
+        },
+        {
+          label: "Meus pedidos e keys",
+          to: "/meus-pedidos",
+          icon: ReceiptText,
+        },
+        {
+          label: "Sair",
+          icon: LogOut,
+          onSelect: handleLogout,
+          danger: true,
+        },
+      ]
+    : [];
+
+  const getActionClass = (baseClass: string, danger?: boolean) =>
+    danger
+      ? `${baseClass} text-rose-200 data-focus:bg-rose-500/10 data-focus:text-rose-100 hover:text-rose-100`
+      : baseClass;
+
+  const renderAction = (action: MenuAction, className: string) => {
+    const content = (
+      <>
+        <action.icon
+          className={action.danger ? "h-4 w-4 text-rose-300" : "h-4 w-4"}
+        />
+        {action.label}
+      </>
+    );
+
+    if (action.to) {
+      return (
+        <Link to={action.to} className={className}>
+          {content}
+        </Link>
+      );
+    }
+
+    return (
+      <button type="button" onClick={action.onSelect} className={className}>
+        {content}
+      </button>
+    );
   };
 
   return (
@@ -223,66 +303,21 @@ function NavBar() {
         onConfirm={goToLogin}
       />
 
-      <nav className="fixed top-0 z-50 w-full bg-black/90 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="shrink-0">
-            <Link
-              to="/"
-              className="block transition-all duration-300 hover:scale-105"
-            >
-              <img
-                src="/utils/logo.png"
-                alt="Logo Nexus"
-                className="h-10 w-auto"
-              />
-            </Link>
-          </div>
+      <nav className="fixed top-0 z-50 w-full border-b border-slate-900/80 bg-black/85 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link to="/" className="shrink-0 transition-opacity hover:opacity-90">
+            <img src="/utils/logo.png" alt="Logo Nexus" className="h-10 w-auto" />
+          </Link>
 
-          <div className="hidden items-center gap-8 md:flex">
-            <Link
-              to="/loja"
-              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
-            >
-              Loja
-            </Link>
-            <Link
-              to="/ofertas"
-              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
-            >
-              Ofertas
-            </Link>
-            <Link
-              to="/comofunciona"
-              className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
-            >
-              Como funciona
-            </Link>
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="transition-all duration-300 hover:scale-105 hover:text-blue-600"
-              >
-                Painel admin
+          <div className="hidden items-center gap-6 md:flex">
+            {visibleNavLinks.map((link) => (
+              <Link key={link.to} to={link.to} className={navLinkClass}>
+                {link.label}
               </Link>
-            )}
+            ))}
           </div>
 
-          <div className="flex items-center gap-3 text-sm md:hidden">
-            <Link
-              to="/loja"
-              className="rounded-md px-2 py-1 hover:bg-gray-800 hover:text-blue-500"
-            >
-              Loja
-            </Link>
-            <Link
-              to="/comofunciona"
-              className="rounded-md px-2 py-1 hover:bg-gray-800 hover:text-blue-500"
-            >
-              Como funciona
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div ref={searchBoxRef} className="relative">
               <button
                 type="button"
@@ -294,7 +329,7 @@ function NavBar() {
               </button>
 
               {searchOpen && (
-                <div className="absolute right-0 top-11 w-[90vw] max-w-80 rounded-xl border border-gray-700 bg-black/95 p-3 shadow-2xl">
+                <div className="absolute right-0 top-12 w-[90vw] max-w-80 rounded-2xl border border-slate-800 bg-slate-950/96 p-3 shadow-[0_18px_40px_rgba(2,6,23,0.28)]">
                   <form onSubmit={handleSubmit} className="mb-2">
                     <div className="flex items-center gap-2">
                       <input
@@ -302,14 +337,14 @@ function NavBar() {
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
                         placeholder="Pesquisar jogos..."
-                        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-600"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-slate-500"
                       />
 
                       {searchTerm.trim().length > 0 && (
                         <button
                           type="button"
                           onClick={handleClearSearchFilter}
-                          className="rounded-md border border-gray-700 bg-gray-900 p-2 text-gray-300 transition-colors hover:text-blue-500"
+                          className="rounded-xl border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:text-white"
                           aria-label="Limpar filtro"
                           title="Limpar filtro"
                         >
@@ -341,7 +376,7 @@ function NavBar() {
                               setSearchTerm(game.title);
                               irParaResultado(game.title);
                             }}
-                            className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-800"
+                            className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-900"
                           >
                             <img
                               src={game.coverImageUrl || "/utils/logo.png"}
@@ -369,12 +404,12 @@ function NavBar() {
             <button
               type="button"
               onClick={handleGoToFavorites}
-              className={`relative hidden md:inline-flex ${iconButtonClass}`}
+              className={`hidden md:inline-flex ${iconButtonClass}`}
               aria-label="Ir para favoritos"
             >
               <Heart className="h-5 w-5" />
               {isLoggedIn && wishlistCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
@@ -382,7 +417,7 @@ function NavBar() {
 
             <Link
               to="/carrinho"
-              className={`relative hidden md:inline-flex ${iconButtonClass}`}
+              className={`hidden md:inline-flex ${iconButtonClass}`}
               aria-label="Carrinho"
             >
               <ShoppingCart className="h-5 w-5" />
@@ -394,8 +429,8 @@ function NavBar() {
             </Link>
 
             {isLoggedIn ? (
-              <HeadlessMenu as="div" className="relative hidden md:inline-flex">
-                <MenuButton className="inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-950/85 px-2 py-1.5 text-left transition hover:border-blue-500/40 hover:bg-slate-900 focus:outline-none">
+              <HeadlessMenu as="div" className="relative hidden md:block">
+                <MenuButton className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/80 px-2 py-1.5 text-left text-sm text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 focus:outline-none">
                   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 text-slate-200">
                     {avatarSrc && !avatarBroken ? (
                       <img
@@ -408,92 +443,30 @@ function NavBar() {
                       <UserRound className="h-5 w-5" />
                     )}
                   </div>
-                  <div className="hidden min-w-0 sm:block">
-                    <p className="max-w-28 truncate text-sm font-medium text-white">
-                      {authUser?.username || "Minha conta"}
-                    </p>
-                    <p className="max-w-28 truncate text-xs text-slate-400">
-                      {authUser?.email || "Conta Nexus"}
-                    </p>
-                  </div>
+                  <span className="hidden max-w-28 truncate font-medium text-white sm:block">
+                    {profileLabel}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </MenuButton>
 
                 <MenuItems
                   transition
-                  className="absolute right-0 z-10 mt-3 w-72 origin-top-right rounded-[28px] border border-slate-800 bg-slate-950/96 p-3 shadow-[0_24px_70px_rgba(2,6,23,0.45)] outline-none backdrop-blur-md transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                  className="absolute right-0 z-10 mt-3 w-64 origin-top-right rounded-2xl border border-slate-800 bg-slate-950/96 p-2 shadow-[0_18px_40px_rgba(2,6,23,0.3)] outline-none transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                 >
-                  <div className="rounded-[22px] border border-slate-800 bg-slate-900/65 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-950 text-slate-200">
-                        {avatarSrc && !avatarBroken ? (
-                          <img
-                            src={avatarSrc}
-                            alt="Foto do usuario"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <UserRound className="h-6 w-6" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">
-                          {authUser?.username || "Minha conta"}
-                        </p>
-                        <p className="truncate text-xs text-slate-400">
-                          {authUser?.email || "Conta Nexus"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1">
-                    {isAdmin && (
-                      <MenuItem>
-                        <Link
-                          to="/admin"
-                          className={menuItemClass}
-                        >
-                          <LayoutDashboard className="h-4 w-4 text-blue-300" />
-                          Painel admin
-                        </Link>
-                      </MenuItem>
-                    )}
-                    <MenuItem>
-                      <Link
-                        to="/configuracoes"
-                        className={menuItemClass}
-                      >
-                        <Settings className="h-4 w-4 text-blue-300" />
-                        Configuracoes
-                      </Link>
+                  {accountActions.map((action) => (
+                    <MenuItem key={action.label}>
+                      {renderAction(
+                        action,
+                        getActionClass(menuItemClass, action.danger),
+                      )}
                     </MenuItem>
-                    <MenuItem>
-                      <Link
-                        to="/meus-pedidos"
-                        className={menuItemClass}
-                      >
-                        <ReceiptText className="h-4 w-4 text-blue-300" />
-                        Meus pedidos e keys
-                      </Link>
-                    </MenuItem>
-                    <MenuItem>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className={menuItemClass}
-                      >
-                        <LogOut className="h-4 w-4 text-rose-300" />
-                        Sair
-                      </button>
-                    </MenuItem>
-                  </div>
+                  ))}
                 </MenuItems>
               </HeadlessMenu>
             ) : (
               <Link
                 to="/login"
-                className="hidden rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 md:inline-block"
+                className="hidden rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 md:inline-block"
               >
                 Entrar
               </Link>
@@ -501,7 +474,7 @@ function NavBar() {
 
             <button
               type="button"
-              className="rounded-md p-1 hover:text-blue-600 md:hidden"
+              className={`${iconButtonClass} md:hidden`}
               onClick={() => setMenuMobileAberto((valorAtual) => !valorAtual)}
               aria-label={menuMobileAberto ? "Fechar menu" : "Abrir menu"}
               aria-expanded={menuMobileAberto}
@@ -519,82 +492,43 @@ function NavBar() {
         {menuMobileAberto && (
           <div
             id="menu-mobile-navbar"
-            className="border-t border-gray-800 bg-black/95 px-4 pb-4 pt-2 md:hidden"
+            className="border-t border-slate-900 bg-black/95 px-4 pb-4 pt-3 md:hidden"
           >
-            <div className="flex flex-col gap-3 text-sm">
-              <Link
-                to="/loja"
-                className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
-                Loja
-              </Link>
-              <Link
-                to="/ofertas"
-                className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
-                Ofertas
-              </Link>
-              <Link
-                to="/comofunciona"
-                className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
-                Como funciona
-              </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-                >
-                  Painel admin
+            <div className="flex flex-col gap-2">
+              {visibleNavLinks.map((link) => (
+                <Link key={link.to} to={link.to} className={mobileItemClass}>
+                  {link.label}
                 </Link>
-              )}
+              ))}
+
+              <div className="my-1 h-px bg-slate-800" />
+
               <button
                 type="button"
                 onClick={handleGoToFavorites}
-                className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-800 hover:text-blue-500"
+                className={mobileItemClass}
               >
                 <Heart className="h-4 w-4" /> Favoritos{" "}
                 {isLoggedIn ? `(${wishlistCount})` : ""}
               </button>
-              <Link
-                to="/carrinho"
-                className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-              >
+              <Link to="/carrinho" className={mobileItemClass}>
                 <ShoppingCart className="h-4 w-4" /> Carrinho{" "}
                 {isLoggedIn ? `(${cartCount})` : ""}
               </Link>
-              {isLoggedIn && (
-                <Link
-                  to="/configuracoes"
-                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-                >
-                  <UserRound className="h-4 w-4" /> Configuracoes
-                </Link>
-              )}
-              {isLoggedIn && (
-                <Link
-                  to="/meus-pedidos"
-                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-                >
-                  <UserRound className="h-4 w-4" /> Meus pedidos e keys
-                </Link>
-              )}
-              {!isLoggedIn && (
-                <Link
-                  to="/login"
-                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-gray-800 hover:text-blue-500"
-                >
+
+              {isLoggedIn ? (
+                accountActions.map((action) => (
+                  <div key={action.label}>
+                    {renderAction(
+                      action,
+                      getActionClass(mobileItemClass, action.danger),
+                    )}
+                  </div>
+                ))
+              ) : (
+                <Link to="/login" className={mobileItemClass}>
                   <UserRound className="h-4 w-4" /> Entrar
                 </Link>
-              )}
-              {isLoggedIn && (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-800 hover:text-blue-500"
-                >
-                  <UserRound className="h-4 w-4" /> Sair
-                </button>
               )}
             </div>
           </div>

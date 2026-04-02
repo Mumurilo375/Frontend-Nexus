@@ -21,16 +21,16 @@ export default function AdminLayout({
   actions,
 }: AdminLayoutProps) {
   return (
-    <div className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_34%),linear-gradient(180deg,#020617_0%,#030712_100%)]">
+    <div className="nexus-page-shell">
       <NavBar />
       <main className="mx-auto min-h-screen w-full max-w-6xl px-6 pb-10 pt-28">
-        <div className="flex flex-col gap-5 rounded-[30px] border border-slate-800/80 bg-slate-950/85 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.42)] backdrop-blur-sm">
+        <div className="nexus-panel flex flex-col gap-5 p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               {backTo && (
                 <Link
                   to={backTo}
-                  className="inline-flex rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1 text-sm text-slate-300 transition hover:border-blue-500/60 hover:text-white"
+                  className="inline-flex rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
                 >
                   {backLabel}
                 </Link>

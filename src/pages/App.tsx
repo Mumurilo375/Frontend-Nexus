@@ -7,7 +7,7 @@ import Plataforms from "../components/globals/Plataforms";
 
 function App() {
   return (
-    <div className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.16),_transparent_32%),linear-gradient(180deg,#020617_0%,#030712_100%)]">
+    <div className="nexus-page-shell">
       <NavBar />
       <Hero />
       <Intro />

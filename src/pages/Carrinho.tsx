@@ -4,6 +4,10 @@ import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
 import { Trash2Icon } from "lucide-react";
+import steamLogo from "../assets/steam.png";
+import playstationLogo from "../assets/playlogo.png";
+import xboxLogo from "../assets/xbox.png";
+import nintendoLogo from "../assets/nintendo.png";
 
 type CartItem = {
   id: number;
@@ -21,8 +25,22 @@ type CartResponse = {
   meta?: { subtotal?: number; totalItems?: number };
 };
 
+const platformLogoByName: Record<string, string> = {
+  steam: steamLogo,
+  playstation: playstationLogo,
+  xbox: xboxLogo,
+  "nintendo switch": nintendoLogo,
+};
+
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
+}
+
+function getPlatformLogo(platformName?: string) {
+  const key = String(platformName ?? "")
+    .trim()
+    .toLowerCase();
+  return platformLogoByName[key] || "/logo.png";
 }
 
 export default function Carrinho() {
@@ -129,9 +147,14 @@ export default function Carrinho() {
                           <h2 className="truncate text-xl font-semibold text-white">
                             {item.listing?.game?.title || "Jogo"}
                           </h2>
-                          <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-100">
-                            {item.listing?.platform?.name || "Sem plataforma"}
-                          </span>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-950/90 p-1.5">
+                            <img
+                              src={getPlatformLogo(item.listing?.platform?.name)}
+                              alt={item.listing?.platform?.name || "Plataforma"}
+                              title={item.listing?.platform?.name || "Plataforma"}
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-4 sm:block sm:text-right">

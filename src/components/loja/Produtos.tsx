@@ -400,7 +400,7 @@ export default function Produtos({
       )}
       {filteredGames.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 mt-25 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedGames.map((game) => {
               const listings = getListingsForGame(game.id);
               const selectedListing = getSelectedListingForGame(game.id);
@@ -411,7 +411,7 @@ export default function Produtos({
               return (
                 <div
                   key={game.id}
-                  className="relative my-2 flex flex-col items-start gap-3 rounded-[28px] border border-slate-800 bg-slate-950/78 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30"
+                  className="relative  my-2 flex flex-col items-start gap-3 rounded-[28px] border border-slate-800 bg-slate-950/78 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30"
                 >
                   <button
                     type="button"

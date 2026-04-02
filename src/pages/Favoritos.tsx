@@ -225,9 +225,7 @@ function Favoritos() {
         <div className="rounded-[32px] border border-slate-800 bg-slate-950/85 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.4)]">
           <div className="flex flex-col gap-2 border-b border-slate-800 pb-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200/80">
-                Wishlist
-              </p>
+              
               <h1 className="mt-2 text-4xl font-bold text-white">
                 Meus favoritos
               </h1>

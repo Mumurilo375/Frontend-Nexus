@@ -61,7 +61,7 @@ type WishlistResponse = {
   items: WishlistItem[];
 };
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 12;
 
 const platformLogoByName: Record<string, string> = {
   steam: steamLogo,
@@ -107,6 +107,11 @@ export default function Produtos({
   const { isAuthenticated: isLoggedIn } = useAuth();
   const [searchParams] = useSearchParams();
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
 
   const goToLogin = () => {
     setShowAuthModal(false);
@@ -526,7 +531,7 @@ export default function Produtos({
           <Pagination
             page={page}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={handlePageChange}
           />
         </>
       )}

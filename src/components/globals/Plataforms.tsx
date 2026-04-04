@@ -118,18 +118,22 @@ export default function Plataforms() {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             {platforms.map((platform, index) => {
               return (
-                <span
+                <button
                   key={platform.id}
-                  className={`h-2.5 rounded-full transition-all duration-500 ${
+                  type="button"
+                  onClick={() => setCurrentIndex(index)}
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 ${
                     index === currentIndex
-                      ? "w-8 bg-blue-400"
-                      : "w-2.5 bg-zinc-600"
+                      ? "border-blue-400/50 bg-blue-500/15 text-blue-100"
+                      : "border-white/10 bg-slate-950/70 text-slate-300 hover:border-blue-300/35 hover:text-white"
                   }`}
-                  aria-hidden="true"
-                ></span>
+                  aria-pressed={index === currentIndex}
+                >
+                  {platform.id}
+                </button>
               );
             })}
           </div>

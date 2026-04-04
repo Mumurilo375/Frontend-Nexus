@@ -17,7 +17,7 @@ function Hero() {
           <div className="overflow-hidden rounded-xl">
             <iframe
               className="aspect-video w-full"
-              src="https://www.youtube.com/embed/hYcpNzFNZrk?si=5uxbdHzOsepuOnmH"
+              src="https://www.youtube.com/embed/RJ7eRQgJBbo"
               title="Trailer de Resident Evil Requiem"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

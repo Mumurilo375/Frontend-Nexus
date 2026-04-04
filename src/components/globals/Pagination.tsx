@@ -18,6 +18,7 @@ export default function Pagination({
 
   const handleChange = (_event: ChangeEvent<unknown>, value: number) => {
     onPageChange(value);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   return (

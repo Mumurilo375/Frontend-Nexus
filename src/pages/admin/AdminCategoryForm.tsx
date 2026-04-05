@@ -34,7 +34,7 @@ export default function AdminCategoryForm() {
         setError(
           getApiErrorMessage(
             requestError,
-            "Nao foi possivel carregar a categoria.",
+            "Não foi possível carregar a categoria.",
           ),
         );
       } finally {
@@ -68,7 +68,7 @@ export default function AdminCategoryForm() {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel salvar a categoria.",
+          "Não foi possível salvar a categoria.",
         ),
       );
     } finally {
@@ -79,11 +79,11 @@ export default function AdminCategoryForm() {
   return (
     <AdminLayout
       title={isEditMode ? "Editar categoria" : "Nova categoria"}
-      description="Formulario simples para manter as categorias do projeto."
+      description="Formulário simples para manter as categorias do projeto."
       backTo="/admin/categories"
       backLabel="Voltar para categorias"
     >
-      {loading && <p className="text-gray-300">Carregando formulario...</p>}
+      {loading && <p className="text-gray-300">Carregando formulário...</p>}
 
       {!loading && (
         <form

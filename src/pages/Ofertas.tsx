@@ -15,13 +15,13 @@ function Ofertas() {
             Ofertas em breve
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-            Esta pagina continua temporaria. Enquanto as promocoes reais nao
+            Esta página continua temporária. Enquanto as promoções reais não
             entram, o fluxo principal segue na loja e o processo completo fica
             explicado em como funciona.
           </p>
 
           <p className="nexus-card mt-8 max-w-3xl p-5 text-sm leading-7 text-slate-300">
-            Use esta area como atalho: explore o catalogo completo ou veja como
+            Use esta área como atalho: explore o catálogo completo ou veja como
             a compra e o resgate das keys funcionam na demo.
           </p>
 

@@ -9,8 +9,8 @@ function Hero() {
           Como funcionam as keys?
         </h1>
         <p className="max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-          Keys sao codigos digitais que liberam o jogo diretamente na
-          plataforma escolhida. No Nexus voce compra, recebe a key na hora e
+          Keys são códigos digitais que liberam o jogo diretamente na
+          plataforma escolhida. No Nexus você compra, recebe a key na hora e
           faz o resgate na sua conta com poucos passos.
         </p>
       </div>

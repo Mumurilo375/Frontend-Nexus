@@ -116,7 +116,7 @@ function Favoritos() {
         setItems([]);
         setListingByGame(new Map());
         setCartListingIds([]);
-        setError("Nao foi possivel carregar seus favoritos.");
+        setError("Não foi possível carregar seus favoritos.");
       } finally {
         setLoading(false);
       }
@@ -208,7 +208,7 @@ function Favoritos() {
 
     if (cartListingIds.includes(selectedListing.id)) {
       setInfoMessage(
-        `${gameTitle} nessa plataforma ja esta no seu carrinho.`,
+        `${gameTitle} nessa plataforma já está no seu carrinho.`,
       );
       return;
     }
@@ -230,7 +230,7 @@ function Favoritos() {
                 Meus favoritos
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                Guarde os jogos que chamaram sua atencao para comparar preco,
+                Guarde os jogos que chamaram sua atenção para comparar preço,
                 plataforma e decidir a compra com calma.
               </p>
             </div>
@@ -256,7 +256,7 @@ function Favoritos() {
           {!loading && !error && items.length === 0 && (
             <div className="mt-6 rounded-[28px] border border-slate-800 bg-slate-900/55 p-6">
               <p className="text-gray-300">
-                Voce ainda nao favoritou nenhum jogo.
+                Você ainda não favoritou nenhum jogo.
               </p>
               <button
                 type="button"
@@ -265,7 +265,7 @@ function Favoritos() {
                 }}
                 className="mt-4 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
               >
-                Explorar catalogo
+                Explorar catálogo
               </button>
             </div>
           )}
@@ -353,7 +353,7 @@ function Favoritos() {
                           </div>
                         ) : (
                           <p className="text-sm text-slate-400">
-                            Nenhuma plataforma disponivel para este jogo.
+                            Nenhuma plataforma disponível para este jogo.
                           </p>
                         )}
                       </div>

@@ -63,7 +63,7 @@ export default function Carrinho() {
       setItems(data.items ?? []);
     } catch {
       setItems([]);
-      setError("Nao foi possivel carregar o carrinho.");
+      setError("Não foi possível carregar o carrinho.");
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function Carrinho() {
 
           {!loading && !error && items.length === 0 && (
             <div className="nexus-card mt-6 p-6">
-              <p className="text-gray-300">Seu carrinho esta vazio.</p>
+              <p className="text-gray-300">Seu carrinho está vazio.</p>
               <Link
                 to="/loja"
                 className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"

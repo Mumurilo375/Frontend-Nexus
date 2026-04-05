@@ -74,7 +74,7 @@ export default function AdminListingForm() {
 
   useEffect(() => {
     if (!gameId) {
-      setError("Jogo invalido.");
+      setError("Jogo inválido.");
       setLoading(false);
       return;
     }
@@ -111,7 +111,7 @@ export default function AdminListingForm() {
         setError(
           getApiErrorMessage(
             requestError,
-            "Nao foi possivel carregar o formulario do listing.",
+            "Não foi possível carregar o formulário do listing.",
           ),
         );
       } finally {
@@ -128,7 +128,7 @@ export default function AdminListingForm() {
     const parsedPrice = Number(form.price);
 
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      setError("Informe um preco maior que zero.");
+      setError("Informe um preço maior que zero.");
       return;
     }
 
@@ -138,12 +138,12 @@ export default function AdminListingForm() {
     }
 
     if (!isEditMode && availablePlatforms.length === 0) {
-      setError("Este jogo ja possui listings em todas as plataformas disponiveis.");
+      setError("Este jogo já possui listings em todas as plataformas disponíveis.");
       return;
     }
 
     if (!gameId) {
-      setError("Jogo invalido.");
+      setError("Jogo inválido.");
       return;
     }
 
@@ -156,20 +156,20 @@ export default function AdminListingForm() {
           price: parsedPrice,
           isActive: form.isActive,
         });
+        void navigate(`/admin/games/${gameId}/listings`);
       } else {
-        await api.post("/listings", {
+        const { data } = await api.post<ListingDetails>("/listings", {
           gameId: Number(gameId),
           platformId: Number(form.platformId),
           price: parsedPrice,
         });
+        void navigate(`/admin/games/${gameId}/listings/${data.id}/keys`);
       }
-
-      void navigate(`/admin/games/${gameId}/listings`);
     } catch (requestError) {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel salvar o listing.",
+          "Não foi possível salvar o listing.",
         ),
       );
     } finally {
@@ -182,13 +182,15 @@ export default function AdminListingForm() {
       title={isEditMode ? "Editar listing" : "Novo listing"}
       description={
         game
-          ? `Listing vinculado ao jogo ${game.title}.`
+          ? isEditMode
+            ? `Atualize o listing vinculado ao jogo ${game.title}.`
+            : `Crie o listing de ${game.title} e abasteça as keys na etapa seguinte.`
           : "Preencha os dados do listing."
       }
       backTo={gameId ? `/admin/games/${gameId}/listings` : "/admin/games"}
       backLabel="Voltar para listings"
     >
-      {loading && <p className="text-gray-300">Carregando formulario...</p>}
+      {loading && <p className="text-gray-300">Carregando formulário...</p>}
 
       {!loading && (
         <form
@@ -231,18 +233,18 @@ export default function AdminListingForm() {
                 </select>
                 {!isEditMode && availablePlatforms.length === 0 && (
                   <p className="mt-2 text-xs text-amber-300">
-                    Todas as plataformas ja possuem listing para este jogo.
+                    Todas as plataformas já possuem listing para este jogo.
                   </p>
                 )}
                 {!isEditMode && availablePlatforms.length > 0 && (
                   <p className="mt-2 text-xs text-slate-400">
-                    So aparecem plataformas ainda nao usadas neste jogo.
+                    Só aparecem plataformas ainda não usadas neste jogo.
                   </p>
                 )}
               </label>
 
               <label className="text-sm text-gray-200">
-                Preco
+                Preço
                 <input
                   type="number"
                   min="0.01"
@@ -268,8 +270,9 @@ export default function AdminListingForm() {
                 {game?.title || "Jogo selecionado"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Use esta tela para controlar a combinacao de plataforma e preco
-                sem duplicar listings do mesmo jogo.
+                {isEditMode
+                  ? "Ajuste preço e status sem duplicar listings do mesmo jogo."
+                  : "Depois de salvar, você vai para a tela de keys para abastecer o estoque."}
               </p>
             </aside>
           </div>
@@ -302,7 +305,11 @@ export default function AdminListingForm() {
               disabled={saving || (!isEditMode && availablePlatforms.length === 0)}
               className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? "Salvando..." : "Salvar"}
+              {saving
+                ? "Salvando..."
+                : isEditMode
+                  ? "Salvar"
+                  : "Salvar e gerenciar keys"}
             </button>
             <Link
               to={gameId ? `/admin/games/${gameId}/listings` : "/admin/games"}

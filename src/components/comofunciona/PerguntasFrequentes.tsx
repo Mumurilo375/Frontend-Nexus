@@ -1,18 +1,18 @@
 const faqItems = [
   {
-    question: "O que sao keys de jogos?",
+    question: "O que são keys de jogos?",
     answer:
-      "Keys sao codigos alfanumericos que liberam jogos digitais em plataformas como Steam, Xbox, PlayStation e Nintendo.",
+      "Keys são códigos alfanuméricos que liberam jogos digitais em plataformas como Steam, Xbox, PlayStation e Nintendo.",
   },
   {
-    question: "O que faco se minha key nao funcionar?",
+    question: "O que faço se minha key não funcionar?",
     answer:
-      "Como o Nexus e uma demo academica, a entrega e simulada. Em um projeto real, esse seria o ponto de acionar suporte e validar a compra.",
+      "Como o Nexus é uma demo acadêmica, a entrega é simulada. Em um projeto real, esse seria o ponto de acionar suporte e validar a compra.",
   },
   {
-    question: "Posso usar a mesma key em varias contas?",
+    question: "Posso usar a mesma key em várias contas?",
     answer:
-      "Nao. Uma key valida normalmente pode ser resgatada apenas uma vez e fica vinculada a uma unica conta.",
+      "Não. Uma key válida normalmente pode ser resgatada apenas uma vez e fica vinculada a uma única conta.",
   },
 ];
 

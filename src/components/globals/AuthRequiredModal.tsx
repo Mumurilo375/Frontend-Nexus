@@ -8,8 +8,8 @@ type AuthRequiredModalProps = {
 
 export default function AuthRequiredModal({
   open,
-  title = "Login necessario",
-  message = "Para continuar, voce precisa estar logado.",
+  title = "Login necessário",
+  message = "Para continuar, você precisa estar logado.",
   onClose,
   onConfirm,
 }: AuthRequiredModalProps) {
@@ -27,7 +27,7 @@ export default function AuthRequiredModal({
             onClick={onClose}
             className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600"
           >
-            Agora nao
+            Agora não
           </button>
           <button
             type="button"

@@ -7,15 +7,15 @@ const linkClass =
 const sections = [
   {
     title: "Jogos",
-    label: "Catalogo",
+    label: "Catálogo",
     description: "Cadastre, edite, exclua e abra os listings de cada jogo.",
     to: "/admin/games",
     cta: "Gerenciar jogos",
   },
   {
     title: "Categorias",
-    label: "Organizacao",
-    description: "Mantenha a classificacao usada na loja e no admin.",
+    label: "Organização",
+    description: "Mantenha a classificação usada na loja e no admin.",
     to: "/admin/categories",
     cta: "Gerenciar categorias",
   },
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   return (
     <AdminLayout
       title="Painel admin"
-      description="Acesse os dois fluxos principais de gestao da demo."
+      description="Acesse os dois fluxos principais de gestão da demo."
     >
       <div className="grid gap-4 md:grid-cols-2">
         {sections.map((section) => (

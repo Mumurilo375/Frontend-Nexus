@@ -7,7 +7,7 @@ function Highlights() {
             Para Todos os Tipos de Jogador
           </h2>
           <p className="my-7 text-xl text-slate-400">
-            Descubra jogos de diferentes gêneros e estilos em um só lugar
+            Descubra jogos de diferentes gêneros e estilos em um só lugar.
           </p>
         </div>
         <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -19,7 +19,7 @@ function Highlights() {
             />
             <h3 className="mb-2 text-3xl font-bold text-white">Ação e Aventura</h3>
             <p className="text-slate-300">
-              Enfrente desafios intensos e explore novos mundos
+              Enfrente desafios intensos e explore novos mundos.
             </p>
           </div>
           <div className="rounded-[30px] border border-slate-800 bg-slate-950/78 p-8 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">

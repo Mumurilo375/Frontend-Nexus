@@ -50,7 +50,7 @@ export default function AdminCategories() {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel carregar as categorias.",
+          "Não foi possível carregar as categorias.",
         ),
       );
     } finally {
@@ -83,7 +83,7 @@ export default function AdminCategories() {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel excluir a categoria.",
+          "Não foi possível excluir a categoria.",
         ),
       );
     } finally {
@@ -134,7 +134,7 @@ export default function AdminCategories() {
                   <tr>
                     <th className="px-4 py-3">ID</th>
                     <th className="px-4 py-3">Nome</th>
-                    <th className="px-4 py-3 text-right">Acoes</th>
+                    <th className="px-4 py-3 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">

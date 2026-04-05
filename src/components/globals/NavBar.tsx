@@ -117,7 +117,7 @@ function NavBar() {
       } catch {
         setGames([]);
         setSearchError(
-          "Nao foi possivel carregar sugestoes. Faca login para pesquisar.",
+          "Não foi possível carregar sugestões. Faça login para pesquisar.",
         );
       } finally {
         setLoadingSuggestions(false);
@@ -245,7 +245,7 @@ function NavBar() {
   const accountActions: MenuAction[] = isLoggedIn
     ? [
         {
-          label: "Configuracoes",
+          label: "Configurações",
           to: "/configuracoes",
           icon: Settings,
         },
@@ -298,7 +298,7 @@ function NavBar() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Essa acao exige login. Deseja entrar agora?"
+        message="Essa ação exige login. Deseja entrar agora?"
         onClose={() => setShowAuthModal(false)}
         onConfirm={goToLogin}
       />
@@ -356,7 +356,7 @@ function NavBar() {
 
                   {loadingSuggestions && (
                     <p className="px-1 py-2 text-sm text-gray-300">
-                      Carregando sugestoes...
+                      Carregando sugestões...
                     </p>
                   )}
 
@@ -435,7 +435,7 @@ function NavBar() {
                     {avatarSrc && !avatarBroken ? (
                       <img
                         src={avatarSrc}
-                        alt="Foto do usuario"
+                        alt="Foto do usuário"
                         className="h-full w-full object-cover"
                         onError={() => setAvatarBroken(true)}
                       />

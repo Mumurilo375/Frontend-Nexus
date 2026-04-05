@@ -32,34 +32,34 @@ function getFriendlyRegisterError(error: unknown): string {
     : "";
 
   if (message.includes("Email is already in use")) {
-    return "Este email ja esta em uso.";
+    return "Este email já está em uso.";
   }
 
   if (message.includes("Username is already in use")) {
-    return "Este nome de usuario ja esta em uso.";
+    return "Este nome de usuário já está em uso.";
   }
 
   if (message.includes("CPF is already in use")) {
-    return "Este CPF ja esta cadastrado.";
+    return "Este CPF já está cadastrado.";
   }
 
   if (message.includes("Password must")) {
-    return "A senha deve ter no minimo 8 caracteres, com maiuscula, minuscula, numero e caractere especial.";
+    return "A senha deve ter no mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.";
   }
 
   if (
     message.includes("Invalid CPF") ||
     message.includes("CPF must have 11 digits")
   ) {
-    return "CPF invalido. Verifique os dados informados.";
+    return "CPF inválido. Verifique os dados informados.";
   }
 
   if (message.includes("Network Error")) {
-    return "Nao foi possivel conectar com o servidor.";
+    return "Não foi possível conectar com o servidor.";
   }
 
   return (
-    message || "Nao foi possivel concluir o cadastro agora. Tente novamente."
+    message || "Não foi possível concluir o cadastro agora. Tente novamente."
   );
 }
 
@@ -87,23 +87,23 @@ function Cadastro() {
 
     if (!cleanFullName || !cleanEmail || !cleanPassword || !cleanCpf) {
       setErrorMessage(
-        "Preencha os campos obrigatorios: nome, email, senha e CPF.",
+        "Preencha os campos obrigatórios: nome, email, senha e CPF.",
       );
       return;
     }
 
     if (!EMAIL_REGEX.test(cleanEmail)) {
-      setErrorMessage("Digite um email valido.");
+      setErrorMessage("Digite um email válido.");
       return;
     }
 
     if (!isValidCpf(cleanCpf)) {
-      setErrorMessage("CPF invalido.");
+      setErrorMessage("CPF inválido.");
       return;
     }
 
     if (cleanPassword !== cleanConfirmPassword) {
-      setErrorMessage("As senhas nao conferem.");
+      setErrorMessage("As senhas não conferem.");
       return;
     }
 
@@ -150,14 +150,14 @@ function Cadastro() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="text-sm font-medium text-slate-100">
-                  Nome de usuario
+                  Nome de usuário
                   <input
                     value={username}
                     onChange={(event) => {
                       setUsername(event.target.value);
                       setErrorMessage("");
                     }}
-                    placeholder="nome de usuario"
+                    placeholder="nome de usuário"
                     id="username"
                     name="username"
                     type="text"
@@ -316,7 +316,7 @@ function Cadastro() {
             </form>
 
             <p className="mt-8 text-center text-sm text-slate-400">
-              Ja possui uma conta?{" "}
+              Já possui uma conta?{" "}
               <Link
                 to="/login"
                 className="font-semibold text-blue-300 transition hover:text-blue-200"

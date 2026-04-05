@@ -36,6 +36,9 @@ export default function AdminGameListings() {
   const { gameId } = useParams();
   const [game, setGame] = useState<GameDetails | null>(null);
   const [listings, setListings] = useState<ListingItem[]>([]);
+  const [stockByListing, setStockByListing] = useState<Record<number, number>>(
+    {},
+  );
   const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -44,7 +47,7 @@ export default function AdminGameListings() {
 
   const loadData = useCallback(async (nextPage = page) => {
     if (!gameId) {
-      setError("Jogo invalido.");
+      setError("Jogo inválido.");
       setLoading(false);
       return;
     }
@@ -59,18 +62,34 @@ export default function AdminGameListings() {
           params: { gameId, page: nextPage, limit: PAGE_SIZE },
         }),
       ]);
+      const items = listingsResponse.data.items ?? [];
+      const stockEntries = await Promise.all(
+        items.map(async (listing) => {
+          try {
+            const { data } = await api.get<{
+              stock?: { available?: number };
+            }>(`/listings/${listing.id}/stock`);
+
+            return [listing.id, Number(data.stock?.available ?? 0)] as const;
+          } catch {
+            return [listing.id, 0] as const;
+          }
+        }),
+      );
 
       setGame(gameResponse.data);
-      setListings(listingsResponse.data.items ?? []);
+      setListings(items);
+      setStockByListing(Object.fromEntries(stockEntries));
       setMeta(listingsResponse.data.meta ?? emptyMeta);
     } catch (requestError) {
       setGame(null);
       setListings([]);
+      setStockByListing({});
       setMeta(emptyMeta);
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel carregar os listings deste jogo.",
+          "Não foi possível carregar os listings deste jogo.",
         ),
       );
     } finally {
@@ -103,7 +122,7 @@ export default function AdminGameListings() {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel excluir o listing.",
+          "Não foi possível excluir o listing.",
         ),
       );
     } finally {
@@ -114,7 +133,7 @@ export default function AdminGameListings() {
   return (
     <AdminLayout
       title={game ? `Listings de ${game.title}` : "Listings do jogo"}
-      description="Cada listing representa a combinacao de jogo, plataforma e preco."
+      description="Cada listing representa a combinação de jogo, plataforma e preço."
       backTo="/admin/games"
       backLabel="Voltar para jogos"
       actions={
@@ -170,8 +189,7 @@ export default function AdminGameListings() {
                 </div>
 
                 <p className="mt-4 text-sm leading-6 text-slate-300">
-                  Listing vinculado ao jogo atual. A plataforma nao se repete no
-                  cadastro para evitar combinacoes duplicadas.
+                  Estoque disponível: {stockByListing[listing.id] ?? 0} key(s).
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -180,6 +198,12 @@ export default function AdminGameListings() {
                     className="rounded-full bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
                   >
                     Editar
+                  </Link>
+                  <Link
+                    to={`/admin/games/${gameId}/listings/${listing.id}/keys`}
+                    className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+                  >
+                    Gerenciar keys
                   </Link>
                   <button
                     type="button"

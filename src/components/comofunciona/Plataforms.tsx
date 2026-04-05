@@ -12,15 +12,15 @@ const platformGuides = [
         heading: "No console",
         items: [
           "Abra a PlayStation Store.",
-          'Role o menu lateral ate "Resgatar codigos".',
+          'Role o menu lateral até "Resgatar códigos".',
           "Digite a key com cuidado e confirme.",
         ],
       },
       {
         heading: "No site",
         items: [
-          "Acesse store.playstation.com e faca login.",
-          'Abra o menu do avatar e clique em "Resgatar codigos".',
+          "Acesse store.playstation.com e faça login.",
+          'Abra o menu do avatar e clique em "Resgatar códigos".',
           "Cole a key e conclua o resgate.",
         ],
       },
@@ -34,15 +34,15 @@ const platformGuides = [
         heading: "No console",
         items: [
           "Pressione o botao Xbox para abrir o guia.",
-          'Entre em Store e escolha "Resgatar codigo".',
-          "Digite o codigo de 25 caracteres e confirme.",
+          'Entre em Store e escolha "Resgatar código".',
+          "Digite o código de 25 caracteres e confirme.",
         ],
       },
       {
         heading: "Na Microsoft Store",
         items: [
-          "Abra a Microsoft Store no PC e faca login.",
-          'Use o menu de opcoes para abrir "Resgatar codigo".',
+          "Abra a Microsoft Store no PC e faça login.",
+          'Use o menu de opções para abrir "Resgatar código".',
           "Cole a key e avance para finalizar.",
         ],
       },
@@ -55,7 +55,7 @@ const platformGuides = [
       {
         heading: "No cliente Steam",
         items: [
-          "Faca login na sua conta.",
+          "Faça login na sua conta.",
           'Abra o menu "Jogos" e escolha "Ativar um produto no Steam".',
           "Aceite os termos, cole a key e conclua o processo.",
         ],
@@ -70,8 +70,8 @@ const platformGuides = [
         heading: "No console",
         items: [
           "Abra a Nintendo eShop no Switch.",
-          "Selecione o usuario desejado.",
-          'No menu lateral, clique em "Inserir codigo".',
+          "Selecione o usuário desejado.",
+          'No menu lateral, clique em "Inserir código".',
           "Digite a key e confirme.",
         ],
       },
@@ -79,7 +79,7 @@ const platformGuides = [
         heading: "No site",
         items: [
           "Entre na sua conta Nintendo.",
-          "Abra a area de resgate de codigo.",
+          "Abra a área de resgate de código.",
           "Cole a key e confirme para liberar o jogo.",
         ],
       },

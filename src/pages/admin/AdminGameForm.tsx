@@ -65,7 +65,7 @@ export default function AdminGameForm() {
         });
       } catch (requestError) {
         setError(
-          getApiErrorMessage(requestError, "Nao foi possivel carregar o jogo."),
+          getApiErrorMessage(requestError, "Não foi possível carregar o jogo."),
         );
       } finally {
         setLoading(false);
@@ -89,7 +89,7 @@ export default function AdminGameForm() {
       !form.releaseDate.trim() ||
       !form.coverImageUrl.trim()
     ) {
-      setError("Preencha todos os campos obrigatorios.");
+      setError("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -114,7 +114,7 @@ export default function AdminGameForm() {
       void navigate("/admin/games");
     } catch (requestError) {
       setError(
-        getApiErrorMessage(requestError, "Nao foi possivel salvar o jogo."),
+        getApiErrorMessage(requestError, "Não foi possível salvar o jogo."),
       );
     } finally {
       setSaving(false);
@@ -124,11 +124,11 @@ export default function AdminGameForm() {
   return (
     <AdminLayout
       title={isEditMode ? "Editar jogo" : "Novo jogo"}
-      description="Preencha os dados obrigatorios do jogo. O listing continua sendo cadastrado em uma tela separada."
+      description="Preencha os dados obrigatórios do jogo. O listing continua sendo cadastrado em uma tela separada."
       backTo="/admin/games"
       backLabel="Voltar para jogos"
     >
-      {loading && <p className="text-gray-300">Carregando formulario...</p>}
+      {loading && <p className="text-gray-300">Carregando formulário...</p>}
 
       {!loading && (
         <form
@@ -138,7 +138,7 @@ export default function AdminGameForm() {
           <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
             <div className="space-y-5">
               <label className="text-sm text-gray-200">
-                Titulo
+                Título
                 <input
                   type="text"
                   value={form.title}
@@ -149,7 +149,7 @@ export default function AdminGameForm() {
               </label>
 
               <label className="text-sm text-gray-200">
-                Descricao curta
+                Descrição curta
                 <textarea
                   value={form.description}
                   onChange={(event) =>
@@ -161,7 +161,7 @@ export default function AdminGameForm() {
               </label>
 
               <label className="text-sm text-gray-200">
-                Descricao longa
+                Descrição longa
                 <textarea
                   value={form.longDescription}
                   onChange={(event) =>
@@ -174,7 +174,7 @@ export default function AdminGameForm() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm text-gray-200">
-                  Data de lancamento
+                  Data de lançamento
                   <input
                     type="date"
                     value={form.releaseDate}
@@ -211,10 +211,10 @@ export default function AdminGameForm() {
                 className="mt-4 h-56 w-full rounded-[20px] border border-slate-800 object-cover"
               />
               <h2 className="mt-4 text-lg font-semibold text-white">
-                {form.title || "Titulo do jogo"}
+                {form.title || "Título do jogo"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                {form.description || "A descricao curta aparece aqui como apoio visual."}
+                {form.description || "A descrição curta aparece aqui como apoio visual."}
               </p>
             </aside>
           </div>

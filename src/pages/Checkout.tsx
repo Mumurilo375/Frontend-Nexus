@@ -101,7 +101,7 @@ function getCardBrand(value: string) {
   if (/^5[1-5]/.test(digits)) return "Mastercard";
   if (/^(5067|5090|650|6516|6550|6363)/.test(digits)) return "Elo";
 
-  return "Cartao";
+  return "Cartão";
 }
 
 function buildPixCode(total: number, itemCount: number) {
@@ -252,7 +252,7 @@ export default function Checkout() {
         setError(
           getApiErrorMessage(
             requestError,
-            "Nao foi possivel carregar o checkout.",
+            "Não foi possível carregar o checkout.",
           ),
         );
       } finally {
@@ -278,15 +278,15 @@ export default function Checkout() {
 
   const validatePaymentDetails = () => {
     if (paymentMethod === "card") {
-      if (cardName.trim().length < 3) return "Informe o nome impresso no cartao.";
+      if (cardName.trim().length < 3) return "Informe o nome impresso no cartão.";
       if (digitsOnly(cardNumber).length !== 16) {
-        return "O numero do cartao deve ter 16 digitos.";
+        return "O número do cartão deve ter 16 dígitos.";
       }
       if (!isValidFutureExpiry(cardExpiry)) {
-        return "Informe uma validade valida e que ainda nao tenha expirado.";
+        return "Informe uma validade válida e que ainda não tenha expirado.";
       }
       if (digitsOnly(cardCvv).length !== 3) {
-        return "O CVV deve ter exatamente 3 digitos.";
+        return "O CVV deve ter exatamente 3 dígitos.";
       }
       return "";
     }
@@ -328,7 +328,7 @@ export default function Checkout() {
       setError(
         getApiErrorMessage(
           requestError,
-          "Nao foi possivel finalizar o pedido.",
+          "Não foi possível finalizar o pedido.",
         ),
       );
     } finally {
@@ -360,14 +360,14 @@ export default function Checkout() {
         {!loading && order && (
           <section className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-950/20 p-6">
             <h2 className="text-2xl font-semibold">Pedido confirmado</h2>
-            <p className="mt-2 text-gray-200">Numero: {order.orderNumber}</p>
+            <p className="mt-2 text-gray-200">Número: {order.orderNumber}</p>
             <p className="text-gray-200">
               Total: {toMoney(Number(order.totalAmount ?? 0))}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
               <p className="basis-full text-sm text-blue-100">
-                Compra concluida. Suas keys ja foram liberadas na sua
+                Compra concluída. Suas keys já foram liberadas na sua
                 biblioteca.
               </p>
               <Link
@@ -389,7 +389,7 @@ export default function Checkout() {
           <section className="mt-6 rounded-2xl border border-gray-800 bg-gray-950/80 p-5">
             {items.length === 0 ? (
               <>
-                <p className="text-gray-300">Seu carrinho esta vazio.</p>
+                <p className="text-gray-300">Seu carrinho está vazio.</p>
                 <Link
                   to="/loja"
                   className="mt-3 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm"
@@ -431,7 +431,7 @@ export default function Checkout() {
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-gray-400">
-                        A confirmacao libera as keys imediatamente na sua
+                        A confirmação libera as keys imediatamente na sua
                         biblioteca.
                       </p>
                     </div>
@@ -440,7 +440,7 @@ export default function Checkout() {
                   <div className="grid gap-3 md:grid-cols-3">
                     <PaymentOption
                       icon={CreditCard}
-                      title="Cartao"
+                      title="Cartão"
                       description="Pagamento com preenchimento guiado."
                       active={paymentMethod === "card"}
                       onClick={() => selectPaymentMethod("card")}
@@ -455,7 +455,7 @@ export default function Checkout() {
                     <PaymentOption
                       icon={QrCode}
                       title="PIX"
-                      description="Leia o QR Code ou copie o codigo."
+                      description="Leia o QR Code ou copie o código."
                       active={paymentMethod === "pix"}
                       onClick={() => selectPaymentMethod("pix")}
                     />
@@ -467,7 +467,7 @@ export default function Checkout() {
                     <div className="space-y-5">
                       <div>
                         <h2 className="text-xl font-semibold">
-                          Pagar com cartao
+                          Pagar com cartão
                         </h2>
                       </div>
 
@@ -552,7 +552,7 @@ export default function Checkout() {
 
                       <div className="grid gap-4">
                         <label className="text-sm text-gray-200">
-                          Numero do cartao
+                          Número do cartão
                           <input
                             type="text"
                             inputMode="numeric"
@@ -582,7 +582,7 @@ export default function Checkout() {
                               setCardName(sanitizeCardName(event.target.value));
                               setError("");
                             }}
-                            placeholder="Nome como esta no cartao"
+                            placeholder="Nome como está no cartão"
                             className="mt-2 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none transition focus:border-blue-500"
                           />
                         </label>
@@ -686,7 +686,7 @@ export default function Checkout() {
                       <div>
                         <h2 className="text-xl font-semibold">Pagar com PIX</h2>
                         <p className="mt-1 text-sm text-gray-300">
-                          Leia o QR Code ou copie o codigo abaixo.
+                          Leia o QR Code ou copie o código abaixo.
                         </p>
                       </div>
 
@@ -708,7 +708,7 @@ export default function Checkout() {
 
                         <div className="rounded-2xl border border-gray-800 bg-gray-950/60 p-5">
                           <p className="text-sm font-medium text-gray-200">
-                            Codigo copia e cola
+                            Código copia e cola
                           </p>
                           <div className="mt-3 rounded-xl border border-gray-800 bg-black/40 p-4">
                             <p className="break-all font-mono text-xs text-blue-200">
@@ -725,19 +725,19 @@ export default function Checkout() {
                               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
                             >
                               <Copy className="h-4 w-4" />
-                              Copiar codigo
+                              Copiar código
                             </button>
 
                             {copyStatus === "copied" && (
                               <span className="inline-flex items-center gap-2 text-sm text-blue-200">
                                 <CheckCircle2 className="h-4 w-4" />
-                                Codigo copiado com sucesso
+                                Código copiado com sucesso
                               </span>
                             )}
 
                             {copyStatus === "error" && (
                               <span className="text-sm text-rose-300">
-                                Nao foi possivel copiar automaticamente.
+                                Não foi possível copiar automaticamente.
                               </span>
                             )}
                           </div>
@@ -753,7 +753,7 @@ export default function Checkout() {
                               className="mt-1"
                             />
                             <span>
-                              Ja conferi o QR Code e quero concluir a compra.
+                              Já conferi o QR Code e quero concluir a compra.
                             </span>
                           </label>
                         </div>

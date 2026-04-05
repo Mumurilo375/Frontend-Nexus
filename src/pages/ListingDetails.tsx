@@ -220,7 +220,7 @@ export default function ListingDetails() {
   useEffect(() => {
     if (!listingIdIsValid) {
       setLoading(false);
-      setError("Listing invalida.");
+      setError("Listing inválida.");
       setDetails(null);
       return;
     }
@@ -240,7 +240,7 @@ export default function ListingDetails() {
       } catch {
         if (!active) return;
         setDetails(null);
-        setError("Nao foi possivel carregar os detalhes do listing.");
+        setError("Não foi possível carregar os detalhes do listing.");
       } finally {
         if (active) {
           setLoading(false);
@@ -273,7 +273,7 @@ export default function ListingDetails() {
       } catch {
         if (!active) return;
         setReviews([]);
-        setReviewError("Nao foi possivel carregar as avaliacoes.");
+        setReviewError("Não foi possível carregar as avaliações.");
       } finally {
         if (active) {
           setLoadingReviews(false);
@@ -372,7 +372,7 @@ export default function ListingDetails() {
       );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } catch {
-      setActionError("Nao foi possivel adicionar o item ao carrinho.");
+      setActionError("Não foi possível adicionar o item ao carrinho.");
     } finally {
       setBusyCart(false);
     }
@@ -402,7 +402,7 @@ export default function ListingDetails() {
 
       navigate("/checkout");
     } catch {
-      setActionError("Nao foi possivel iniciar a compra agora.");
+      setActionError("Não foi possível iniciar a compra agora.");
     } finally {
       setBusyBuyNow(false);
     }
@@ -465,7 +465,7 @@ export default function ListingDetails() {
 
     const trimmedComment = reviewComment.trim();
     if (!trimmedComment) {
-      setReviewError("Escreva um comentario para enviar sua avaliacao.");
+      setReviewError("Escreva um comentário para enviar sua avaliação.");
       return;
     }
 
@@ -493,7 +493,7 @@ export default function ListingDetails() {
       setReviewError(
         String(
           error?.response?.data?.message ??
-            "Nao foi possivel enviar sua avaliacao.",
+            "Não foi possível enviar sua avaliação.",
         ),
       );
     } finally {
@@ -502,8 +502,9 @@ export default function ListingDetails() {
   };
 
   const gameTitle = details?.game?.title || "Jogo";
-  const gameDescription = details?.game?.description || "Sem descricao curta.";
+  const gameDescription = details?.game?.description || "Sem descrição curta.";
   const gameLongDescription = details?.game?.longDescription || gameDescription;
+  const extraImagesCount = details?.game?.images?.length ?? 0;
 
   const pricing = details?.pricing ?? {};
   const basePrice = Number(pricing.basePrice ?? details?.price ?? 0);
@@ -513,32 +514,56 @@ export default function ListingDetails() {
   const platformListings = details?.game?.platformListings ?? [];
 
   return (
-    <div>
+    <div className="nexus-page-shell">
       <NavBar />
 
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Essa acao exige login. Deseja entrar agora?"
+        message="Essa ação exige login. Deseja entrar agora?"
         onClose={() => setShowAuthModal(false)}
         onConfirm={goToLogin}
       />
 
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-16 pt-28 sm:px-6">
-        <div className="mb-6 flex items-center gap-3 text-sm text-zinc-300">
-          <Link
-            to="/loja"
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900/70 px-3 py-2 transition hover:border-blue-400/50 hover:text-blue-200"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Voltar para loja
-          </Link>
-          <span className="text-zinc-500">/</span>
-          <span className="truncate text-zinc-200">{gameTitle}</span>
-        </div>
+        <section className="nexus-panel mb-6 px-5 py-5 sm:px-6">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+            <Link
+              to="/loja"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950/80 px-3 py-2 transition hover:border-blue-400/50 hover:text-blue-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Voltar para loja
+            </Link>
+            <span className="text-slate-500">/</span>
+            <span className="truncate text-slate-100">{gameTitle}</span>
+          </div>
+          {!loading && !error && details && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h1 className="text-3xl font-black text-white sm:text-4xl">
+                  {gameTitle}
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
+                  {gameDescription}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-blue-100">
+                  {details.platform?.name || "Plataforma"}
+                </span>
+                <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-slate-200">
+                  {extraImagesCount > 0
+                    ? `Capa + ${extraImagesCount} imagens`
+                    : "Capa oficial"}
+                </span>
+              </div>
+            </div>
+          )}
+        </section>
 
         {loading && (
-          <div className="mt-14 flex items-center justify-center gap-3 text-zinc-300">
+          <div className="nexus-card mt-14 flex items-center justify-center gap-3 px-6 py-8 text-zinc-300">
             <Loader2 className="h-5 w-5 animate-spin" />
             Carregando detalhes do listing...
           </div>
@@ -561,7 +586,7 @@ export default function ListingDetails() {
           <>
             <section className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="space-y-6">
-                <article className="overflow-hidden rounded-3xl border border-white/12 bg-linear-to-b from-blue-950/25 via-zinc-950/70 to-zinc-950/90 p-4 shadow-[0_22px_55px_rgba(0,0,0,0.5)] sm:p-6">
+                <article className="nexus-panel overflow-hidden p-4 sm:p-6">
                   <div className="overflow-hidden rounded-2xl border border-white/12 bg-black/60">
                     <img
                       src={selectedImage || "/logo.png"}
@@ -571,7 +596,12 @@ export default function ListingDetails() {
                   </div>
 
                   {galleryImages.length > 1 && (
-                    <div className="nexus-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+                    <div className="mt-4">
+                      <div className="mb-3 flex items-center justify-between text-sm text-slate-300">
+                        <span>Galeria do jogo</span>
+                        <span>{extraImagesCount} imagem(ns) extra(s)</span>
+                      </div>
+                      <div className="nexus-scrollbar flex gap-2 overflow-x-auto pb-1">
                       {galleryImages.map((imageUrl, index) => {
                         const selected = selectedImage === imageUrl;
 
@@ -595,10 +625,11 @@ export default function ListingDetails() {
                         );
                       })}
                     </div>
+                    </div>
                   )}
                 </article>
 
-                <article className="rounded-3xl border border-white/10 bg-zinc-900/70 p-5 sm:p-6">
+                <article className="nexus-card p-5 sm:p-6">
                   <h2 className="text-2xl font-bold text-white">
                     Sobre o jogo
                   </h2>
@@ -608,13 +639,13 @@ export default function ListingDetails() {
 
                   <dl className="mt-5 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2">
                     <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Lancamento</dt>
+                      <dt className="text-zinc-400">Lançamento</dt>
                       <dd className="mt-1 font-medium text-zinc-100">
                         {formatDate(details.game?.releaseDate)}
                       </dd>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Avaliacao media</dt>
+                      <dt className="text-zinc-400">Avaliação média</dt>
                       <dd className="mt-1 font-medium text-zinc-100">
                         {Number(
                           details.reviewStats?.averageRating ?? 0,
@@ -646,14 +677,14 @@ export default function ListingDetails() {
                 </article>
               </div>
 
-              <aside className="rounded-3xl border border-white/10 bg-zinc-900/85 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.45)] lg:sticky lg:top-28 lg:h-fit sm:p-6">
+              <aside className="nexus-panel p-5 lg:sticky lg:top-28 lg:h-fit sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h1 className="text-3xl font-black leading-tight text-white">
                       {gameTitle}
                     </h1>
                     <p className="mt-2 text-sm text-zinc-300">
-                      {details.platform?.name || "Plataforma nao informada"}
+                      {details.platform?.name || "Plataforma não informada"}
                     </p>
                   </div>
 
@@ -702,12 +733,12 @@ export default function ListingDetails() {
                   </div>
 
                   <p className="mt-3 text-sm text-zinc-300">
-                    Estoque disponivel: {availableStock}
+                    Estoque disponível: {availableStock}
                   </p>
 
                   {availableStock <= 0 && (
                     <p className="mt-2 text-sm font-semibold text-red-300">
-                      Este listing esta sem estoque no momento.
+                      Este listing está sem estoque no momento.
                     </p>
                   )}
 
@@ -764,7 +795,7 @@ export default function ListingDetails() {
                   >
                     <ShoppingCart className="h-4 w-4" />
                     {inCart
-                      ? "Ja esta no carrinho"
+                      ? "Já está no carrinho"
                       : busyCart
                         ? "Adicionando..."
                         : "Adicionar ao carrinho"}
@@ -789,7 +820,7 @@ export default function ListingDetails() {
             </section>
 
             <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
-              <article className="rounded-3xl border border-white/10 bg-zinc-900/70 p-5 sm:p-6">
+              <article className="nexus-card p-5 sm:p-6">
                 <header className="mb-4 flex items-center justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white">
@@ -816,7 +847,7 @@ export default function ListingDetails() {
 
                 {!loadingReviews && !reviewError && reviews.length === 0 && (
                   <p className="text-zinc-300">
-                    Ainda nao existem avaliacoes para este jogo.
+                    Ainda não existem avaliações para este jogo.
                   </p>
                 )}
 
@@ -826,14 +857,11 @@ export default function ListingDetails() {
                     const votesCount = (review.votes ?? []).length;
 
                     return (
-                      <div
-                        key={`review-${review.id}`}
-                        className="rounded-2xl border border-white/10 bg-black/35 p-4"
-                      >
+                      <div key={`review-${review.id}`} className="nexus-card p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-semibold text-zinc-100">
-                              {review.user?.username || "Usuario"}
+                              {review.user?.username || "Usuário"}
                             </p>
                             <p className="text-xs text-zinc-400">
                               {formatDate(review.createdAt)}
@@ -845,7 +873,7 @@ export default function ListingDetails() {
                         </div>
 
                         <p className="mt-3 text-sm leading-relaxed text-zinc-200">
-                          {review.comment || "Sem comentario."}
+                          {review.comment || "Sem comentário."}
                         </p>
 
                         <button
@@ -861,7 +889,7 @@ export default function ListingDetails() {
                           } disabled:opacity-60`}
                         >
                           <ThumbsUp className="h-3.5 w-3.5" />
-                          {voted ? "Voto registrado" : "Marcar como util"} (
+                          {voted ? "Voto registrado" : "Marcar como útil"} (
                           {votesCount})
                         </button>
                       </div>
@@ -870,9 +898,9 @@ export default function ListingDetails() {
                 </div>
               </article>
 
-              <aside className="rounded-3xl border border-white/10 bg-zinc-900/80 p-5 sm:p-6">
+              <aside className="nexus-card p-5 sm:p-6">
                 <h2 className="text-xl font-bold text-white">
-                  Escrever avaliacao
+                  Escrever avaliação
                 </h2>
                 <p className="mt-1 text-sm text-zinc-300">
                   Compartilhe sua experiencia para ajudar outros jogadores.
@@ -903,7 +931,7 @@ export default function ListingDetails() {
                   className="mt-4 block text-sm text-zinc-300"
                   htmlFor="review-comment"
                 >
-                  Comentario
+                  Comentário
                 </label>
                 <textarea
                   id="review-comment"
@@ -911,7 +939,7 @@ export default function ListingDetails() {
                   onChange={(event) => setReviewComment(event.target.value)}
                   rows={5}
                   className="mt-1 w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 outline-none focus:border-blue-400"
-                  placeholder="Escreva sua opiniao sobre jogabilidade, desempenho e historia."
+                  placeholder="Escreva sua opinião sobre jogabilidade, desempenho e história."
                 ></textarea>
 
                 {reviewError && (
@@ -926,7 +954,7 @@ export default function ListingDetails() {
                   disabled={submittingReview}
                   className="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-2.5 font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {submittingReview ? "Enviando..." : "Publicar avaliacao"}
+                  {submittingReview ? "Enviando..." : "Publicar avaliação"}
                 </button>
               </aside>
             </section>

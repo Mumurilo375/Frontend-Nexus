@@ -27,8 +27,8 @@ function Hero() {
           </div>
 
           <p className="mt-4 text-sm leading-relaxed text-zinc-200 sm:text-base">
-            Resident Evil Requiem e um survival horror que mistura terror e
-            acao, focado em uma nova investigacao ligada ao desastre de Raccoon
+            Resident Evil Requiem é um survival horror que mistura terror e
+            ação, focado em uma nova investigação ligada ao desastre de Raccoon
             City.
           </p>
 

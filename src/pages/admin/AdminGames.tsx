@@ -71,7 +71,7 @@ export default function AdminGames() {
       setGames([]);
       setMeta(emptyMeta);
       setError(
-        getApiErrorMessage(requestError, "Nao foi possivel carregar os jogos."),
+        getApiErrorMessage(requestError, "Não foi possível carregar os jogos."),
       );
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function AdminGames() {
       await loadGames();
     } catch (requestError) {
       setError(
-        getApiErrorMessage(requestError, "Nao foi possivel excluir o jogo."),
+        getApiErrorMessage(requestError, "Não foi possível excluir o jogo."),
       );
     } finally {
       setDeletingId(null);
@@ -142,7 +142,7 @@ export default function AdminGames() {
             type="text"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Pesquisar por titulo..."
+            placeholder="Pesquisar por título..."
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-slate-500"
           />
         </div>
@@ -180,7 +180,7 @@ export default function AdminGames() {
                   <div>
                     <h2 className="text-lg font-semibold">{game.title}</h2>
                     <p className="mt-1 text-xs text-gray-400">
-                      Lancamento: {formatReleaseDate(game.releaseDate)}
+                      Lançamento: {formatReleaseDate(game.releaseDate)}
                     </p>
                   </div>
                   <span

@@ -25,10 +25,10 @@ function getFriendlyLoginError(error: unknown): string {
   }
 
   if (message.includes("Network Error")) {
-    return "Nao foi possivel conectar com o servidor.";
+    return "Não foi possível conectar com o servidor.";
   }
 
-  return message || "Nao foi possivel fazer login agora. Tente novamente.";
+  return message || "Não foi possível fazer login agora. Tente novamente.";
 }
 
 function Login() {
@@ -47,7 +47,7 @@ function Login() {
     const password = passwordRef.current?.value ?? "";
 
     if (!EMAIL_REGEX.test(email)) {
-      setErrorMessage("Digite um email valido.");
+      setErrorMessage("Digite um email válido.");
       return;
     }
 
@@ -152,7 +152,7 @@ function Login() {
             </form>
 
             <p className="mt-8 text-center text-sm text-slate-400">
-              Nao possui conta?{" "}
+              Não possui conta?{" "}
               <Link
                 to="/cadastro"
                 className="font-semibold text-blue-300 transition hover:text-blue-200"

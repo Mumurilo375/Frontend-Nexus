@@ -66,7 +66,7 @@ export default function MeusPedidos() {
         setError(
           getApiErrorMessage(
             requestError,
-            "Nao foi possivel carregar seus pedidos e keys.",
+            "Não foi possível carregar seus pedidos e keys.",
           ),
         );
       } finally {
@@ -118,7 +118,7 @@ export default function MeusPedidos() {
                 </p>
               </div>
               <p className="text-xs uppercase tracking-[0.18em] text-gray-500">
-                Mostrando {totalVisibleItems} nesta pagina
+                Mostrando {totalVisibleItems} nesta página
               </p>
             </div>
 

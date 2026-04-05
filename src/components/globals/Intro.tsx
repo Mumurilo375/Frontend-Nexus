@@ -12,11 +12,11 @@ function Intro() {
     },
     {
       value: "Suporte a todo momento",
-      label: "Atendimento disponível a qualquer hora",
+      label: "Atendimento disponível a qualquer hora.",
     },
     {
       value: "Grandes jogos para você",
-      label: "Explore vários títulos na nossa biblioteca",
+      label: "Explore vários títulos na nossa biblioteca.",
     },
   ];
   return (
@@ -33,7 +33,7 @@ function Intro() {
         </p>
         <p className="text-lg leading-8 text-slate-300 md:text-xl">
           Descubra novos mundos, encontre grandes jogos e tenha acesso rápido às
-          suas keys para ativar e jogar quando quiser
+          suas keys para ativar e jogar quando quiser.
         </p>
       </div>
       <div className="mb-16 mt-8 flex justify-center gap-4">

@@ -7,12 +7,12 @@ const steps = [
   {
     title: "Acesse sua biblioteca",
     description:
-      "Assim que o pedido e aprovado, a key aparece na sua area de pedidos e biblioteca.",
+      "Assim que o pedido é aprovado, a key aparece na sua área de pedidos e biblioteca.",
   },
   {
     title: "Resgate e jogue",
     description:
-      "Cole o codigo na Steam, Xbox, PlayStation ou Nintendo para ativar o jogo.",
+      "Cole o código na Steam, Xbox, PlayStation ou Nintendo para ativar o jogo.",
   },
 ];
 
@@ -28,7 +28,7 @@ export default function Steps() {
             Do carrinho ao resgate
           </h2>
           <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
-            O processo foi desenhado para ser simples: voce compra, recebe a
+            O processo foi desenhado para ser simples: você compra, recebe a
             key e ativa o jogo direto na plataforma correspondente.
           </p>
         </div>

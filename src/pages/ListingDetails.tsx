@@ -15,36 +15,26 @@ import AuthRequiredModal from "../components/globals/AuthRequiredModal";
 import api from "../services/api";
 import { getAuthUser, isAuthenticated } from "../services/auth";
 
-type Category = {
-  id: number;
-  name: string;
-};
-
-type Tag = {
-  id: number;
-  name: string;
-};
-
-type Platform = {
-  id: number;
-  name?: string;
-  slug?: string;
-  iconUrl?: string | null;
-};
-
-type GameImage = {
-  id: number;
-  imageUrl?: string;
-  sortOrder?: number;
-};
-
+type Category = { id: number; name: string };
+type Tag = { id: number; name: string };
+type Platform = { id: number; name?: string; slug?: string; iconUrl?: string | null };
+type GameImage = { id: number; imageUrl?: string; sortOrder?: number };
+type Promotion = { id: number; name?: string; description?: string | null; discountPercentage?: number };
 type PlatformListing = {
   id: number;
   price?: number | string;
   platform?: Platform;
+  activePromotions?: Promotion[];
+  pricing?: {
+    basePrice?: number;
+    discountPercentage?: number;
+    discountAmount?: number;
+    finalPrice?: number;
+    hasDiscount?: boolean;
+  };
+  stock?: { available?: number; reserved?: number; sold?: number; total?: number };
 };
-
-type GameDetails = {
+type GameDetailsResponse = {
   id: number;
   title?: string;
   description?: string;
@@ -55,75 +45,20 @@ type GameDetails = {
   tags?: Tag[];
   images?: GameImage[];
   platformListings?: PlatformListing[];
+  reviewStats?: { totalReviews?: number; averageRating?: number };
 };
-
-type Promotion = {
-  id: number;
-  name?: string;
-  description?: string | null;
-  discountPercentage?: number;
-};
-
-type ListingDetailsResponse = {
-  id: number;
-  gameId?: number;
-  platformId?: number;
-  price?: number | string;
-  isActive?: boolean;
-  game?: GameDetails;
-  platform?: Platform;
-  activePromotions?: Promotion[];
-  pricing?: {
-    basePrice?: number;
-    discountPercentage?: number;
-    discountAmount?: number;
-    finalPrice?: number;
-    hasDiscount?: boolean;
-  };
-  stock?: {
-    available?: number;
-    reserved?: number;
-    sold?: number;
-    total?: number;
-  };
-  reviewStats?: {
-    totalReviews?: number;
-    averageRating?: number;
-  };
-};
-
-type WishlistResponse = {
-  items: Array<{ gameId: number }>;
-};
-
-type CartResponse = {
-  items: Array<{ listingId: number }>;
-};
-
-type ReviewVote = {
-  id: number;
-  userId?: number;
-  user?: {
-    id?: number;
-  };
-};
-
+type WishlistResponse = { items: Array<{ gameId: number }> };
+type CartResponse = { items: Array<{ listingId: number }> };
+type ReviewVote = { id: number; userId?: number; user?: { id?: number } };
 type ReviewItem = {
   id: number;
   rating?: number;
   comment?: string;
   createdAt?: string;
-  user?: {
-    id?: number;
-    username?: string;
-    avatarUrl?: string | null;
-  };
+  user?: { id?: number; username?: string; avatarUrl?: string | null };
   votes?: ReviewVote[];
 };
-
-type ReviewsResponse = {
-  items: ReviewItem[];
-};
+type ReviewsResponse = { items: ReviewItem[] };
 
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
@@ -147,17 +82,17 @@ function renderStars(value: number) {
 }
 
 export default function ListingDetails() {
-  const { listingId } = useParams();
+  const { gameId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const authUser = getAuthUser();
   const isLoggedIn = isAuthenticated();
   const authUserId = Number(authUser?.id ?? 0);
-  const parsedListingId = Number(listingId);
-  const listingIdIsValid =
-    Number.isInteger(parsedListingId) && parsedListingId > 0;
+  const parsedGameId = Number(gameId);
+  const gameIdIsValid = Number.isInteger(parsedGameId) && parsedGameId > 0;
 
-  const [details, setDetails] = useState<ListingDetailsResponse | null>(null);
+  const [details, setDetails] = useState<GameDetailsResponse | null>(null);
+  const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -176,20 +111,35 @@ export default function ListingDetails() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const gameId = Number(details?.game?.id ?? 0);
-  const currentListingId = Number(details?.id ?? 0);
-  const availableStock = Number(details?.stock?.available ?? 0);
-  const inCart = cartListingIds.includes(currentListingId);
-  const isFavorite = gameId > 0 && favoriteGameIds.includes(gameId);
+  const platformListings = details?.platformListings ?? [];
+  const currentListing = useMemo(() => {
+    if (platformListings.length === 0) return null;
+    if (!selectedListingId) return platformListings[0];
+    return (
+      platformListings.find((listing) => Number(listing.id) === selectedListingId) ??
+      platformListings[0]
+    );
+  }, [platformListings, selectedListingId]);
+
+  const currentGameId = Number(details?.id ?? 0);
+  const currentListingId = Number(currentListing?.id ?? 0);
+  const availableStock = Number(currentListing?.stock?.available ?? 0);
+  const pricing = currentListing?.pricing ?? {};
+  const basePrice = Number(pricing.basePrice ?? currentListing?.price ?? 0);
+  const finalPrice = Number(pricing.finalPrice ?? basePrice);
+  const discountPercentage = Number(pricing.discountPercentage ?? 0);
+  const activePromotions = currentListing?.activePromotions ?? [];
+  const inCart = currentListingId > 0 && cartListingIds.includes(currentListingId);
+  const isFavorite = currentGameId > 0 && favoriteGameIds.includes(currentGameId);
+  const extraImagesCount = details?.images?.length ?? 0;
 
   const galleryImages = useMemo(() => {
-    const cover = String(details?.game?.coverImageUrl ?? "").trim();
-    const extras = (details?.game?.images ?? [])
+    const cover = String(details?.coverImageUrl ?? "").trim();
+    const extras = (details?.images ?? [])
       .map((image) => String(image.imageUrl ?? "").trim())
       .filter(Boolean);
 
-    const allImages = [cover, ...extras].filter(Boolean);
-    return Array.from(new Set(allImages));
+    return Array.from(new Set([cover, ...extras].filter(Boolean)));
   }, [details]);
 
   const goToLogin = () => {
@@ -203,9 +153,9 @@ export default function ListingDetails() {
     setShowAuthModal(true);
   };
 
-  const loadListingDetails = async (targetListingId: number) => {
-    const { data } = await api.get<ListingDetailsResponse>(
-      `/listings/${targetListingId}/details`,
+  const loadGameDetails = async (targetGameId: number) => {
+    const { data } = await api.get<GameDetailsResponse>(
+      `/games/${targetGameId}/details`,
     );
     return data;
   };
@@ -218,9 +168,9 @@ export default function ListingDetails() {
   };
 
   useEffect(() => {
-    if (!listingIdIsValid) {
+    if (!gameIdIsValid) {
       setLoading(false);
-      setError("Listing inválida.");
+      setError("Jogo invalido.");
       setDetails(null);
       return;
     }
@@ -233,14 +183,14 @@ export default function ListingDetails() {
         setError("");
         setActionError("");
 
-        const listingDetails = await loadListingDetails(parsedListingId);
+        const gameDetails = await loadGameDetails(parsedGameId);
 
         if (!active) return;
-        setDetails(listingDetails);
+        setDetails(gameDetails);
       } catch {
         if (!active) return;
         setDetails(null);
-        setError("Não foi possível carregar os detalhes do listing.");
+        setError("Nao foi possivel carregar os detalhes do jogo.");
       } finally {
         if (active) {
           setLoading(false);
@@ -253,10 +203,10 @@ export default function ListingDetails() {
     return () => {
       active = false;
     };
-  }, [listingIdIsValid, parsedListingId]);
+  }, [gameIdIsValid, parsedGameId]);
 
   useEffect(() => {
-    if (!gameId) {
+    if (!currentGameId) {
       setReviews([]);
       return;
     }
@@ -267,13 +217,13 @@ export default function ListingDetails() {
       try {
         setLoadingReviews(true);
         setReviewError("");
-        const items = await loadReviews(gameId);
+        const items = await loadReviews(currentGameId);
         if (!active) return;
         setReviews(items);
       } catch {
         if (!active) return;
         setReviews([]);
-        setReviewError("Não foi possível carregar as avaliações.");
+        setReviewError("Nao foi possivel carregar as avaliacoes.");
       } finally {
         if (active) {
           setLoadingReviews(false);
@@ -286,7 +236,7 @@ export default function ListingDetails() {
     return () => {
       active = false;
     };
-  }, [gameId]);
+  }, [currentGameId]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -306,9 +256,7 @@ export default function ListingDetails() {
 
         if (!active) return;
 
-        setFavoriteGameIds(
-          (wishlistData.items ?? []).map((item) => item.gameId),
-        );
+        setFavoriteGameIds((wishlistData.items ?? []).map((item) => item.gameId));
         setCartListingIds((cartData.items ?? []).map((item) => item.listingId));
       } catch {
         if (!active) return;
@@ -322,14 +270,32 @@ export default function ListingDetails() {
     return () => {
       active = false;
     };
-  }, [isLoggedIn, parsedListingId]);
+  }, [isLoggedIn, parsedGameId]);
+
+  useEffect(() => {
+    if (platformListings.length === 0) {
+      setSelectedListingId(null);
+      return;
+    }
+
+    setSelectedListingId((current) => {
+      if (
+        current &&
+        platformListings.some((listing) => Number(listing.id) === current)
+      ) {
+        return current;
+      }
+
+      return Number(platformListings[0]?.id ?? 0);
+    });
+  }, [platformListings]);
 
   useEffect(() => {
     setSelectedImage(galleryImages[0] ?? "");
   }, [galleryImages]);
 
   const toggleFavorite = async () => {
-    if (!gameId) return;
+    if (!currentGameId) return;
 
     if (!isLoggedIn) {
       askLogin();
@@ -340,11 +306,11 @@ export default function ListingDetails() {
       setBusyFavorite(true);
 
       if (isFavorite) {
-        await api.delete(`/wishlists/${gameId}`);
-        setFavoriteGameIds((current) => current.filter((id) => id !== gameId));
+        await api.delete(`/wishlists/${currentGameId}`);
+        setFavoriteGameIds((current) => current.filter((id) => id !== currentGameId));
       } else {
-        await api.post(`/wishlists/${gameId}`, {});
-        setFavoriteGameIds((current) => [...current, gameId]);
+        await api.post(`/wishlists/${currentGameId}`, {});
+        setFavoriteGameIds((current) => [...current, currentGameId]);
       }
 
       window.dispatchEvent(new Event("nexus:counts-updated"));
@@ -372,7 +338,7 @@ export default function ListingDetails() {
       );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } catch {
-      setActionError("Não foi possível adicionar o item ao carrinho.");
+      setActionError("Nao foi possivel adicionar o item ao carrinho.");
     } finally {
       setBusyCart(false);
     }
@@ -402,7 +368,7 @@ export default function ListingDetails() {
 
       navigate("/checkout");
     } catch {
-      setActionError("Não foi possível iniciar a compra agora.");
+      setActionError("Nao foi possivel iniciar a compra agora.");
     } finally {
       setBusyBuyNow(false);
     }
@@ -461,11 +427,11 @@ export default function ListingDetails() {
       return;
     }
 
-    if (!gameId) return;
+    if (!currentGameId) return;
 
     const trimmedComment = reviewComment.trim();
     if (!trimmedComment) {
-      setReviewError("Escreva um comentário para enviar sua avaliação.");
+      setReviewError("Escreva um comentario para enviar sua avaliacao.");
       return;
     }
 
@@ -474,7 +440,7 @@ export default function ListingDetails() {
       setReviewError("");
 
       await api.post("/reviews", {
-        gameId,
+        gameId: currentGameId,
         rating: reviewRating,
         comment: trimmedComment,
       });
@@ -482,18 +448,18 @@ export default function ListingDetails() {
       setReviewComment("");
       setReviewRating(5);
 
-      const [listingDetails, reviewItems] = await Promise.all([
-        loadListingDetails(parsedListingId),
-        loadReviews(gameId),
+      const [gameDetails, reviewItems] = await Promise.all([
+        loadGameDetails(parsedGameId),
+        loadReviews(currentGameId),
       ]);
 
-      setDetails(listingDetails);
+      setDetails(gameDetails);
       setReviews(reviewItems);
     } catch (error: any) {
       setReviewError(
         String(
           error?.response?.data?.message ??
-            "Não foi possível enviar sua avaliação.",
+            "Nao foi possivel enviar sua avaliacao.",
         ),
       );
     } finally {
@@ -501,17 +467,9 @@ export default function ListingDetails() {
     }
   };
 
-  const gameTitle = details?.game?.title || "Jogo";
-  const gameDescription = details?.game?.description || "Sem descrição curta.";
-  const gameLongDescription = details?.game?.longDescription || gameDescription;
-  const extraImagesCount = details?.game?.images?.length ?? 0;
-
-  const pricing = details?.pricing ?? {};
-  const basePrice = Number(pricing.basePrice ?? details?.price ?? 0);
-  const finalPrice = Number(pricing.finalPrice ?? basePrice);
-  const discountPercentage = Number(pricing.discountPercentage ?? 0);
-
-  const platformListings = details?.game?.platformListings ?? [];
+  const gameTitle = details?.title || "Jogo";
+  const gameDescription = details?.description || "Sem descricao curta.";
+  const gameLongDescription = details?.longDescription || gameDescription;
 
   return (
     <div className="nexus-page-shell">
@@ -520,7 +478,7 @@ export default function ListingDetails() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Essa ação exige login. Deseja entrar agora?"
+        message="Essa acao exige login. Deseja entrar agora?"
         onClose={() => setShowAuthModal(false)}
         onConfirm={goToLogin}
       />
@@ -550,7 +508,7 @@ export default function ListingDetails() {
               </div>
               <div className="flex flex-wrap gap-2 text-xs font-semibold">
                 <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-blue-100">
-                  {details.platform?.name || "Plataforma"}
+                  {currentListing?.platform?.name || "Plataforma"}
                 </span>
                 <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-slate-200">
                   {extraImagesCount > 0
@@ -565,7 +523,7 @@ export default function ListingDetails() {
         {loading && (
           <div className="nexus-card mt-14 flex items-center justify-center gap-3 px-6 py-8 text-zinc-300">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Carregando detalhes do listing...
+            Carregando detalhes do jogo...
           </div>
         )}
 
@@ -602,29 +560,29 @@ export default function ListingDetails() {
                         <span>{extraImagesCount} imagem(ns) extra(s)</span>
                       </div>
                       <div className="nexus-scrollbar flex gap-2 overflow-x-auto pb-1">
-                      {galleryImages.map((imageUrl, index) => {
-                        const selected = selectedImage === imageUrl;
+                        {galleryImages.map((imageUrl, index) => {
+                          const selected = selectedImage === imageUrl;
 
-                        return (
-                          <button
-                            key={`${imageUrl}-${index}`}
-                            type="button"
-                            onClick={() => setSelectedImage(imageUrl)}
-                            className={`overflow-hidden rounded-lg border transition ${
-                              selected
-                                ? "border-blue-400"
-                                : "border-white/10 hover:border-blue-300/60"
-                            }`}
-                          >
-                            <img
-                              src={imageUrl}
-                              alt={`${gameTitle} preview ${index + 1}`}
-                              className="h-16 w-28 object-cover"
-                            />
-                          </button>
-                        );
-                      })}
-                    </div>
+                          return (
+                            <button
+                              key={`${imageUrl}-${index}`}
+                              type="button"
+                              onClick={() => setSelectedImage(imageUrl)}
+                              className={`overflow-hidden rounded-lg border transition ${
+                                selected
+                                  ? "border-blue-400"
+                                  : "border-white/10 hover:border-blue-300/60"
+                              }`}
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`${gameTitle} preview ${index + 1}`}
+                                className="h-16 w-28 object-cover"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </article>
@@ -639,24 +597,21 @@ export default function ListingDetails() {
 
                   <dl className="mt-5 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2">
                     <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Lançamento</dt>
+                      <dt className="text-zinc-400">Lancamento</dt>
                       <dd className="mt-1 font-medium text-zinc-100">
-                        {formatDate(details.game?.releaseDate)}
+                        {formatDate(details.releaseDate)}
                       </dd>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Avaliação média</dt>
+                      <dt className="text-zinc-400">Avaliacao media</dt>
                       <dd className="mt-1 font-medium text-zinc-100">
-                        {Number(
-                          details.reviewStats?.averageRating ?? 0,
-                        ).toFixed(1)}{" "}
-                        / 5
+                        {Number(details.reviewStats?.averageRating ?? 0).toFixed(1)} / 5
                       </dd>
                     </div>
                   </dl>
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {(details.game?.categories ?? []).map((category) => (
+                    {(details.categories ?? []).map((category) => (
                       <span
                         key={`cat-${category.id}`}
                         className="rounded-full border border-blue-400/30 bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-100"
@@ -665,7 +620,7 @@ export default function ListingDetails() {
                       </span>
                     ))}
 
-                    {(details.game?.tags ?? []).map((tag) => (
+                    {(details.tags ?? []).map((tag) => (
                       <span
                         key={`tag-${tag.id}`}
                         className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-100"
@@ -684,7 +639,7 @@ export default function ListingDetails() {
                       {gameTitle}
                     </h1>
                     <p className="mt-2 text-sm text-zinc-300">
-                      {details.platform?.name || "Plataforma não informada"}
+                      {currentListing?.platform?.name || "Plataforma nao informada"}
                     </p>
                   </div>
 
@@ -693,7 +648,7 @@ export default function ListingDetails() {
                     onClick={() => {
                       void toggleFavorite();
                     }}
-                    disabled={busyFavorite || !gameId}
+                    disabled={busyFavorite || !currentGameId}
                     className="rounded-full border border-white/15 bg-black/50 p-2 text-white transition hover:scale-105 hover:border-red-400/60 disabled:opacity-60"
                     aria-label={
                       isFavorite
@@ -712,44 +667,52 @@ export default function ListingDetails() {
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-                  <div className="flex items-end justify-between gap-3">
-                    <div>
-                      {discountPercentage > 0 && (
-                        <p className="text-sm text-zinc-400 line-through">
-                          {toMoney(basePrice)}
+                  {currentListing ? (
+                    <>
+                      <div className="flex items-end justify-between gap-3">
+                        <div>
+                          {discountPercentage > 0 && (
+                            <p className="text-sm text-zinc-400 line-through">
+                              {toMoney(basePrice)}
+                            </p>
+                          )}
+                          <p className="text-3xl font-black text-blue-200">
+                            {toMoney(finalPrice)}
+                          </p>
+                        </div>
+
+                        {discountPercentage > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-200">
+                            <BadgePercent className="h-3.5 w-3.5" />-
+                            {discountPercentage}%
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-3 text-sm text-zinc-300">
+                        Estoque disponivel: {availableStock}
+                      </p>
+
+                      {availableStock <= 0 && (
+                        <p className="mt-2 text-sm font-semibold text-red-300">
+                          Esta plataforma esta sem estoque no momento.
                         </p>
                       )}
-                      <p className="text-3xl font-black text-blue-200">
-                        {toMoney(finalPrice)}
-                      </p>
-                    </div>
 
-                    {discountPercentage > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-200">
-                        <BadgePercent className="h-3.5 w-3.5" />-
-                        {discountPercentage}%
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-3 text-sm text-zinc-300">
-                    Estoque disponível: {availableStock}
-                  </p>
-
-                  {availableStock <= 0 && (
-                    <p className="mt-2 text-sm font-semibold text-red-300">
-                      Este listing está sem estoque no momento.
+                      {activePromotions.length > 0 && (
+                        <ul className="mt-3 space-y-1 text-xs text-emerald-200">
+                          {activePromotions.map((promotion) => (
+                            <li key={`promo-${promotion.id}`}>
+                              Promocao ativa: {promotion.name || "Oferta especial"}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-zinc-300">
+                      Nenhuma plataforma disponivel para este jogo no momento.
                     </p>
-                  )}
-
-                  {(details.activePromotions ?? []).length > 0 && (
-                    <ul className="mt-3 space-y-1 text-xs text-emerald-200">
-                      {(details.activePromotions ?? []).map((promotion) => (
-                        <li key={`promo-${promotion.id}`}>
-                          Promocao ativa: {promotion.name || "Oferta especial"}
-                        </li>
-                      ))}
-                    </ul>
                   )}
                 </div>
 
@@ -760,14 +723,19 @@ export default function ListingDetails() {
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     {platformListings.map((listing) => {
                       const selected = Number(listing.id) === currentListingId;
-                      const platformName =
-                        listing.platform?.name || "Plataforma";
+                      const platformName = listing.platform?.name || "Plataforma";
+                      const listingPrice = Number(
+                        listing.pricing?.finalPrice ?? listing.price ?? 0,
+                      );
 
                       return (
                         <button
                           key={`platform-${listing.id}`}
                           type="button"
-                          onClick={() => navigate(`/loja/${listing.id}`)}
+                          onClick={() => {
+                            setSelectedListingId(Number(listing.id));
+                            setActionError("");
+                          }}
                           className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
                             selected
                               ? "border-blue-400 bg-blue-500/20 text-blue-100"
@@ -776,7 +744,7 @@ export default function ListingDetails() {
                         >
                           <p className="font-semibold">{platformName}</p>
                           <p className="text-xs text-zinc-400">
-                            {toMoney(Number(listing.price ?? 0))}
+                            {toMoney(listingPrice)}
                           </p>
                         </button>
                       );
@@ -790,12 +758,17 @@ export default function ListingDetails() {
                     onClick={() => {
                       void addCurrentListingToCart();
                     }}
-                    disabled={busyCart || inCart || availableStock <= 0}
+                    disabled={
+                      busyCart ||
+                      inCart ||
+                      availableStock <= 0 ||
+                      !currentListing
+                    }
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-500 disabled:opacity-60"
                   >
                     <ShoppingCart className="h-4 w-4" />
                     {inCart
-                      ? "Já está no carrinho"
+                      ? "Ja esta no carrinho"
                       : busyCart
                         ? "Adicionando..."
                         : "Adicionar ao carrinho"}
@@ -806,7 +779,11 @@ export default function ListingDetails() {
                     onClick={() => {
                       void handleBuyNow();
                     }}
-                    disabled={busyBuyNow || availableStock <= 0}
+                    disabled={
+                      busyBuyNow ||
+                      availableStock <= 0 ||
+                      !currentListing
+                    }
                     className="rounded-xl border border-cyan-300/50 bg-cyan-500/15 px-4 py-3 font-bold text-cyan-100 transition hover:bg-cyan-500/25 disabled:opacity-60"
                   >
                     {busyBuyNow ? "Processando..." : "Comprar agora"}
@@ -831,9 +808,7 @@ export default function ListingDetails() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    {renderStars(
-                      Number(details.reviewStats?.averageRating ?? 0),
-                    )}
+                    {renderStars(Number(details.reviewStats?.averageRating ?? 0))}
                   </div>
                 </header>
 
@@ -847,7 +822,7 @@ export default function ListingDetails() {
 
                 {!loadingReviews && !reviewError && reviews.length === 0 && (
                   <p className="text-zinc-300">
-                    Ainda não existem avaliações para este jogo.
+                    Ainda nao existem avaliacoes para este jogo.
                   </p>
                 )}
 
@@ -861,7 +836,7 @@ export default function ListingDetails() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-semibold text-zinc-100">
-                              {review.user?.username || "Usuário"}
+                              {review.user?.username || "Usuario"}
                             </p>
                             <p className="text-xs text-zinc-400">
                               {formatDate(review.createdAt)}
@@ -873,7 +848,7 @@ export default function ListingDetails() {
                         </div>
 
                         <p className="mt-3 text-sm leading-relaxed text-zinc-200">
-                          {review.comment || "Sem comentário."}
+                          {review.comment || "Sem comentario."}
                         </p>
 
                         <button
@@ -889,7 +864,7 @@ export default function ListingDetails() {
                           } disabled:opacity-60`}
                         >
                           <ThumbsUp className="h-3.5 w-3.5" />
-                          {voted ? "Voto registrado" : "Marcar como útil"} (
+                          {voted ? "Voto registrado" : "Marcar como util"} (
                           {votesCount})
                         </button>
                       </div>
@@ -900,7 +875,7 @@ export default function ListingDetails() {
 
               <aside className="nexus-card p-5 sm:p-6">
                 <h2 className="text-xl font-bold text-white">
-                  Escrever avaliação
+                  Escrever avaliacao
                 </h2>
                 <p className="mt-1 text-sm text-zinc-300">
                   Compartilhe sua experiencia para ajudar outros jogadores.
@@ -931,7 +906,7 @@ export default function ListingDetails() {
                   className="mt-4 block text-sm text-zinc-300"
                   htmlFor="review-comment"
                 >
-                  Comentário
+                  Comentario
                 </label>
                 <textarea
                   id="review-comment"
@@ -939,7 +914,7 @@ export default function ListingDetails() {
                   onChange={(event) => setReviewComment(event.target.value)}
                   rows={5}
                   className="mt-1 w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 outline-none focus:border-blue-400"
-                  placeholder="Escreva sua opinião sobre jogabilidade, desempenho e história."
+                  placeholder="Escreva sua opiniao sobre jogabilidade, desempenho e historia."
                 ></textarea>
 
                 {reviewError && (
@@ -954,7 +929,7 @@ export default function ListingDetails() {
                   disabled={submittingReview}
                   className="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-2.5 font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {submittingReview ? "Enviando..." : "Publicar avaliação"}
+                  {submittingReview ? "Enviando..." : "Publicar avaliacao"}
                 </button>
               </aside>
             </section>

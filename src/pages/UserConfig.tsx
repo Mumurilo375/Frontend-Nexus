@@ -50,19 +50,19 @@ function formatCpf(value: string) {
 
 function getPasswordStrengthError(password: string): string | null {
   if (password.length < 8) {
-    return "A senha deve ter no minimo 8 caracteres.";
+    return "A senha deve ter no mínimo 8 caracteres.";
   }
 
   if (!/[a-z]/.test(password)) {
-    return "A senha deve ter ao menos uma letra minuscula.";
+    return "A senha deve ter ao menos uma letra minúscula.";
   }
 
   if (!/[A-Z]/.test(password)) {
-    return "A senha deve ter ao menos uma letra maiuscula.";
+    return "A senha deve ter ao menos uma letra maiúscula.";
   }
 
   if (!/\d/.test(password)) {
-    return "A senha deve ter ao menos um numero.";
+    return "A senha deve ter ao menos um número.";
   }
 
   if (!/[^a-zA-Z0-9]/.test(password)) {
@@ -84,34 +84,34 @@ function getFriendlyUpdateError(error: unknown): string {
   const message = String(maybeError?.response?.data?.message ?? "");
 
   if (message.includes("Email cannot be changed")) {
-    return "O email nao pode ser alterado.";
+    return "O email não pode ser alterado.";
   }
 
   if (message.includes("Username is already in use")) {
-    return "Este nome de usuario ja esta em uso.";
+    return "Este nome de usuário já está em uso.";
   }
 
   if (message.includes("CPF is already in use")) {
-    return "Este CPF ja esta cadastrado.";
+    return "Este CPF já está cadastrado.";
   }
 
   if (message.includes("Password must")) {
-    return "A senha deve ter no minimo 8 caracteres, com caractére maiusculo, minusculo, numero e caractere especial.";
+    return "A senha deve ter no mínimo 8 caracteres, com caractere maiúsculo, minúsculo, número e caractere especial.";
   }
 
   if (
     message.includes("Invalid CPF") ||
     message.includes("CPF must have 11 digits")
   ) {
-    return "CPF invalido. Verifique os dados informados.";
+    return "CPF inválido. Verifique os dados informados.";
   }
 
   if (message.includes("Network Error")) {
-    return "Nao foi possivel conectar com o servidor.";
+    return "Não foi possível conectar com o servidor.";
   }
 
   return (
-    message || "Nao foi possivel atualizar seus dados agora. Tente novamente."
+    message || "Não foi possível atualizar seus dados agora. Tente novamente."
   );
 }
 
@@ -135,7 +135,7 @@ export default function UserConfig() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!authUser?.id) {
-        setErrorMessage("Nao foi possivel identificar o usuario autenticado.");
+        setErrorMessage("Não foi possível identificar o usuário autenticado.");
         setLoading(false);
         return;
       }
@@ -161,7 +161,7 @@ export default function UserConfig() {
         setAvatarPreview(resolvedAvatarUrl);
         setEmail(data.email ?? authUser.email ?? "");
       } catch {
-        setErrorMessage("Nao foi possivel carregar seus dados.");
+        setErrorMessage("Não foi possível carregar seus dados.");
       } finally {
         setLoading(false);
       }
@@ -193,20 +193,20 @@ export default function UserConfig() {
 
     if (!fullName.trim() || !username.trim() || !cpf.trim() || !password) {
       setErrorMessage(
-        "Preencha os campos obrigatorios: nome, usuario, CPF e senha.",
+        "Preencha os campos obrigatórios: nome, usuário, CPF e senha.",
       );
       setSuccessMessage("");
       return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      setErrorMessage("O email exibido esta invalido.");
+      setErrorMessage("O email exibido está inválido.");
       setSuccessMessage("");
       return;
     }
 
     if (!isValidCpf(cpf)) {
-      setErrorMessage("CPF invalido.");
+      setErrorMessage("CPF inválido.");
       setSuccessMessage("");
       return;
     }
@@ -219,13 +219,13 @@ export default function UserConfig() {
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage("As senhas nao conferem.");
+      setErrorMessage("As senhas não conferem.");
       setSuccessMessage("");
       return;
     }
 
     if (!authUser?.id) {
-      setErrorMessage("Nao foi possivel identificar o usuario autenticado.");
+      setErrorMessage("Não foi possível identificar o usuário autenticado.");
       setSuccessMessage("");
       return;
     }
@@ -276,11 +276,11 @@ export default function UserConfig() {
               Minha conta
             </p>
             <h1 className="mt-2 text-3xl font-bold text-white">
-              Configuracoes da conta
+              Configurações da conta
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              Atualize seus dados com seguranca. O email fica bloqueado para
-              preservar a autenticacao da conta.
+              Atualize seus dados com segurança. O email fica bloqueado para
+              preservar a autenticação da conta.
             </p>
           </div>
 
@@ -302,7 +302,7 @@ export default function UserConfig() {
                     </div>
                   )}
                   <h2 className="mt-4 text-xl font-semibold text-white">
-                    {fullName || authUser?.username || "Usuario Nexus"}
+                    {fullName || authUser?.username || "Usuário Nexus"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
                     @{username || authUser?.username || "usuario"}
@@ -319,8 +319,8 @@ export default function UserConfig() {
                     <p className="mt-1 text-slate-200">{cpf || "-"}</p>
                   </div>
                   <p className="text-xs leading-6 text-slate-400">
-                    A alteracao de email fica bloqueada. Nome, usuario, CPF,
-                    senha e avatar continuam editaveis.
+                    A alteração de email fica bloqueada. Nome, usuário, CPF,
+                    senha e avatar continuam editáveis.
                   </p>
                 </div>
               </aside>
@@ -343,7 +343,7 @@ export default function UserConfig() {
                   </label>
 
                   <label className="text-sm font-medium text-slate-100">
-                    Nome de usuario
+                    Nome de usuário
                     <input
                       id="username"
                       type="text"
@@ -380,7 +380,7 @@ export default function UserConfig() {
                       className="mt-2 block w-full cursor-not-allowed rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-500"
                     />
                     <p className="mt-2 text-xs text-slate-400">
-                      O email fica bloqueado por regra de seguranca.
+                      O email fica bloqueado por regra de segurança.
                     </p>
                   </label>
                 </div>
@@ -441,8 +441,8 @@ export default function UserConfig() {
                 </div>
 
                 <p className="text-xs leading-6 text-slate-400">
-                  A nova senha precisa manter nivel forte: 8 caracteres, letras
-                  maiusculas e minusculas, numero e caractere especial.
+                  A nova senha precisa manter nível forte: 8 caracteres, letras
+                  maiúsculas e minúsculas, número e caractere especial.
                 </p>
 
                 {errorMessage && (
@@ -462,7 +462,7 @@ export default function UserConfig() {
                   disabled={isSubmitting}
                   className="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {isSubmitting ? "Salvando..." : "Salvar alteracoes"}
+                  {isSubmitting ? "Salvando..." : "Salvar alterações"}
                 </button>
               </form>
             </div>

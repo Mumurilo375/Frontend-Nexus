@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -251,7 +252,7 @@ export default function Produtos({
       } catch {
         setGames([]);
         setListingByGame(new Map());
-        setError("Nao foi possivel carregar os produtos no momento.");
+        setError("Não foi possível carregar os produtos no momento.");
       } finally {
         setLoading(false);
       }
@@ -367,6 +368,23 @@ export default function Produtos({
     }
   };
 
+  const openListingDetails = (gameId: number) => {
+    void navigate(`/loja/${gameId}`);
+  };
+
+  const stopCardNavigation = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleCardKeyDown = (
+    event: KeyboardEvent<HTMLElement>,
+    gameId: number,
+  ) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openListingDetails(gameId);
+  };
+
   if (loading) {
     return (
       <p className="nexus-card px-6 py-5 text-gray-300">
@@ -414,13 +432,19 @@ export default function Produtos({
                 : false;
 
               return (
-                <div
+                <article
                   key={game.id}
-                  className="nexus-card relative my-1 flex flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => openListingDetails(game.id)}
+                  onKeyDown={(event) => handleCardKeyDown(event, game.id)}
+                  className="nexus-card relative my-1 flex cursor-pointer flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
                 >
                   <button
                     type="button"
-                    onClick={() => {
+                    onMouseDown={stopCardNavigation}
+                    onClick={(event) => {
+                      stopCardNavigation(event);
                       void alternarFavorito(game.id);
                     }}
                     disabled={pendingFavoriteId === game.id}
@@ -473,7 +497,9 @@ export default function Produtos({
                           <button
                             key={listing.id}
                             type="button"
-                            onClick={() => {
+                            onMouseDown={stopCardNavigation}
+                            onClick={(event) => {
+                              stopCardNavigation(event);
                               selectListing(game.id, listing.id);
                             }}
                             className={`rounded-xl border p-2 transition ${selected ? "border-slate-500 bg-slate-800/90" : "border-slate-700 bg-slate-950/85 hover:border-slate-500"}`}
@@ -503,7 +529,9 @@ export default function Produtos({
                     </p>
                     <button
                       type="button"
-                      onClick={() => {
+                      onMouseDown={stopCardNavigation}
+                      onClick={(event) => {
+                        stopCardNavigation(event);
                         if (!selectedListing) return;
                         void addToCart(game.id, selectedListing.id);
                       }}
@@ -523,7 +551,7 @@ export default function Produtos({
                             : "Adicionar"}
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>

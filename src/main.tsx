@@ -13,6 +13,7 @@ import AdminGameForm from "./pages/admin/AdminGameForm";
 import AdminGameListings from "./pages/admin/AdminGameListings";
 import AdminGames from "./pages/admin/AdminGames";
 import AdminListingForm from "./pages/admin/AdminListingForm";
+import AdminListingKeys from "./pages/admin/AdminListingKeys";
 import Cadastro from "./pages/Cadastro";
 import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
@@ -35,7 +36,7 @@ const router = createBrowserRouter([
       { path: "/comofunciona", element: <ComoFunciona /> },
       { path: "/login", element: <Login /> },
       { path: "/cadastro", element: <Cadastro /> },
-      { path: "/loja/:listingId", element: <ListingDetails /> },
+      { path: "/loja/:gameId", element: <ListingDetails /> },
       {
         path: "/admin",
         element: (
@@ -89,6 +90,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAdmin>
             <AdminListingForm />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: "/admin/games/:gameId/listings/:listingId/keys",
+        element: (
+          <RequireAdmin>
+            <AdminListingKeys />
           </RequireAdmin>
         ),
       },

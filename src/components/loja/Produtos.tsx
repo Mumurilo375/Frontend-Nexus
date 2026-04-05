@@ -368,7 +368,7 @@ export default function Produtos({
     }
   };
 
-  const openListingDetails = (gameId: number) => {
+  const openGameDetails = (gameId: number) => {
     void navigate(`/loja/${gameId}`);
   };
 
@@ -382,7 +382,7 @@ export default function Produtos({
   ) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    openListingDetails(gameId);
+      openGameDetails(gameId);
   };
 
   if (loading) {
@@ -436,7 +436,7 @@ export default function Produtos({
                   key={game.id}
                   role="link"
                   tabIndex={0}
-                  onClick={() => openListingDetails(game.id)}
+                        onClick={() => openGameDetails(game.id)}
                   onKeyDown={(event) => handleCardKeyDown(event, game.id)}
                   className="nexus-card relative my-1 flex cursor-pointer flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
                 >

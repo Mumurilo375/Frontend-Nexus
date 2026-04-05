@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   BadgePercent,
   ChevronLeft,
-  Heart,
+  ChevronRight,
   Loader2,
   ShoppingCart,
   Star,
@@ -47,7 +47,6 @@ type GameDetailsResponse = {
   platformListings?: PlatformListing[];
   reviewStats?: { totalReviews?: number; averageRating?: number };
 };
-type WishlistResponse = { items: Array<{ gameId: number }> };
 type CartResponse = { items: Array<{ listingId: number }> };
 type ReviewVote = { id: number; userId?: number; user?: { id?: number } };
 type ReviewItem = {
@@ -59,6 +58,7 @@ type ReviewItem = {
   votes?: ReviewVote[];
 };
 type ReviewsResponse = { items: ReviewItem[] };
+const REVIEW_COMMENT_MAX_LENGTH = 500;
 
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
@@ -81,7 +81,7 @@ function renderStars(value: number) {
   ));
 }
 
-export default function ListingDetails() {
+export default function GameDetails() {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,9 +100,7 @@ export default function ListingDetails() {
   const [actionError, setActionError] = useState("");
   const [reviewError, setReviewError] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
-  const [favoriteGameIds, setFavoriteGameIds] = useState<number[]>([]);
   const [cartListingIds, setCartListingIds] = useState<number[]>([]);
-  const [busyFavorite, setBusyFavorite] = useState(false);
   const [busyCart, setBusyCart] = useState(false);
   const [busyBuyNow, setBusyBuyNow] = useState(false);
   const [busyVoteReviewId, setBusyVoteReviewId] = useState<number | null>(null);
@@ -111,6 +109,12 @@ export default function ListingDetails() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  const gameTitle = details?.title || "Jogo";
+  const gameDescription = details?.description || "Sem descricao curta.";
+  const gameLongDescription = details?.longDescription || gameDescription;
+  const coverImage = String(details?.coverImageUrl ?? "").trim() || "/logo.png";
+  const reviewAverage = Number(details?.reviewStats?.averageRating ?? 0);
+  const reviewTotal = Number(details?.reviewStats?.totalReviews ?? 0);
   const platformListings = details?.platformListings ?? [];
   const currentListing = useMemo(() => {
     if (platformListings.length === 0) return null;
@@ -130,17 +134,23 @@ export default function ListingDetails() {
   const discountPercentage = Number(pricing.discountPercentage ?? 0);
   const activePromotions = currentListing?.activePromotions ?? [];
   const inCart = currentListingId > 0 && cartListingIds.includes(currentListingId);
-  const isFavorite = currentGameId > 0 && favoriteGameIds.includes(currentGameId);
-  const extraImagesCount = details?.images?.length ?? 0;
+  const infoItems = [
+    { label: "Lançamento", value: formatDate(details?.releaseDate) },
+    { label: "Avaliação", value: `${reviewAverage.toFixed(1)} / 5` },
+  ];
 
   const galleryImages = useMemo(() => {
-    const cover = String(details?.coverImageUrl ?? "").trim();
     const extras = (details?.images ?? [])
       .map((image) => String(image.imageUrl ?? "").trim())
       .filter(Boolean);
 
-    return Array.from(new Set([cover, ...extras].filter(Boolean)));
-  }, [details]);
+    return Array.from(new Set([coverImage, ...extras]));
+  }, [coverImage, details?.images]);
+
+  const currentImageIndex = Math.max(
+    0,
+    galleryImages.findIndex((imageUrl) => imageUrl === selectedImage),
+  );
 
   const goToLogin = () => {
     setShowAuthModal(false);
@@ -240,7 +250,6 @@ export default function ListingDetails() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setFavoriteGameIds([]);
       setCartListingIds([]);
       return;
     }
@@ -249,18 +258,13 @@ export default function ListingDetails() {
 
     const load = async () => {
       try {
-        const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
-          api.get<WishlistResponse>("/wishlists"),
-          api.get<CartResponse>("/cart"),
-        ]);
+        const { data: cartData } = await api.get<CartResponse>("/cart");
 
         if (!active) return;
 
-        setFavoriteGameIds((wishlistData.items ?? []).map((item) => item.gameId));
         setCartListingIds((cartData.items ?? []).map((item) => item.listingId));
       } catch {
         if (!active) return;
-        setFavoriteGameIds([]);
         setCartListingIds([]);
       }
     };
@@ -291,32 +295,17 @@ export default function ListingDetails() {
   }, [platformListings]);
 
   useEffect(() => {
-    setSelectedImage(galleryImages[0] ?? "");
-  }, [galleryImages]);
+    setSelectedImage(galleryImages[0] ?? coverImage);
+  }, [coverImage, galleryImages]);
 
-  const toggleFavorite = async () => {
-    if (!currentGameId) return;
+  const stepGalleryImage = (direction: -1 | 1) => {
+    if (galleryImages.length <= 1) return;
 
-    if (!isLoggedIn) {
-      askLogin();
-      return;
-    }
+    const nextIndex =
+      (currentImageIndex + direction + galleryImages.length) %
+      galleryImages.length;
 
-    try {
-      setBusyFavorite(true);
-
-      if (isFavorite) {
-        await api.delete(`/wishlists/${currentGameId}`);
-        setFavoriteGameIds((current) => current.filter((id) => id !== currentGameId));
-      } else {
-        await api.post(`/wishlists/${currentGameId}`, {});
-        setFavoriteGameIds((current) => [...current, currentGameId]);
-      }
-
-      window.dispatchEvent(new Event("nexus:counts-updated"));
-    } finally {
-      setBusyFavorite(false);
-    }
+    setSelectedImage(galleryImages[nextIndex] ?? coverImage);
   };
 
   const addCurrentListingToCart = async () => {
@@ -435,6 +424,13 @@ export default function ListingDetails() {
       return;
     }
 
+    if (trimmedComment.length > REVIEW_COMMENT_MAX_LENGTH) {
+      setReviewError(
+        `A avaliacao deve ter no maximo ${REVIEW_COMMENT_MAX_LENGTH} caracteres.`,
+      );
+      return;
+    }
+
     try {
       setSubmittingReview(true);
       setReviewError("");
@@ -467,10 +463,6 @@ export default function ListingDetails() {
     }
   };
 
-  const gameTitle = details?.title || "Jogo";
-  const gameDescription = details?.description || "Sem descricao curta.";
-  const gameLongDescription = details?.longDescription || gameDescription;
-
   return (
     <div className="nexus-page-shell">
       <NavBar />
@@ -484,41 +476,18 @@ export default function ListingDetails() {
       />
 
       <main className="mx-auto min-h-screen w-full max-w-7xl px-4 pb-16 pt-28 sm:px-6">
-        <section className="nexus-panel mb-6 px-5 py-5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-            <Link
-              to="/loja"
-              className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950/80 px-3 py-2 transition hover:border-blue-400/50 hover:text-blue-200"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Voltar para loja
-            </Link>
-            <span className="text-slate-500">/</span>
-            <span className="truncate text-slate-100">{gameTitle}</span>
-          </div>
-          {!loading && !error && details && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-black text-white sm:text-4xl">
-                  {gameTitle}
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
-                  {gameDescription}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-blue-100">
-                  {currentListing?.platform?.name || "Plataforma"}
-                </span>
-                <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-slate-200">
-                  {extraImagesCount > 0
-                    ? `Capa + ${extraImagesCount} imagens`
-                    : "Capa oficial"}
-                </span>
-              </div>
-            </div>
-          )}
-        </section>
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <Link
+            to="/loja"
+            className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950/80 px-3 py-2 transition hover:border-blue-400/50 hover:text-blue-200"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Voltar para loja
+          </Link>
+          <h1 className="truncate text-3xl font-black text-white sm:text-4xl">
+            {gameTitle}
+          </h1>
+        </div>
 
         {loading && (
           <div className="nexus-card mt-14 flex items-center justify-center gap-3 px-6 py-8 text-zinc-300">
@@ -542,128 +511,191 @@ export default function ListingDetails() {
 
         {!loading && !error && details && (
           <>
-            <section className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-              <div className="space-y-6">
-                <article className="nexus-panel overflow-hidden p-4 sm:p-6">
-                  <div className="overflow-hidden rounded-2xl border border-white/12 bg-black/60">
+            <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_380px]">
+              <div className="space-y-3">
+                <article className="nexus-panel px-3 pt-3 pb-3 sm:px-4 sm:pt-4 sm:pb-3">
+                  <div className="overflow-hidden border border-white/12 bg-slate-950/80">
                     <img
-                      src={selectedImage || "/logo.png"}
+                      src={selectedImage || coverImage}
                       alt={gameTitle}
-                      className="h-80 w-full object-contain sm:h-105"
+                      className="aspect-[21/10] w-full object-cover"
                     />
                   </div>
 
-                  {galleryImages.length > 1 && (
-                    <div className="mt-4">
-                      <div className="mb-3 flex items-center justify-between text-sm text-slate-300">
-                        <span>Galeria do jogo</span>
-                        <span>{extraImagesCount} imagem(ns) extra(s)</span>
-                      </div>
-                      <div className="nexus-scrollbar flex gap-2 overflow-x-auto pb-1">
-                        {galleryImages.map((imageUrl, index) => {
-                          const selected = selectedImage === imageUrl;
+                  <div className="nexus-scrollbar mt-1.5 flex gap-2 overflow-x-auto">
+                    {galleryImages.map((imageUrl, index) => {
+                      const selected = selectedImage === imageUrl;
 
-                          return (
-                            <button
-                              key={`${imageUrl}-${index}`}
-                              type="button"
-                              onClick={() => setSelectedImage(imageUrl)}
-                              className={`overflow-hidden rounded-lg border transition ${
-                                selected
-                                  ? "border-blue-400"
-                                  : "border-white/10 hover:border-blue-300/60"
-                              }`}
-                            >
-                              <img
-                                src={imageUrl}
-                                alt={`${gameTitle} preview ${index + 1}`}
-                                className="h-16 w-28 object-cover"
-                              />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                      return (
+                        <button
+                          key={`${imageUrl}-${index}`}
+                          type="button"
+                          onClick={() => setSelectedImage(imageUrl)}
+                          className={`shrink-0 overflow-hidden border transition ${
+                            selected
+                              ? "border-blue-400 shadow-[0_0_0_2px_rgba(96,165,250,0.3)]"
+                              : "border-white/10 hover:border-blue-300/60"
+                          }`}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`${gameTitle} miniatura ${index + 1}`}
+                            className="h-14 w-24 object-cover sm:h-16 sm:w-28"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-1.5 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => stepGalleryImage(-1)}
+                      disabled={galleryImages.length <= 1}
+                      className="border border-white/10 bg-black/35 p-1 text-zinc-300 transition hover:border-blue-400/50 hover:text-white disabled:opacity-40"
+                      aria-label="Imagem anterior"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stepGalleryImage(1)}
+                      disabled={galleryImages.length <= 1}
+                      className="border border-white/10 bg-black/35 p-1 text-zinc-300 transition hover:border-blue-400/50 hover:text-white disabled:opacity-40"
+                      aria-label="Proxima imagem"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </article>
+
+                <article className="nexus-panel relative overflow-hidden border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_42%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 sm:p-7">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-cyan-200/80">
+                    Sobre o jogo
+                  </p>
+                  <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                    Explore o universo de {gameTitle}
+                  </h2>
+                  <p className="mt-4 text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">
+                    {gameLongDescription}
+                  </p>
                 </article>
 
                 <article className="nexus-card p-5 sm:p-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    Sobre o jogo
-                  </h2>
-                  <p className="mt-3 leading-relaxed text-zinc-200">
-                    {gameLongDescription}
-                  </p>
-
-                  <dl className="mt-5 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2">
-                    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Lancamento</dt>
-                      <dd className="mt-1 font-medium text-zinc-100">
-                        {formatDate(details.releaseDate)}
-                      </dd>
+                  <header className="mb-4 flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        Avaliacoes
+                      </h2>
+                      <p className="text-sm text-zinc-300">
+                        {reviewTotal} avaliacoes
+                      </p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                      <dt className="text-zinc-400">Avaliacao media</dt>
-                      <dd className="mt-1 font-medium text-zinc-100">
-                        {Number(details.reviewStats?.averageRating ?? 0).toFixed(1)} / 5
-                      </dd>
+                    <div className="flex items-center gap-1">
+                      {renderStars(reviewAverage)}
                     </div>
-                  </dl>
+                  </header>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {(details.categories ?? []).map((category) => (
-                      <span
-                        key={`cat-${category.id}`}
-                        className="rounded-full border border-blue-400/30 bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-100"
-                      >
-                        {category.name}
-                      </span>
-                    ))}
+                  {loadingReviews && (
+                    <p className="text-zinc-300">Carregando avaliacoes...</p>
+                  )}
 
-                    {(details.tags ?? []).map((tag) => (
-                      <span
-                        key={`tag-${tag.id}`}
-                        className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-100"
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
+                  {!loadingReviews && reviewError && (
+                    <p className="text-red-300">{reviewError}</p>
+                  )}
+
+                  {!loadingReviews && !reviewError && reviews.length === 0 && (
+                    <p className="text-zinc-300">
+                      Ainda nao existem avaliacoes para este jogo.
+                    </p>
+                  )}
+
+                  <div className="space-y-3">
+                    {reviews.map((review) => {
+                      const voted = hasUserVote(review);
+                      const votesCount = (review.votes ?? []).length;
+
+                      return (
+                        <div key={`review-${review.id}`} className="nexus-card p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-zinc-100">
+                                {review.user?.username || "Usuario"}
+                              </p>
+                              <p className="text-xs text-zinc-400">
+                                {formatDate(review.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {renderStars(Number(review.rating ?? 0))}
+                            </div>
+                          </div>
+
+                          <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-200">
+                            {review.comment || "Sem comentario."}
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void toggleReviewVote(review.id, voted);
+                            }}
+                            disabled={busyVoteReviewId === review.id}
+                            className={`mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                              voted
+                                ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-200"
+                                : "border-white/10 bg-black/40 text-zinc-300 hover:border-blue-400/50"
+                            } disabled:opacity-60`}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                            {voted ? "Voto registrado" : "Marcar como util"} (
+                            {votesCount})
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </article>
               </div>
 
               <aside className="nexus-panel p-5 lg:sticky lg:top-28 lg:h-fit sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h1 className="text-3xl font-black leading-tight text-white">
-                      {gameTitle}
-                    </h1>
-                    <p className="mt-2 text-sm text-zinc-300">
-                      {currentListing?.platform?.name || "Plataforma nao informada"}
-                    </p>
-                  </div>
+                <div className="overflow-hidden border border-white/10 bg-slate-950/70">
+                  <img
+                    src={coverImage}
+                    alt={`${gameTitle} capa`}
+                    className="aspect-video w-full object-cover"
+                  />
+                </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void toggleFavorite();
-                    }}
-                    disabled={busyFavorite || !currentGameId}
-                    className="rounded-full border border-white/15 bg-black/50 p-2 text-white transition hover:scale-105 hover:border-red-400/60 disabled:opacity-60"
-                    aria-label={
-                      isFavorite
-                        ? "Remover dos favoritos"
-                        : "Adicionar aos favoritos"
-                    }
-                  >
-                    <Heart
-                      className={`h-5 w-5 ${
-                        isFavorite
-                          ? "fill-red-500 text-red-500"
-                          : "text-zinc-100"
-                      }`}
-                    />
-                  </button>
+                <p className="mt-4 text-sm leading-6 text-slate-300">
+                  {gameDescription}
+                </p>
+
+                <div className="mt-4 space-y-2 text-sm text-zinc-300">
+                  {infoItems.map((item) => (
+                    <p key={item.label}>
+                      <span className="font-semibold text-zinc-100">
+                        {item.label}:
+                      </span>{" "}
+                      <span className="text-zinc-300">
+                        {item.value}
+                      </span>
+                    </p>
+                  ))}
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {[...(details.categories ?? []), ...(details.tags ?? [])].map(
+                    (item) => (
+                      <span
+                        key={`${item.name}-${item.id}`}
+                        className="rounded-full border border-blue-400/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-100"
+                      >
+                        {item.name}
+                      </span>
+                    ),
+                  )}
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
@@ -720,7 +752,7 @@ export default function ListingDetails() {
                   <p className="text-sm font-semibold text-zinc-200">
                     Escolha a plataforma
                   </p>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                     {platformListings.map((listing) => {
                       const selected = Number(listing.id) === currentListingId;
                       const platformName = listing.platform?.name || "Plataforma";
@@ -736,14 +768,14 @@ export default function ListingDetails() {
                             setSelectedListingId(Number(listing.id));
                             setActionError("");
                           }}
-                          className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
+                          className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
                             selected
                               ? "border-blue-400 bg-blue-500/20 text-blue-100"
                               : "border-white/12 bg-black/40 text-zinc-200 hover:border-blue-300/50"
                           }`}
                         >
                           <p className="font-semibold">{platformName}</p>
-                          <p className="text-xs text-zinc-400">
+                          <p className="mt-1 text-xs text-zinc-400">
                             {toMoney(listingPrice)}
                           </p>
                         </button>
@@ -796,83 +828,7 @@ export default function ListingDetails() {
               </aside>
             </section>
 
-            <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
-              <article className="nexus-card p-5 sm:p-6">
-                <header className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Avaliacoes
-                    </h2>
-                    <p className="text-sm text-zinc-300">
-                      {details.reviewStats?.totalReviews ?? 0} avaliacoes
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {renderStars(Number(details.reviewStats?.averageRating ?? 0))}
-                  </div>
-                </header>
-
-                {loadingReviews && (
-                  <p className="text-zinc-300">Carregando avaliacoes...</p>
-                )}
-
-                {!loadingReviews && reviewError && (
-                  <p className="text-red-300">{reviewError}</p>
-                )}
-
-                {!loadingReviews && !reviewError && reviews.length === 0 && (
-                  <p className="text-zinc-300">
-                    Ainda nao existem avaliacoes para este jogo.
-                  </p>
-                )}
-
-                <div className="space-y-3">
-                  {reviews.map((review) => {
-                    const voted = hasUserVote(review);
-                    const votesCount = (review.votes ?? []).length;
-
-                    return (
-                      <div key={`review-${review.id}`} className="nexus-card p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-zinc-100">
-                              {review.user?.username || "Usuario"}
-                            </p>
-                            <p className="text-xs text-zinc-400">
-                              {formatDate(review.createdAt)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {renderStars(Number(review.rating ?? 0))}
-                          </div>
-                        </div>
-
-                        <p className="mt-3 text-sm leading-relaxed text-zinc-200">
-                          {review.comment || "Sem comentario."}
-                        </p>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void toggleReviewVote(review.id, voted);
-                          }}
-                          disabled={busyVoteReviewId === review.id}
-                          className={`mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                            voted
-                              ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-200"
-                              : "border-white/10 bg-black/40 text-zinc-300 hover:border-blue-400/50"
-                          } disabled:opacity-60`}
-                        >
-                          <ThumbsUp className="h-3.5 w-3.5" />
-                          {voted ? "Voto registrado" : "Marcar como util"} (
-                          {votesCount})
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </article>
-
+            <section className="mt-6 lg:ml-auto lg:max-w-[340px]">
               <aside className="nexus-card p-5 sm:p-6">
                 <h2 className="text-xl font-bold text-white">
                   Escrever avaliacao
@@ -913,9 +869,14 @@ export default function ListingDetails() {
                   value={reviewComment}
                   onChange={(event) => setReviewComment(event.target.value)}
                   rows={5}
+                  maxLength={REVIEW_COMMENT_MAX_LENGTH}
                   className="mt-1 w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 outline-none focus:border-blue-400"
                   placeholder="Escreva sua opiniao sobre jogabilidade, desempenho e historia."
                 ></textarea>
+
+                <p className="mt-2 text-right text-xs text-zinc-400">
+                  {reviewComment.length}/{REVIEW_COMMENT_MAX_LENGTH}
+                </p>
 
                 {reviewError && (
                   <p className="mt-3 text-sm text-red-300">{reviewError}</p>

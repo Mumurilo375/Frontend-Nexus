@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import AdminLayout from "../../components/admin/AdminLayout";
+import AdminLayout from "./AdminLayout";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 

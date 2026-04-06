@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import AdminLayout from "../../components/admin/AdminLayout";
+import AdminLayout from "./AdminLayout";
 
 const linkClass =
   "inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500";

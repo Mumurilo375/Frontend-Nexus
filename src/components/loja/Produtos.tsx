@@ -16,13 +16,6 @@ type Category = {
   name: string;
 };
 
-type ProdutosProps = {
-  selectedPlatforms: string[];
-  onPlatformsLoaded: (platforms: string[]) => void;
-  selectedCategories: string[];
-  onCategoriesLoaded: (categories: string[]) => void;
-};
-
 type Game = {
   id: number;
   title: string;
@@ -78,12 +71,7 @@ const normalizeText = (value: string) =>
     .trim()
     .toLowerCase();
 
-export default function Produtos({
-  selectedPlatforms,
-  onPlatformsLoaded,
-  selectedCategories,
-  onCategoriesLoaded,
-}: ProdutosProps) {
+export default function Produtos() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -107,6 +95,22 @@ export default function Produtos({
   const location = useLocation();
   const { isAuthenticated: isLoggedIn } = useAuth();
   const [searchParams] = useSearchParams();
+  const selectedPlatforms = useMemo(
+    () =>
+      searchParams
+        .getAll("platform")
+        .map((platform) => platform.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
+  const selectedCategories = useMemo(
+    () =>
+      searchParams
+        .getAll("category")
+        .map((category) => category.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
   const handlePageChange = (nextPage: number) => {
@@ -124,18 +128,6 @@ export default function Produtos({
   const askLogin = () => {
     setShowAuthModal(true);
   };
-
-  const availableCategories = useMemo(() => {
-    const names = games.flatMap((game) =>
-      (game.categories ?? []).map((category) => category.name),
-    );
-    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
-  }, [games]);
-
-  const availablePlatforms = useMemo(() => {
-    const names = games.flatMap((game) => game.platforms ?? []);
-    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
-  }, [games]);
 
   const filteredGames = useMemo(() => {
     const filtrosCategoria = new Set(
@@ -177,14 +169,6 @@ export default function Produtos({
     const start = (page - 1) * PAGE_SIZE;
     return filteredGames.slice(start, start + PAGE_SIZE);
   }, [filteredGames, page]);
-
-  useEffect(() => {
-    onCategoriesLoaded(availableCategories);
-  }, [availableCategories, onCategoriesLoaded]);
-
-  useEffect(() => {
-    onPlatformsLoaded(availablePlatforms);
-  }, [availablePlatforms, onPlatformsLoaded]);
 
   useEffect(() => {
     setPage(1);
@@ -382,7 +366,7 @@ export default function Produtos({
   ) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-      openGameDetails(gameId);
+    openGameDetails(gameId);
   };
 
   if (loading) {
@@ -436,7 +420,7 @@ export default function Produtos({
                   key={game.id}
                   role="link"
                   tabIndex={0}
-                        onClick={() => openGameDetails(game.id)}
+                  onClick={() => openGameDetails(game.id)}
                   onKeyDown={(event) => handleCardKeyDown(event, game.id)}
                   className="nexus-card relative my-1 flex cursor-pointer flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
                 >

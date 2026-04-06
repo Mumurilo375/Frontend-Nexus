@@ -1,41 +1,160 @@
 import { FilterIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import api from "../../services/api";
 
-type FiltroProps = {
-  platforms: string[];
-  selectedPlatforms: string[];
-  onTogglePlatform: (platform: string) => void;
-  onClearPlatforms: () => void;
-  categories: string[];
-  selectedCategories: string[];
-  onToggleCategory: (category: string) => void;
-  onClearCategories: () => void;
+type Category = {
+  id: number;
+  name: string;
 };
 
-function Filtro({
-  platforms,
-  selectedPlatforms,
-  onTogglePlatform,
-  onClearPlatforms,
-  categories,
-  selectedCategories,
-  onToggleCategory,
-  onClearCategories,
-}: FiltroProps) {
+type Game = {
+  id: number;
+  categories?: Category[];
+};
+
+type GamesResponse = {
+  items: Game[];
+};
+
+type ListingItem = {
+  id: number;
+  isActive?: boolean;
+  platform?: {
+    name?: string;
+  };
+};
+
+type ListingsResponse = {
+  items: ListingItem[];
+};
+
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+function Filtro() {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const selectedPlatforms = useMemo(
+    () =>
+      searchParams
+        .getAll("platform")
+        .map((platform) => platform.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
+
+  const selectedCategories = useMemo(
+    () =>
+      searchParams
+        .getAll("category")
+        .map((category) => category.trim())
+        .filter(Boolean),
+    [searchParams],
+  );
+
+  const selectedPlatformSet = useMemo(
+    () => new Set(selectedPlatforms.map((platform) => normalizeText(platform))),
+    [selectedPlatforms],
+  );
+
+  const selectedCategorySet = useMemo(
+    () =>
+      new Set(selectedCategories.map((category) => normalizeText(category))),
+    [selectedCategories],
+  );
 
   const irParaTopo = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  useEffect(() => {
+    const carregarFiltros = async () => {
+      try {
+        setLoading(true);
+
+        const [gamesResponse, listingsResponse] = await Promise.all([
+          api.get<GamesResponse>("/games", {
+            params: { page: 1, limit: 60 },
+          }),
+          api.get<ListingsResponse>("/listings", {
+            params: { page: 1, limit: 200 },
+          }),
+        ]);
+
+        const categoryNames = (gamesResponse.data?.items ?? [])
+          .flatMap((game) => game.categories ?? [])
+          .map((category) => category.name)
+          .filter(Boolean);
+
+        const platformNames = (listingsResponse.data?.items ?? [])
+          .filter((listing) => listing.isActive !== false)
+          .map((listing) => String(listing.platform?.name ?? "").trim())
+          .filter(Boolean);
+
+        setCategories(
+          Array.from(new Set(categoryNames)).sort((a, b) => a.localeCompare(b)),
+        );
+        setPlatforms(
+          Array.from(new Set(platformNames)).sort((a, b) => a.localeCompare(b)),
+        );
+      } catch {
+        setCategories([]);
+        setPlatforms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void carregarFiltros();
+  }, []);
+
+  const atualizarParametroLista = (key: string, values: string[]) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(key);
+
+    values.forEach((value) => {
+      if (value.trim()) {
+        next.append(key, value.trim());
+      }
+    });
+
+    setSearchParams(next);
+  };
+
+  const alternarSelecionado = (values: string[], value: string) => {
+    const alvo = normalizeText(value);
+    const existe = values.some((current) => normalizeText(current) === alvo);
+
+    if (existe) {
+      return values.filter((current) => normalizeText(current) !== alvo);
+    }
+
+    return [...values, value];
+  };
+
   const selecionarPlataforma = (plataforma: string) => {
-    onTogglePlatform(plataforma);
+    atualizarParametroLista(
+      "platform",
+      alternarSelecionado(selectedPlatforms, plataforma),
+    );
     irParaTopo();
     setMenuAbertoMobile(false);
   };
 
   const selecionarCategoria = (categoria: string) => {
-    onToggleCategory(categoria);
+    atualizarParametroLista(
+      "category",
+      alternarSelecionado(selectedCategories, categoria),
+    );
     irParaTopo();
     setMenuAbertoMobile(false);
   };
@@ -62,13 +181,18 @@ function Filtro({
           <FilterIcon className="mr-2 inline-block" />
           Filtros
         </h2>
+
+        {loading && (
+          <p className="px-4 text-sm text-slate-400">Carregando...</p>
+        )}
+
         <h2 className="mb-2 p-4 text-2xl font-bold text-white">Plataformas</h2>
         <ul className="mb-2">
           <li>
             <button
               type="button"
               onClick={() => {
-                onClearPlatforms();
+                atualizarParametroLista("platform", []);
                 irParaTopo();
                 setMenuAbertoMobile(false);
               }}
@@ -87,7 +211,7 @@ function Filtro({
                 type="button"
                 onClick={() => selecionarPlataforma(platform)}
                 className={
-                  selectedPlatforms.includes(platform)
+                  selectedPlatformSet.has(normalizeText(platform))
                     ? "font-bold text-blue-300"
                     : "hover:text-white"
                 }
@@ -104,7 +228,7 @@ function Filtro({
             <button
               type="button"
               onClick={() => {
-                onClearCategories();
+                atualizarParametroLista("category", []);
                 irParaTopo();
                 setMenuAbertoMobile(false);
               }}
@@ -123,7 +247,7 @@ function Filtro({
                 type="button"
                 onClick={() => selecionarCategoria(category)}
                 className={
-                  selectedCategories.includes(category)
+                  selectedCategorySet.has(normalizeText(category))
                     ? "font-bold text-blue-300"
                     : "hover:text-white"
                 }

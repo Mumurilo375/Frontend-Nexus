@@ -6,14 +6,7 @@ import { RequireAdmin, RequireAuth } from "./components/auth/RouteGuards";
 import { AuthProvider } from "./contexts/AuthContext";
 import RootLayout from "./components/globals/RootLayout";
 import App from "./pages/App";
-import AdminCategories from "./pages/admin/AdminCategories";
-import AdminCategoryForm from "./pages/admin/AdminCategoryForm";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminGameForm from "./pages/admin/AdminGameForm";
-import AdminGameListings from "./pages/admin/AdminGameListings";
-import AdminGames from "./pages/admin/AdminGames";
-import AdminListingForm from "./pages/admin/AdminListingForm";
-import AdminListingKeys from "./pages/admin/AdminListingKeys";
+import AdminControl from "./pages/AdminControl";
 import Cadastro from "./pages/Cadastro";
 import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
@@ -38,90 +31,10 @@ const router = createBrowserRouter([
       { path: "/cadastro", element: <Cadastro /> },
       { path: "/loja/:gameId", element: <GameDetails /> },
       {
-        path: "/admin",
+        path: "/admin/*",
         element: (
           <RequireAdmin>
-            <AdminDashboard />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games",
-        element: (
-          <RequireAdmin>
-            <AdminGames />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/new",
-        element: (
-          <RequireAdmin>
-            <AdminGameForm />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/:id/edit",
-        element: (
-          <RequireAdmin>
-            <AdminGameForm />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/:gameId/listings",
-        element: (
-          <RequireAdmin>
-            <AdminGameListings />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/:gameId/listings/new",
-        element: (
-          <RequireAdmin>
-            <AdminListingForm />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/:gameId/listings/:listingId/edit",
-        element: (
-          <RequireAdmin>
-            <AdminListingForm />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/games/:gameId/listings/:listingId/keys",
-        element: (
-          <RequireAdmin>
-            <AdminListingKeys />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/categories",
-        element: (
-          <RequireAdmin>
-            <AdminCategories />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/categories/new",
-        element: (
-          <RequireAdmin>
-            <AdminCategoryForm />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: "/admin/categories/:id/edit",
-        element: (
-          <RequireAdmin>
-            <AdminCategoryForm />
+            <AdminControl />
           </RequireAdmin>
         ),
       },

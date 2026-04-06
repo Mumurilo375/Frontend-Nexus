@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AdminLayout from "../../components/admin/AdminLayout";
+import AdminLayout from "./AdminLayout";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
 import {

@@ -90,11 +90,16 @@ export default function AdminGameForm() {
     };
   }, [selectedObjectUrl]);
 
-  const handleChange = (field: keyof GameFormState, value: string | boolean) => {
+  const handleChange = (
+    field: keyof GameFormState,
+    value: string | boolean,
+  ) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const handleCoverFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -176,7 +181,9 @@ export default function AdminGameForm() {
                 <input
                   type="text"
                   value={form.title}
-                  onChange={(event) => handleChange("title", event.target.value)}
+                  onChange={(event) =>
+                    handleChange("title", event.target.value)
+                  }
                   className={inputClass}
                   required
                 />
@@ -244,7 +251,11 @@ export default function AdminGameForm() {
                 Preview
               </p>
               <img
-                src={coverPreviewUrl.trim() || form.coverImageUrl.trim() || "/utils/logo.png"}
+                src={
+                  coverPreviewUrl.trim() ||
+                  form.coverImageUrl.trim() ||
+                  "/utils/logo.png"
+                }
                 alt={form.title || "Preview do jogo"}
                 className="mt-4 h-56 w-full rounded-[20px] border border-slate-800 object-cover"
               />
@@ -252,7 +263,8 @@ export default function AdminGameForm() {
                 {form.title || "Título do jogo"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                {form.description || "A descrição curta aparece aqui como apoio visual."}
+                {form.description ||
+                  "A descrição curta aparece aqui como apoio visual."}
               </p>
             </aside>
           </div>

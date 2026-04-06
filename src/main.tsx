@@ -3,21 +3,43 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { RequireAdmin, RequireAuth } from "./components/auth/RouteGuards";
+import Footer from "./components/globals/Footer";
+import NavBar from "./components/globals/NavBar";
 import { AuthProvider } from "./contexts/AuthContext";
 import RootLayout from "./components/globals/RootLayout";
+import CheckoutMid from "./components/user/CheckoutMid";
+import MeusPedidosMid from "./components/user/MeusPedidosMid";
 import App from "./pages/App";
 import AdminControl from "./pages/AdminControl";
 import Cadastro from "./pages/Cadastro";
 import Carrinho from "./pages/Carrinho";
-import Checkout from "./pages/Checkout";
 import ComoFunciona from "./pages/ComoFunciona";
 import Favoritos from "./pages/Favoritos";
+import GameDetails from "./pages/GameDetails";
 import Login from "./pages/Login";
 import Loja from "./pages/Loja";
-import MeusPedidos from "./pages/MeusPedidos";
 import Ofertas from "./pages/Ofertas";
 import UserConfig from "./pages/UserConfig";
-import GameDetails from "./pages/GameDetails";
+
+function CheckoutPage() {
+  return (
+    <div className="nexus-page-shell">
+      <NavBar />
+      <CheckoutMid />
+      <Footer />
+    </div>
+  );
+}
+
+function MeusPedidosPage() {
+  return (
+    <div className="nexus-page-shell">
+      <NavBar />
+      <MeusPedidosMid />
+      <Footer />
+    </div>
+  );
+}
 
 const router = createBrowserRouter([
   {
@@ -58,7 +80,7 @@ const router = createBrowserRouter([
         path: "/checkout",
         element: (
           <RequireAuth>
-            <Checkout />
+            <CheckoutPage />
           </RequireAuth>
         ),
       },
@@ -66,7 +88,7 @@ const router = createBrowserRouter([
         path: "/meus-pedidos",
         element: (
           <RequireAuth>
-            <MeusPedidos />
+            <MeusPedidosPage />
           </RequireAuth>
         ),
       },

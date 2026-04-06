@@ -32,6 +32,10 @@ type GameSuggestion = {
 type GamesResponse = {
   items: GameSuggestion[];
 };
+type CartResponse = {
+  items?: Array<{ listingId?: number; quantity?: number }>;
+  meta?: { totalItems?: number };
+};
 
 type NavLinkItem = {
   to: string;
@@ -61,6 +65,12 @@ const mobileItemClass =
   "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white";
 const menuItemClass =
   "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-200 transition data-focus:bg-slate-900 data-focus:text-white data-focus:outline-hidden";
+const normalizeSearchText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 
 function NavBar() {
   const navigate = useNavigate();
@@ -116,9 +126,7 @@ function NavBar() {
         setGames(data?.items ?? []);
       } catch {
         setGames([]);
-        setSearchError(
-          "Não foi possível carregar sugestões. Faça login para pesquisar.",
-        );
+        setSearchError("Não foi possível carregar os jogos para a busca.");
       } finally {
         setLoadingSuggestions(false);
       }
@@ -143,13 +151,6 @@ function NavBar() {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const queryFromUrl = searchParams.get("q") ?? "";
-
-    setSearchTerm(queryFromUrl);
-  }, [location.search]);
-
-  useEffect(() => {
     if (!isLoggedIn) {
       setWishlistCount(0);
       setCartCount(0);
@@ -160,11 +161,15 @@ function NavBar() {
       try {
         const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
           api.get<{ items?: unknown[] }>("/wishlists"),
-          api.get<{ items?: unknown[] }>("/cart"),
+          api.get<CartResponse>("/cart"),
         ]);
 
         setWishlistCount((wishlistData.items ?? []).length);
-        setCartCount((cartData.items ?? []).length);
+        setCartCount(
+          Number(
+            cartData.meta?.totalItems ?? (cartData.items ?? []).length,
+          ),
+        );
       } catch {
         setWishlistCount(0);
         setCartCount(0);
@@ -182,47 +187,46 @@ function NavBar() {
   }, [isLoggedIn, location.pathname, location.search]);
 
   const filteredSuggestions = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const term = normalizeSearchText(searchTerm);
 
     if (!term) {
       return games.slice(0, 6);
     }
 
     return games
-      .filter((game) => game.title.toLowerCase().includes(term))
+      .filter((game) => normalizeSearchText(game.title).includes(term))
       .slice(0, 6);
   }, [games, searchTerm]);
 
-  const irParaResultado = (term: string) => {
-    const query = term.trim();
+  const openGameFromSearch = (term: string) => {
+    const query = normalizeSearchText(term);
     if (!query) {
       return;
     }
 
-    void navigate(`/loja?q=${encodeURIComponent(query)}`);
+    const matchedGame =
+      games.find((game) => normalizeSearchText(game.title) === query) ??
+      games.find((game) => normalizeSearchText(game.title).includes(query));
+
+    if (!matchedGame) {
+      setSearchError("Nenhum jogo encontrado para essa pesquisa.");
+      return;
+    }
+
+    setSearchError("");
+    setSearchTerm("");
     setSearchOpen(false);
+    void navigate(`/loja/${matchedGame.id}`);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    irParaResultado(searchTerm);
+    openGameFromSearch(searchTerm);
   };
 
-  const handleClearSearchFilter = () => {
+  const handleClearSearch = () => {
     setSearchTerm("");
-
-    const searchParams = new URLSearchParams(location.search);
-    if (!searchParams.has("q")) {
-      return;
-    }
-
-    searchParams.delete("q");
-    const nextSearch = searchParams.toString();
-
-    void navigate({
-      pathname: location.pathname,
-      search: nextSearch ? `?${nextSearch}` : "",
-    });
+    setSearchError("");
   };
 
   const handleLogout = () => {
@@ -335,7 +339,12 @@ function NavBar() {
                       <input
                         type="text"
                         value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
+                        onChange={(event) => {
+                          setSearchTerm(event.target.value);
+                          if (games.length > 0) {
+                            setSearchError("");
+                          }
+                        }}
                         placeholder="Pesquisar jogos..."
                         className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none transition focus:border-slate-500"
                       />
@@ -343,10 +352,10 @@ function NavBar() {
                       {searchTerm.trim().length > 0 && (
                         <button
                           type="button"
-                          onClick={handleClearSearchFilter}
+                          onClick={handleClearSearch}
                           className="rounded-xl border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:text-white"
-                          aria-label="Limpar filtro"
-                          title="Limpar filtro"
+                          aria-label="Limpar busca"
+                          title="Limpar busca"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -373,8 +382,10 @@ function NavBar() {
                           <button
                             type="button"
                             onClick={() => {
-                              setSearchTerm(game.title);
-                              irParaResultado(game.title);
+                              setSearchError("");
+                              setSearchTerm("");
+                              setSearchOpen(false);
+                              void navigate(`/loja/${game.id}`);
                             }}
                             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-900"
                           >

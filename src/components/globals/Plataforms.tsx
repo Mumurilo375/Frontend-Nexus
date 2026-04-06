@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const PlaystationConsole = "/plataforms/playstationConsole.png";
 const XboxConsole = "/plataforms/xboxConsole.png";
 const NintendoConsole = "/plataforms/nintendoconsole.png";
-const PcConsole = "/plataforms/computador.png";
+const PcConsole = "/plataforms/computador2.png";
 
 const platforms = [
   {

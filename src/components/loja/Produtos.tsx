@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import api from "../../services/api";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import Pagination from "../globals/Pagination";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
@@ -106,8 +106,6 @@ export default function Produtos({
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated: isLoggedIn } = useAuth();
-  const [searchParams] = useSearchParams();
-  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
@@ -163,14 +161,8 @@ export default function Produtos({
           )
         : jogosFiltradosPorCategoria;
 
-    if (!query) {
-      return jogosFiltrados;
-    }
-
-    return jogosFiltrados.filter((game) =>
-      game.title.toLowerCase().includes(query),
-    );
-  }, [games, query, selectedCategories, selectedPlatforms]);
+    return jogosFiltrados;
+  }, [games, selectedCategories, selectedPlatforms]);
 
   const totalPages = Math.max(1, Math.ceil(filteredGames.length / PAGE_SIZE));
   const paginatedGames = useMemo(() => {
@@ -188,7 +180,7 @@ export default function Produtos({
 
   useEffect(() => {
     setPage(1);
-  }, [games, query, selectedCategories, selectedPlatforms]);
+  }, [games, selectedCategories, selectedPlatforms]);
 
   useEffect(() => {
     const carregarJogos = async () => {
@@ -537,18 +529,17 @@ export default function Produtos({
                       }}
                       disabled={
                         pendingCartGameId === game.id ||
-                        !selectedListing ||
-                        inCart
+                        !selectedListing
                       }
                       className="rounded-full bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
                     >
                       {!selectedListing
                         ? "Escolha a plataforma"
-                        : inCart
-                          ? "No carrinho"
-                          : pendingCartGameId === game.id
+                        : pendingCartGameId === game.id
                             ? "Adicionando..."
-                            : "Adicionar"}
+                            : inCart
+                              ? "Adicionar mais"
+                              : "Adicionar"}
                     </button>
                   </div>
                 </article>

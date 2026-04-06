@@ -206,13 +206,6 @@ function Favoritos() {
       return;
     }
 
-    if (cartListingIds.includes(selectedListing.id)) {
-      setInfoMessage(
-        `${gameTitle} nessa plataforma já está no seu carrinho.`,
-      );
-      return;
-    }
-
     void addToCart(gameId, selectedListing.id);
   };
 
@@ -377,11 +370,11 @@ function Favoritos() {
                         >
                           {!selectedListing
                             ? "Escolha a plataforma"
-                            : inCart
-                              ? "No carrinho"
-                              : pendingCartGameId === item.gameId
+                            : pendingCartGameId === item.gameId
                                 ? "Adicionando..."
-                                : "Adicionar no carrinho"}
+                                : inCart
+                                  ? "Adicionar mais"
+                                  : "Adicionar no carrinho"}
                         </button>
                       </div>
                     </div>

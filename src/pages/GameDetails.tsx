@@ -309,7 +309,7 @@ export default function GameDetails() {
   };
 
   const addCurrentListingToCart = async () => {
-    if (!currentListingId || inCart) return;
+    if (!currentListingId) return;
 
     if (!isLoggedIn) {
       askLogin();
@@ -345,15 +345,13 @@ export default function GameDetails() {
       setActionError("");
       setBusyBuyNow(true);
 
-      if (!inCart) {
-        await api.post(`/cart/${currentListingId}`, {});
-        setCartListingIds((current) =>
-          current.includes(currentListingId)
-            ? current
-            : [...current, currentListingId],
-        );
-        window.dispatchEvent(new Event("nexus:counts-updated"));
-      }
+      await api.post(`/cart/${currentListingId}`, {});
+      setCartListingIds((current) =>
+        current.includes(currentListingId)
+          ? current
+          : [...current, currentListingId],
+      );
+      window.dispatchEvent(new Event("nexus:counts-updated"));
 
       navigate("/checkout");
     } catch {
@@ -792,18 +790,17 @@ export default function GameDetails() {
                     }}
                     disabled={
                       busyCart ||
-                      inCart ||
                       availableStock <= 0 ||
                       !currentListing
                     }
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition hover:bg-blue-500 disabled:opacity-60"
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    {inCart
-                      ? "Ja esta no carrinho"
-                      : busyCart
+                    {busyCart
                         ? "Adicionando..."
-                        : "Adicionar ao carrinho"}
+                        : inCart
+                          ? "Adicionar mais uma"
+                          : "Adicionar ao carrinho"}
                   </button>
 
                   <button

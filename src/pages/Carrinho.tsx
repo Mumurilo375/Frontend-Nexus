@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
 import api from "../services/api";
-import { Trash2Icon } from "lucide-react";
+import { getApiErrorMessage } from "../services/http";
+import { Minus, Plus, Trash2Icon } from "lucide-react";
 import steamLogo from "../assets/steam.png";
 import playstationLogo from "../assets/playlogo.png";
 import xboxLogo from "../assets/xbox.png";
@@ -12,6 +13,7 @@ import nintendoLogo from "../assets/nintendo.png";
 type CartItem = {
   id: number;
   listingId: number;
+  quantity?: number;
   listing?: {
     id: number;
     price: number | string;
@@ -43,6 +45,10 @@ function getPlatformLogo(platformName?: string) {
   return platformLogoByName[key] || "/logo.png";
 }
 
+function getQuantity(item: CartItem) {
+  return Math.max(1, Number(item.quantity ?? 1));
+}
+
 export default function Carrinho() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +57,15 @@ export default function Carrinho() {
 
   const subtotal = useMemo(
     () =>
-      items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
+      items.reduce(
+        (sum, item) =>
+          sum + Number(item.listing?.price ?? 0) * getQuantity(item),
+        0,
+      ),
+    [items],
+  );
+  const totalQuantity = useMemo(
+    () => items.reduce((sum, item) => sum + getQuantity(item), 0),
     [items],
   );
 
@@ -61,9 +75,14 @@ export default function Carrinho() {
       setError("");
       const { data } = await api.get<CartResponse>("/cart");
       setItems(data.items ?? []);
-    } catch {
+    } catch (requestError) {
       setItems([]);
-      setError("Não foi possível carregar o carrinho.");
+      setError(
+        getApiErrorMessage(
+          requestError,
+          "Não foi possível carregar o carrinho.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -76,11 +95,47 @@ export default function Carrinho() {
   const removeItem = async (listingId: number) => {
     try {
       setBusyListingId(listingId);
+      setError("");
       await api.delete(`/cart/${listingId}`);
       setItems((current) =>
         current.filter((item) => item.listingId !== listingId),
       );
       window.dispatchEvent(new Event("nexus:counts-updated"));
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          "Não foi possível remover o item do carrinho.",
+        ),
+      );
+    } finally {
+      setBusyListingId(null);
+    }
+  };
+
+  const updateQuantity = async (listingId: number, quantity: number) => {
+    if (quantity < 1) {
+      await removeItem(listingId);
+      return;
+    }
+
+    try {
+      setBusyListingId(listingId);
+      setError("");
+      await api.patch(`/cart/${listingId}`, { quantity });
+      setItems((current) =>
+        current.map((item) =>
+          item.listingId === listingId ? { ...item, quantity } : item,
+        ),
+      );
+      window.dispatchEvent(new Event("nexus:counts-updated"));
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          "Não foi possível atualizar a quantidade deste item.",
+        ),
+      );
     } finally {
       setBusyListingId(null);
     }
@@ -89,9 +144,17 @@ export default function Carrinho() {
   const clearCart = async () => {
     try {
       setBusyListingId(-1);
+      setError("");
       await api.delete("/cart");
       setItems([]);
       window.dispatchEvent(new Event("nexus:counts-updated"));
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          "Não foi possível limpar o carrinho.",
+        ),
+      );
     } finally {
       setBusyListingId(null);
     }
@@ -105,7 +168,7 @@ export default function Carrinho() {
           <div className="flex flex-col gap-2 border-b border-slate-800 pb-5 md:flex-row md:items-end md:justify-between">
             <h1 className="text-3xl font-bold text-white">Carrinho</h1>
             <div className="rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm text-slate-300">
-              {items.length} {items.length === 1 ? "item" : "itens"}
+              {totalQuantity} {totalQuantity === 1 ? "item" : "itens"}
             </div>
           </div>
 
@@ -136,12 +199,20 @@ export default function Carrinho() {
                     key={item.id}
                     className="nexus-card p-5"
                   >
+                    {(() => {
+                      const quantity = getQuantity(item);
+                      const unitPrice = Number(item.listing?.price ?? 0);
+                      const lineTotal = unitPrice * quantity;
+
+                      return (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <img
-                        src={item.listing?.game?.coverImageUrl || "/logo.png"}
-                        alt={item.listing?.game?.title || "Jogo"}
-                        className="h-24 w-24 rounded-2xl border border-slate-800 object-cover"
-                      />
+                      <div className="h-24 w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70 sm:w-40">
+                        <img
+                          src={item.listing?.game?.coverImageUrl || "/logo.png"}
+                          alt={item.listing?.game?.title || "Jogo"}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
                           <h2 className="truncate text-xl font-semibold text-white">
@@ -156,11 +227,50 @@ export default function Carrinho() {
                             />
                           </div>
                         </div>
+
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <div className="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/85">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void updateQuantity(item.listingId, quantity - 1);
+                              }}
+                              disabled={busyListingId !== null}
+                              className="px-3 py-2 text-slate-300 transition hover:text-white disabled:opacity-60"
+                              aria-label="Diminuir quantidade"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="min-w-10 border-x border-slate-700 px-3 py-2 text-center text-sm font-semibold text-white">
+                              {quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void updateQuantity(item.listingId, quantity + 1);
+                              }}
+                              disabled={busyListingId !== null}
+                              className="px-3 py-2 text-slate-300 transition hover:text-white disabled:opacity-60"
+                              aria-label="Aumentar quantidade"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <p className="text-sm text-slate-400">
+                            Unitário: {toMoney(unitPrice)}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between gap-4 sm:block sm:text-right">
-                        <p className="text-2xl font-semibold text-white">
-                          {toMoney(Number(item.listing?.price ?? 0))}
-                        </p>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                            Total
+                          </p>
+                          <p className="text-2xl font-semibold text-white">
+                            {toMoney(lineTotal)}
+                          </p>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -174,6 +284,8 @@ export default function Carrinho() {
                         </button>
                       </div>
                     </div>
+                      );
+                    })()}
                   </article>
                 ))}
               </section>
@@ -183,7 +295,7 @@ export default function Carrinho() {
                 <div className="mt-5 space-y-3 rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm text-slate-300">
                   <div className="flex items-center justify-between">
                     <span>Itens</span>
-                    <span>{items.length}</span>
+                    <span>{totalQuantity}</span>
                   </div>
                   <div className="flex items-center justify-between text-base font-semibold text-white">
                     <span>Subtotal</span>

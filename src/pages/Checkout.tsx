@@ -17,6 +17,7 @@ import { getApiErrorMessage } from "../services/http";
 
 type CartItem = {
   id: number;
+  quantity?: number;
   listing?: {
     price: number | string;
     game?: { title?: string };
@@ -173,6 +174,10 @@ function createPixQrDataUrl(value: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+function getQuantity(item: CartItem) {
+  return Math.max(1, Number(item.quantity ?? 1));
+}
+
 function PaymentOption({
   icon: Icon,
   title,
@@ -229,13 +234,25 @@ export default function Checkout() {
   const [focusedCardField, setFocusedCardField] = useState<CardField>(null);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + Number(item.listing?.price ?? 0), 0),
+    () =>
+      items.reduce(
+        (sum, item) =>
+          sum + Number(item.listing?.price ?? 0) * getQuantity(item),
+        0,
+      ),
+    [items],
+  );
+  const totalQuantity = useMemo(
+    () => items.reduce((sum, item) => sum + getQuantity(item), 0),
     [items],
   );
   const cardBrand = useMemo(() => getCardBrand(cardNumber), [cardNumber]);
   const formattedCardNumber = useMemo(() => formatCardNumber(cardNumber), [cardNumber]);
   const formattedExpiry = useMemo(() => formatExpiry(cardExpiry), [cardExpiry]);
-  const pixCode = useMemo(() => buildPixCode(subtotal, items.length), [items.length, subtotal]);
+  const pixCode = useMemo(
+    () => buildPixCode(subtotal, totalQuantity),
+    [subtotal, totalQuantity],
+  );
   const pixQrSrc = useMemo(() => createPixQrDataUrl(pixCode), [pixCode]);
   const canSubmit =
     !placingOrder && (paymentMethod !== "pix" || pixConfirmed === true);
@@ -404,26 +421,37 @@ export default function Checkout() {
                     <h2 className="text-xl font-semibold">Itens do pedido</h2>
                     <ul className="mt-4 space-y-3">
                       {items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center justify-between rounded-xl bg-gray-800/80 px-4 py-3"
-                        >
-                          <div>
-                            <p className="font-medium">
-                              {item.listing?.game?.title || "Jogo"}
-                            </p>
-                            <p className="text-sm text-gray-300">
-                              {item.listing?.platform?.name || "-"}
-                            </p>
-                          </div>
-                          <p className="font-medium">
-                            {toMoney(Number(item.listing?.price ?? 0))}
-                          </p>
-                        </li>
+                        (() => {
+                          const quantity = getQuantity(item);
+                          const unitPrice = Number(item.listing?.price ?? 0);
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="flex items-center justify-between rounded-xl bg-gray-800/80 px-4 py-3"
+                            >
+                              <div>
+                                <p className="font-medium">
+                                  {item.listing?.game?.title || "Jogo"}
+                                </p>
+                                <p className="text-sm text-gray-300">
+                                  {item.listing?.platform?.name || "-"} • {quantity}x
+                                </p>
+                              </div>
+                              <p className="font-medium">
+                                {toMoney(unitPrice * quantity)}
+                              </p>
+                            </li>
+                          );
+                        })()
                       ))}
                     </ul>
 
                     <div className="mt-5 rounded-xl border border-gray-800 bg-black/20 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-sm text-gray-300">Itens</span>
+                        <span className="text-sm text-white">{totalQuantity}</span>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-300">Subtotal</span>
                         <span className="text-lg font-semibold text-white">

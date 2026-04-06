@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import NavBar from "../components/globals/NavBar";
 import Footer from "../components/globals/Footer";
 import Filtro from "../components/loja/Filtro";
 import Produtos from "../components/loja/Produtos";
 
 function Loja() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialPlatforms = useMemo(
     () =>
@@ -20,6 +21,23 @@ function Loja() {
     useState<string[]>(initialPlatforms);
   const [categories, setCategories] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!searchParams.has("q")) {
+      return;
+    }
+
+    const nextSearch = new URLSearchParams(searchParams);
+    nextSearch.delete("q");
+
+    void navigate(
+      {
+        pathname: "/loja",
+        search: nextSearch.toString() ? `?${nextSearch.toString()}` : "",
+      },
+      { replace: true },
+    );
+  }, [navigate, searchParams]);
 
   const toggleSelection = (values: string[], value: string) =>
     values.includes(value)

@@ -1,97 +1,75 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminFormActions,
+  AdminNotice,
+  AdminReadonlyField,
+  AdminSelectField,
+  AdminSideCard,
+  AdminTextField,
+  AdminToggleField,
+  adminFormClass,
+} from "./adminShared";
 import api from "../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
 } from "../../services/http";
 
-type GameDetails = {
-  id: number;
-  title: string;
-  platformListings?: Array<{
-    id: number;
-    platform?: Platform;
-  }>;
-};
-
-type Platform = {
-  id: number;
-  name: string;
-};
-
-type ListingDetails = {
-  id: number;
-  price: number | string;
-  isActive?: boolean;
-  platform?: Platform;
-};
-
-type ListingFormState = {
-  platformId: string;
-  price: string;
-  isActive: boolean;
-};
-
-const initialForm: ListingFormState = {
-  platformId: "",
-  price: "",
-  isActive: true,
-};
-const inputClass =
-  "mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70";
+type Platform = { id: number; name: string };
+type GameResponse = { title: string; platformListings?: Array<{ platform?: Platform }> };
+type ListingResponse = { id: number; price: number | string; isActive?: boolean; platform?: { id: number } };
+type ListingValues = { platformId: string; price: string; isActive: boolean };
+const emptyListing: ListingValues = { platformId: "", price: "", isActive: true };
 
 export default function AdminListingForm() {
   const navigate = useNavigate();
   const { gameId, listingId } = useParams();
-  const isEditMode = Boolean(listingId);
-  const [game, setGame] = useState<GameDetails | null>(null);
+  const isEditing = Boolean(listingId);
+  const [game, setGame] = useState<GameResponse | null>(null);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
-  const [form, setForm] = useState<ListingFormState>(initialForm);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [values, setValues] = useState<ListingValues>(emptyListing);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const availablePlatforms = useMemo(() => {
-    const usedPlatformIds = new Set(
-      (game?.platformListings ?? [])
-        .map((listing) => listing.platform?.id)
-        .filter((platformId): platformId is number => Boolean(platformId)),
-    );
+  const setField = <Field extends keyof ListingValues>(field: Field, value: ListingValues[Field]) =>
+    setValues((current) => ({ ...current, [field]: value }));
 
-    if (isEditMode) {
-      const currentPlatformId = Number(form.platformId);
-
-      return platforms.filter(
-        (platform) =>
-          !usedPlatformIds.has(platform.id) || platform.id === currentPlatformId,
-      );
-    }
-
-    return platforms.filter((platform) => !usedPlatformIds.has(platform.id));
-  }, [form.platformId, game?.platformListings, isEditMode, platforms]);
+  const usedPlatformIds = new Set(
+    (game?.platformListings ?? [])
+      .map((listing) => listing.platform?.id)
+      .filter((platformId): platformId is number => Boolean(platformId)),
+  );
+  const selectedPlatformId = Number(values.platformId);
+  const freePlatforms = platforms.filter(
+    ({ id }) => !usedPlatformIds.has(id) || (isEditing && id === selectedPlatformId),
+  );
+  const hasNoFreePlatforms = !isEditing && freePlatforms.length === 0;
+  const platformNote = hasNoFreePlatforms
+    ? "Todas as plataformas já possuem listing para este jogo."
+    : "Só aparecem plataformas ainda não usadas neste jogo.";
+  const backTo = gameId ? `/admin/games/${gameId}/listings` : "/admin/games";
 
   useEffect(() => {
     if (!gameId) {
-      setError("Jogo inválido.");
-      setLoading(false);
+      setErrorMessage("Jogo inválido.");
+      setIsLoading(false);
       return;
     }
 
-    const loadData = async () => {
+    const fetchFormData = async () => {
       try {
-        setLoading(true);
-        setError("");
+        setIsLoading(true);
+        setErrorMessage("");
 
-        const requests = [
-          api.get<GameDetails>(`/games/${gameId}`),
+        const [gameResponse, platformsResponse] = await Promise.all([
+          api.get<GameResponse>(`/games/${gameId}`),
           api.get<PaginatedResponse<Platform>>("/platforms", {
             params: { page: 1, limit: 100 },
           }),
-        ] as const;
-
-        const [gameResponse, platformsResponse] = await Promise.all(requests);
+        ]);
 
         setGame(gameResponse.data);
         setPlatforms(platformsResponse.data.items ?? []);
@@ -100,224 +78,144 @@ export default function AdminListingForm() {
           return;
         }
 
-        const { data } = await api.get<ListingDetails>(`/listings/${listingId}`);
+        const { data } = await api.get<ListingResponse>(`/listings/${listingId}`);
 
-        setForm({
+        setValues({
           platformId: String(data.platform?.id ?? ""),
           price: String(data.price ?? ""),
           isActive: data.isActive !== false,
         });
-      } catch (requestError) {
-        setError(
-          getApiErrorMessage(
-            requestError,
-            "Não foi possível carregar o formulário do listing.",
-          ),
+      } catch (error) {
+        setErrorMessage(
+          getApiErrorMessage(error, "Não foi possível carregar o formulário do listing."),
         );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    void loadData();
+    void fetchFormData();
   }, [gameId, listingId]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveListing = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const parsedPrice = Number(form.price);
+    const price = Number(values.price);
 
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      setError("Informe um preço maior que zero.");
+    if (!Number.isFinite(price) || price <= 0) {
+      setErrorMessage("Informe um preço maior que zero.");
       return;
     }
 
-    if (!isEditMode && !form.platformId) {
-      setError("Selecione a plataforma.");
+    if (!isEditing && !values.platformId) {
+      setErrorMessage("Selecione a plataforma.");
       return;
     }
 
-    if (!isEditMode && availablePlatforms.length === 0) {
-      setError("Este jogo já possui listings em todas as plataformas disponíveis.");
+    if (hasNoFreePlatforms) {
+      setErrorMessage("Este jogo já possui listings em todas as plataformas disponíveis.");
       return;
     }
 
     if (!gameId) {
-      setError("Jogo inválido.");
+      setErrorMessage("Jogo inválido.");
       return;
     }
 
     try {
-      setSaving(true);
-      setError("");
+      setIsSaving(true);
+      setErrorMessage("");
 
-      if (isEditMode) {
+      if (isEditing) {
         await api.put(`/listings/${listingId}`, {
-          price: parsedPrice,
-          isActive: form.isActive,
+          price,
+          isActive: values.isActive,
         });
-        void navigate(`/admin/games/${gameId}/listings`);
+        void navigate(backTo);
       } else {
-        const { data } = await api.post<ListingDetails>("/listings", {
+        const { data } = await api.post<ListingResponse>("/listings", {
           gameId: Number(gameId),
-          platformId: Number(form.platformId),
-          price: parsedPrice,
+          platformId: Number(values.platformId),
+          price,
         });
         void navigate(`/admin/games/${gameId}/listings/${data.id}/keys`);
       }
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível salvar o listing.",
-        ),
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível salvar o listing."),
       );
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
+  const description = !game
+    ? "Preencha os dados do listing."
+    : isEditing
+      ? `Atualize o listing vinculado ao jogo ${game.title}.`
+      : `Crie o listing de ${game.title} e abasteça as keys na etapa seguinte.`;
+
   return (
     <AdminLayout
-      title={isEditMode ? "Editar listing" : "Novo listing"}
-      description={
-        game
-          ? isEditMode
-            ? `Atualize o listing vinculado ao jogo ${game.title}.`
-            : `Crie o listing de ${game.title} e abasteça as keys na etapa seguinte.`
-          : "Preencha os dados do listing."
-      }
-      backTo={gameId ? `/admin/games/${gameId}/listings` : "/admin/games"}
+      title={isEditing ? "Editar listing" : "Novo listing"}
+      description={description}
+      backTo={backTo}
       backLabel="Voltar para listings"
     >
-      {loading && <p className="text-gray-300">Carregando formulário...</p>}
-
-      {!loading && (
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
-        >
+      {isLoading ? (
+        <p className="text-gray-300">Carregando formulário...</p>
+      ) : (
+        <form onSubmit={saveListing} className={adminFormClass}>
           <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
             <div className="space-y-5">
-              <label className="text-sm text-gray-200">
-                Jogo
-                <input
-                  type="text"
-                  value={game?.title ?? ""}
-                  readOnly
-                  disabled
-                  className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-400"
-                />
-              </label>
-
-              <label className="text-sm text-gray-200">
-                Plataforma
-                <select
-                  value={form.platformId}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      platformId: event.target.value,
-                    }))
-                  }
-                  disabled={isEditMode}
-                  className={`${inputClass} disabled:text-gray-400`}
-                  required
-                >
-                  <option value="">Selecione</option>
-                  {availablePlatforms.map((platform) => (
-                    <option key={platform.id} value={platform.id}>
-                      {platform.name}
-                    </option>
-                  ))}
-                </select>
-                {!isEditMode && availablePlatforms.length === 0 && (
-                  <p className="mt-2 text-xs text-amber-300">
-                    Todas as plataformas já possuem listing para este jogo.
-                  </p>
-                )}
-                {!isEditMode && availablePlatforms.length > 0 && (
-                  <p className="mt-2 text-xs text-slate-400">
-                    Só aparecem plataformas ainda não usadas neste jogo.
-                  </p>
-                )}
-              </label>
-
-              <label className="text-sm text-gray-200">
-                Preço
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={form.price}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      price: event.target.value,
-                    }))
-                  }
-                  className={inputClass}
-                  required
-                />
-              </label>
+              <AdminReadonlyField label="Jogo" value={game?.title ?? ""} />
+              <AdminSelectField
+                label="Plataforma"
+                value={values.platformId}
+                onChange={({ target }) => setField("platformId", target.value)}
+                disabled={isEditing}
+                note={!isEditing ? platformNote : undefined}
+                className="disabled:text-gray-400"
+                required
+              >
+                <option value="">Selecione</option>
+                {freePlatforms.map(({ id, name }) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </AdminSelectField>
+              <AdminTextField label="Preço" type="number" min="0.01" step="0.01" value={values.price} onChange={({ target }) => setField("price", target.value)} required />
             </div>
 
-            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
-                Resumo
-              </p>
+            <AdminSideCard eyebrow="Resumo">
               <h2 className="mt-4 text-lg font-semibold text-white">
                 {game?.title || "Jogo selecionado"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                {isEditMode
+                {isEditing
                   ? "Ajuste preço e status sem duplicar listings do mesmo jogo."
                   : "Depois de salvar, você vai para a tela de keys para abastecer o estoque."}
               </p>
-            </aside>
+            </AdminSideCard>
           </div>
 
-          {isEditMode && (
-            <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-gray-200">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    isActive: event.target.checked,
-                  }))
-                }
-              />
-              Listing ativo
-            </label>
+          {isEditing && (
+            <AdminToggleField
+              label="Listing ativo"
+              checked={values.isActive}
+              onChange={(checked) => setField("isActive", checked)}
+            />
           )}
 
-          {error && (
-            <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {error}
-            </p>
-          )}
+          {errorMessage && <AdminNotice>{errorMessage}</AdminNotice>}
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={saving || (!isEditMode && availablePlatforms.length === 0)}
-              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving
-                ? "Salvando..."
-                : isEditMode
-                  ? "Salvar"
-                  : "Salvar e gerenciar keys"}
-            </button>
-            <Link
-              to={gameId ? `/admin/games/${gameId}/listings` : "/admin/games"}
-              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
-            >
-              Cancelar
-            </Link>
-          </div>
+          <AdminFormActions
+            backTo={backTo}
+            saving={isSaving}
+            disabled={hasNoFreePlatforms}
+            submitLabel={isEditing ? "Salvar" : "Salvar e gerenciar keys"}
+          />
         </form>
       )}
     </AdminLayout>

@@ -1,116 +1,92 @@
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminButton,
+  AdminLinkButton,
+  AdminPageState,
+  AdminStatusBadge,
+  createEmptyMeta,
+  formatReleaseDate,
+} from "./adminShared";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
-  type PaginationMeta,
 } from "../../services/http";
 
-type GameItem = {
-  id: number;
-  title: string;
-  description: string;
-  coverImageUrl?: string;
-  releaseDate: string;
-  isActive?: boolean;
-};
+type Game = { id: number; title: string; description: string; coverImageUrl?: string; releaseDate: string; isActive?: boolean };
 
 const PAGE_SIZE = 9;
-const emptyMeta: PaginationMeta = {
-  page: 1,
-  limit: PAGE_SIZE,
-  total: 0,
-  totalPages: 1,
-};
-
-const actionClass =
-  "inline-flex flex-1 items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium transition";
-
-function formatReleaseDate(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return "-";
-  }
-
-  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
-    "pt-BR",
-    { timeZone: "UTC" },
-  );
-}
+const emptyPagination = createEmptyMeta(PAGE_SIZE);
+const cardActionClass = "inline-flex flex-1 items-center justify-center";
 
 export default function AdminGames() {
-  const [games, setGames] = useState<GameItem[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
-  const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [games, setGames] = useState<Game[]>([]);
+  const [pagination, setPagination] = useState(emptyPagination);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [deletingGameId, setDeletingGameId] = useState<number | null>(null);
 
-  const loadGames = useCallback(async (nextPage = page) => {
+  const fetchGamesPage = useCallback(async (page = currentPage) => {
     try {
-      setLoading(true);
-      setError("");
+      setIsLoading(true);
+      setErrorMessage("");
 
-      const { data } = await api.get<PaginatedResponse<GameItem>>("/games", {
+      const { data } = await api.get<PaginatedResponse<Game>>("/games", {
         params: {
-          page: nextPage,
+          page,
           limit: PAGE_SIZE,
-          q: searchTerm.trim() || undefined,
+          q: searchQuery.trim() || undefined,
         },
       });
 
       setGames(data.items ?? []);
-      setMeta(data.meta ?? emptyMeta);
-    } catch (requestError) {
+      setPagination(data.meta ?? emptyPagination);
+    } catch (error) {
       setGames([]);
-      setMeta(emptyMeta);
-      setError(
-        getApiErrorMessage(requestError, "Não foi possível carregar os jogos."),
+      setPagination(emptyPagination);
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível carregar os jogos."),
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [page, searchTerm]);
+  }, [currentPage, searchQuery]);
 
   useEffect(() => {
-    void loadGames();
-  }, [loadGames]);
+    void fetchGamesPage();
+  }, [fetchGamesPage]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm]);
-
-  const handleDelete = async (gameId: number) => {
-    const confirmed = window.confirm("Deseja excluir este jogo?");
-    if (!confirmed) {
-      return;
-    }
+  const removeGame = async (gameId: number) => {
+    if (!window.confirm("Deseja excluir este jogo?")) return;
 
     try {
-      setDeletingId(gameId);
-      setError("");
+      setDeletingGameId(gameId);
+      setErrorMessage("");
       await api.delete(`/games/${gameId}`);
 
-      if (games.length === 1 && page > 1) {
-        setPage((current) => current - 1);
+      if (games.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
         return;
       }
 
-      await loadGames();
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(requestError, "Não foi possível excluir o jogo."),
+      await fetchGamesPage();
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível excluir o jogo."),
       );
     } finally {
-      setDeletingId(null);
+      setDeletingGameId(null);
     }
   };
+
+  const emptyText = searchQuery.trim()
+    ? "Nenhum jogo encontrado para essa busca."
+    : "Nenhum jogo cadastrado.";
 
   return (
     <AdminLayout
@@ -119,12 +95,9 @@ export default function AdminGames() {
       backTo="/admin"
       backLabel="Voltar ao painel"
       actions={
-        <Link
-          to="/admin/games/new"
-          className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
-        >
+        <AdminLinkButton to="/admin/games/new" tone="primary">
           Novo jogo
-        </Link>
+        </AdminLinkButton>
       }
     >
       <div className="nexus-card p-4">
@@ -133,37 +106,28 @@ export default function AdminGames() {
             Buscar jogo
           </label>
           <span className="text-sm text-slate-400">
-            {meta.total} resultado{meta.total === 1 ? "" : "s"}
+            {pagination.total} resultado{pagination.total === 1 ? "" : "s"}
           </span>
         </div>
         <div className="relative mt-2">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            value={searchQuery}
+            onChange={({ target }) => (setSearchQuery(target.value), setCurrentPage(1))}
             placeholder="Pesquisar por título..."
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-slate-500"
           />
         </div>
       </div>
 
-      {loading && <p className="text-gray-300">Carregando jogos...</p>}
-      {!loading && error && (
-        <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && games.length === 0 && (
-        <p className="nexus-card p-5 text-gray-300">
-          {searchTerm.trim()
-            ? "Nenhum jogo encontrado para essa busca."
-            : "Nenhum jogo cadastrado."}
-        </p>
-      )}
-
-      {!loading && !error && games.length > 0 && (
+      <AdminPageState
+        loading={isLoading}
+        error={errorMessage}
+        isEmpty={games.length === 0}
+        loadingText="Carregando jogos..."
+        emptyText={emptyText}
+      >
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {games.map((game) => (
@@ -183,55 +147,36 @@ export default function AdminGames() {
                       Lançamento: {formatReleaseDate(game.releaseDate)}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      game.isActive === false
-                        ? "border border-slate-700 bg-slate-900 text-slate-300"
-                        : "border border-blue-500/20 bg-blue-500/10 text-blue-100"
-                    }`}
-                  >
-                    {game.isActive === false ? "Inativo" : "Ativo"}
-                  </span>
+                  <AdminStatusBadge active={game.isActive} />
                 </div>
                 <p className="mt-3 min-h-16 text-sm leading-6 text-gray-300">
                   {game.description}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2 pt-2">
-                  <Link
-                    to={`/admin/games/${game.id}/edit`}
-                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-200 hover:border-slate-500 hover:text-white`}
-                  >
-                    Editar
-                  </Link>
-                  <Link
-                    to={`/admin/games/${game.id}/listings`}
-                    className={`${actionClass} border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:text-white`}
-                  >
-                    Gerenciar listings
-                  </Link>
-                  <button
+                  <AdminLinkButton to={`/admin/games/${game.id}/edit`} className={cardActionClass}>Editar</AdminLinkButton>
+                  <AdminLinkButton to={`/admin/games/${game.id}/listings`} className={cardActionClass}>Gerenciar listings</AdminLinkButton>
+                  <AdminButton
                     type="button"
-                    onClick={() => {
-                      void handleDelete(game.id);
-                    }}
-                    disabled={deletingId === game.id}
-                    className={`${actionClass} border border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60`}
+                    tone="subtleDanger"
+                    className={cardActionClass}
+                    disabled={deletingGameId === game.id}
+                    onClick={() => { void removeGame(game.id); }}
                   >
-                    {deletingId === game.id ? "Excluindo..." : "Excluir"}
-                  </button>
+                    {deletingGameId === game.id ? "Excluindo..." : "Excluir"}
+                  </AdminButton>
                 </div>
               </article>
             ))}
           </div>
 
           <Pagination
-            page={meta.page}
-            totalPages={meta.totalPages}
-            onPageChange={setPage}
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setCurrentPage}
           />
         </>
-      )}
+      </AdminPageState>
     </AdminLayout>
   );
 }

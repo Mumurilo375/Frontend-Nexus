@@ -1,43 +1,25 @@
-import { Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
-
-const linkClass =
-  "inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500";
+import { AdminLinkButton } from "./adminShared";
 
 const sections = [
-  {
-    title: "Jogos",
-    label: "Catálogo",
-    description: "Cadastre, edite, exclua e abra os listings de cada jogo.",
-    to: "/admin/games",
-    cta: "Gerenciar jogos",
-  },
-  {
-    title: "Categorias",
-    label: "Organização",
-    description: "Mantenha a classificação usada na loja e no admin.",
-    to: "/admin/categories",
-    cta: "Gerenciar categorias",
-  },
+  { title: "Jogos", label: "Catálogo", description: "Cadastre, edite, exclua e abra os listings de cada jogo.", to: "/admin/games", cta: "Gerenciar jogos" },
+  { title: "Categorias", label: "Organização", description: "Mantenha a classificação usada na loja e no admin.", to: "/admin/categories", cta: "Gerenciar categorias" },
 ];
 
 export default function AdminDashboard() {
   return (
-    <AdminLayout
-      title="Painel admin"
-      description="Acesse os dois fluxos principais de gestão da demo."
-    >
+    <AdminLayout title="Painel admin" description="Acesse os dois fluxos principais de gestão da demo.">
       <div className="grid gap-4 md:grid-cols-2">
-        {sections.map((section) => (
-          <section key={section.title} className="nexus-card p-6">
+        {sections.map(({ title, label, description, to, cta }) => (
+          <section key={title} className="nexus-card p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
-              {section.label}
+              {label}
             </p>
-            <h2 className="text-xl font-semibold">{section.title}</h2>
-            <p className="mt-2 text-sm text-gray-300">{section.description}</p>
-            <Link to={section.to} className={`mt-4 ${linkClass}`}>
-              {section.cta}
-            </Link>
+            <h2 className="text-xl font-semibold">{title}</h2>
+            <p className="mt-2 text-sm text-gray-300">{description}</p>
+            <AdminLinkButton to={to} tone="primary" className="mt-4 inline-flex">
+              {cta}
+            </AdminLinkButton>
           </section>
         ))}
       </div>

@@ -1,95 +1,83 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminButton,
+  AdminLinkButton,
+  AdminPageState,
+  createEmptyMeta,
+} from "./adminShared";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
-  type PaginationMeta,
 } from "../../services/http";
 
-type CategoryItem = {
-  id: number;
-  name: string;
-};
+type Category = { id: number; name: string };
 
 const PAGE_SIZE = 8;
-const emptyMeta: PaginationMeta = {
-  page: 1,
-  limit: PAGE_SIZE,
-  total: 0,
-  totalPages: 1,
-};
+const emptyPagination = createEmptyMeta(PAGE_SIZE);
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [pagination, setPagination] = useState(emptyPagination);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
-  const loadCategories = useCallback(async (nextPage = page) => {
+  const fetchCategoriesPage = useCallback(async (page = currentPage) => {
     try {
-      setLoading(true);
-      setError("");
+      setIsLoading(true);
+      setErrorMessage("");
 
-      const { data } = await api.get<PaginatedResponse<CategoryItem>>(
-        "/categories",
-        {
-          params: { page: nextPage, limit: PAGE_SIZE },
-        },
-      );
+      const { data } = await api.get<PaginatedResponse<Category>>("/categories", {
+        params: { page, limit: PAGE_SIZE },
+      });
 
       setCategories(data.items ?? []);
-      setMeta(data.meta ?? emptyMeta);
-    } catch (requestError) {
+      setPagination(data.meta ?? emptyPagination);
+    } catch (error) {
       setCategories([]);
-      setMeta(emptyMeta);
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível carregar as categorias.",
-        ),
+      setPagination(emptyPagination);
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível carregar as categorias."),
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [page]);
+  }, [currentPage]);
 
   useEffect(() => {
-    void loadCategories();
-  }, [loadCategories]);
+    void fetchCategoriesPage();
+  }, [fetchCategoriesPage]);
 
-  const handleDelete = async (categoryId: number) => {
-    const confirmed = window.confirm("Deseja excluir esta categoria?");
-    if (!confirmed) {
-      return;
-    }
+  const removeCategory = async (categoryId: number) => {
+    if (!window.confirm("Deseja excluir esta categoria?")) return;
 
     try {
-      setDeletingId(categoryId);
-      setError("");
+      setDeletingCategoryId(categoryId);
+      setErrorMessage("");
       await api.delete(`/categories/${categoryId}`);
 
-      if (categories.length === 1 && page > 1) {
-        setPage((current) => current - 1);
+      if (categories.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
         return;
       }
 
-      await loadCategories();
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível excluir a categoria.",
-        ),
+      await fetchCategoriesPage();
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível excluir a categoria."),
       );
     } finally {
-      setDeletingId(null);
+      setDeletingCategoryId(null);
     }
   };
+
+  const totalLabel = `${pagination.total} categoria${
+    pagination.total === 1 ? " cadastrada" : "s cadastradas"
+  }`;
 
   return (
     <AdminLayout
@@ -98,36 +86,21 @@ export default function AdminCategories() {
       backTo="/admin"
       backLabel="Voltar ao painel"
       actions={
-        <Link
-          to="/admin/categories/new"
-          className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
-        >
+        <AdminLinkButton to="/admin/categories/new" tone="primary">
           Nova categoria
-        </Link>
+        </AdminLinkButton>
       }
     >
-      {loading && <p className="text-gray-300">Carregando categorias...</p>}
-      {!loading && error && (
-        <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && categories.length === 0 && (
-        <p className="nexus-card p-5 text-gray-300">
-          Nenhuma categoria cadastrada.
-        </p>
-      )}
-
-      {!loading && !error && categories.length > 0 && (
+      <AdminPageState
+        loading={isLoading}
+        error={errorMessage}
+        isEmpty={categories.length === 0}
+        loadingText="Carregando categorias..."
+        emptyText="Nenhuma categoria cadastrada."
+      >
         <>
           <div className="nexus-card p-4">
-            <div className="flex items-center justify-between pb-4">
-              <p className="text-sm text-slate-300">
-                {meta.total} categoria{meta.total === 1 ? "" : "s"} cadastrada
-                {meta.total === 1 ? "" : "s"}
-              </p>
-            </div>
+            <p className="pb-4 text-sm text-slate-300">{totalLabel}</p>
             <div className="overflow-hidden rounded-[24px] border border-slate-800">
               <table className="min-w-full divide-y divide-slate-800 bg-slate-950 text-sm">
                 <thead className="bg-slate-900 text-left text-gray-300">
@@ -138,28 +111,21 @@ export default function AdminCategories() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {categories.map((category) => (
-                    <tr key={category.id}>
-                      <td className="px-4 py-4 text-gray-400">{category.id}</td>
-                      <td className="px-4 py-4 font-medium">{category.name}</td>
+                  {categories.map(({ id, name }) => (
+                    <tr key={id}>
+                      <td className="px-4 py-4 text-gray-400">{id}</td>
+                      <td className="px-4 py-4 font-medium">{name}</td>
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2">
-                          <Link
-                            to={`/admin/categories/${category.id}/edit`}
-                            className="rounded-full bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
-                          >
-                            Editar
-                          </Link>
-                          <button
+                          <AdminLinkButton to={`/admin/categories/${id}/edit`} tone="primary">Editar</AdminLinkButton>
+                          <AdminButton
                             type="button"
-                            onClick={() => {
-                              void handleDelete(category.id);
-                            }}
-                            disabled={deletingId === category.id}
-                            className="rounded-full bg-rose-600 px-4 py-2 text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            tone="danger"
+                            disabled={deletingCategoryId === id}
+                            onClick={() => { void removeCategory(id); }}
                           >
-                            {deletingId === category.id ? "Excluindo..." : "Excluir"}
-                          </button>
+                            {deletingCategoryId === id ? "Excluindo..." : "Excluir"}
+                          </AdminButton>
                         </div>
                       </td>
                     </tr>
@@ -170,12 +136,12 @@ export default function AdminCategories() {
           </div>
 
           <Pagination
-            page={meta.page}
-            totalPages={meta.totalPages}
-            onPageChange={setPage}
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setCurrentPage}
           />
         </>
-      )}
+      </AdminPageState>
     </AdminLayout>
   );
 }

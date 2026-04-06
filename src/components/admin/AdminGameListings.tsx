@@ -1,132 +1,107 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminButton,
+  AdminLinkButton,
+  AdminPageState,
+  AdminStatusBadge,
+  createEmptyMeta,
+  formatMoney,
+} from "./adminShared";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
-  type PaginationMeta,
 } from "../../services/http";
 
-type GameDetails = {
-  id: number;
-  title: string;
-};
-
-type ListingItem = {
-  id: number;
-  price: number | string;
-  isActive?: boolean;
-  platform?: {
-    id: number;
-    name: string;
-  };
-};
+type GameResponse = { title: string };
+type Listing = { id: number; price: number | string; isActive?: boolean; platform?: { name: string } };
 
 const PAGE_SIZE = 6;
-const emptyMeta: PaginationMeta = {
-  page: 1,
-  limit: PAGE_SIZE,
-  total: 0,
-  totalPages: 1,
-};
+const emptyPagination = createEmptyMeta(PAGE_SIZE);
 
 export default function AdminGameListings() {
   const { gameId } = useParams();
-  const [game, setGame] = useState<GameDetails | null>(null);
-  const [listings, setListings] = useState<ListingItem[]>([]);
-  const [stockByListing, setStockByListing] = useState<Record<number, number>>(
-    {},
-  );
-  const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [game, setGame] = useState<GameResponse | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [stockByListingId, setStockByListingId] = useState<Record<number, number>>({});
+  const [pagination, setPagination] = useState(emptyPagination);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [deletingListingId, setDeletingListingId] = useState<number | null>(null);
 
-  const loadData = useCallback(async (nextPage = page) => {
-    if (!gameId) {
-      setError("Jogo inválido.");
-      setLoading(false);
-      return;
-    }
+  const fetchListingsPage = useCallback(async (page = currentPage) => {
+    if (!gameId) return setErrorMessage("Jogo inválido."), setIsLoading(false);
 
     try {
-      setLoading(true);
-      setError("");
+      setIsLoading(true);
+      setErrorMessage("");
 
       const [gameResponse, listingsResponse] = await Promise.all([
-        api.get<GameDetails>(`/games/${gameId}`),
-        api.get<PaginatedResponse<ListingItem>>("/listings", {
-          params: { gameId, page: nextPage, limit: PAGE_SIZE },
+        api.get<GameResponse>(`/games/${gameId}`),
+        api.get<PaginatedResponse<Listing>>("/listings", {
+          params: { gameId, page, limit: PAGE_SIZE },
         }),
       ]);
-      const items = listingsResponse.data.items ?? [];
+      const listings = listingsResponse.data.items ?? [];
       const stockEntries = await Promise.all(
-        items.map(async (listing) => {
+        listings.map(async ({ id }) => {
           try {
-            const { data } = await api.get<{
-              stock?: { available?: number };
-            }>(`/listings/${listing.id}/stock`);
+            const { data } = await api.get<{ stock?: { available?: number } }>(
+              `/listings/${id}/stock`,
+            );
 
-            return [listing.id, Number(data.stock?.available ?? 0)] as const;
+            return [id, Number(data.stock?.available ?? 0)] as const;
           } catch {
-            return [listing.id, 0] as const;
+            return [id, 0] as const;
           }
         }),
       );
 
       setGame(gameResponse.data);
-      setListings(items);
-      setStockByListing(Object.fromEntries(stockEntries));
-      setMeta(listingsResponse.data.meta ?? emptyMeta);
-    } catch (requestError) {
+      setListings(listings);
+      setStockByListingId(Object.fromEntries(stockEntries));
+      setPagination(listingsResponse.data.meta ?? emptyPagination);
+    } catch (error) {
       setGame(null);
       setListings([]);
-      setStockByListing({});
-      setMeta(emptyMeta);
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível carregar os listings deste jogo.",
-        ),
+      setStockByListingId({});
+      setPagination(emptyPagination);
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível carregar os listings deste jogo."),
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [gameId, page]);
+  }, [currentPage, gameId]);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    void fetchListingsPage();
+  }, [fetchListingsPage]);
 
-  const handleDelete = async (listingId: number) => {
-    const confirmed = window.confirm("Deseja excluir este listing?");
-    if (!confirmed) {
-      return;
-    }
+  const removeListing = async (listingId: number) => {
+    if (!window.confirm("Deseja excluir este listing?")) return;
 
     try {
-      setDeletingId(listingId);
-      setError("");
+      setDeletingListingId(listingId);
+      setErrorMessage("");
       await api.delete(`/listings/${listingId}`);
 
-      if (listings.length === 1 && page > 1) {
-        setPage((current) => current - 1);
+      if (listings.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
         return;
       }
 
-      await loadData();
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível excluir o listing.",
-        ),
+      await fetchListingsPage();
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível excluir o listing."),
       );
     } finally {
-      setDeletingId(null);
+      setDeletingListingId(null);
     }
   };
 
@@ -138,29 +113,20 @@ export default function AdminGameListings() {
       backLabel="Voltar para jogos"
       actions={
         gameId ? (
-          <Link
-            to={`/admin/games/${gameId}/listings/new`}
-            className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
-          >
+          <AdminLinkButton to={`/admin/games/${gameId}/listings/new`} tone="primary">
             Novo listing
-          </Link>
+          </AdminLinkButton>
         ) : null
       }
     >
-      {loading && <p className="text-gray-300">Carregando listings...</p>}
-      {!loading && error && (
-        <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && listings.length === 0 && (
-        <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-gray-300">
-          Nenhum listing cadastrado para este jogo.
-        </p>
-      )}
-
-      {!loading && !error && listings.length > 0 && (
+      <AdminPageState
+        loading={isLoading}
+        error={errorMessage}
+        isEmpty={listings.length === 0}
+        loadingText="Carregando listings..."
+        emptyText="Nenhum listing cadastrado para este jogo."
+        emptyClassName="rounded-xl border border-gray-800 bg-gray-900 p-5 text-gray-300"
+      >
         <>
           <div className="grid gap-4 md:grid-cols-2">
             {listings.map((listing) => (
@@ -174,59 +140,39 @@ export default function AdminGameListings() {
                       {listing.platform?.name || "Plataforma"}
                     </h2>
                     <p className="mt-2 text-2xl font-semibold text-blue-100">
-                      R$ {Number(listing.price ?? 0).toFixed(2)}
+                      {formatMoney(listing.price)}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      listing.isActive === false
-                        ? "border border-slate-700 bg-slate-900 text-slate-300"
-                        : "border border-blue-500/20 bg-blue-500/10 text-blue-100"
-                    }`}
-                  >
-                    {listing.isActive === false ? "Inativo" : "Ativo"}
-                  </span>
+                  <AdminStatusBadge active={listing.isActive} />
                 </div>
 
                 <p className="mt-4 text-sm leading-6 text-slate-300">
-                  Estoque disponível: {stockByListing[listing.id] ?? 0} key(s).
+                  Estoque disponível: {stockByListingId[listing.id] ?? 0} key(s).
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link
-                    to={`/admin/games/${gameId}/listings/${listing.id}/edit`}
-                    className="rounded-full bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
-                  >
-                    Editar
-                  </Link>
-                  <Link
-                    to={`/admin/games/${gameId}/listings/${listing.id}/keys`}
-                    className="rounded-full border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
-                  >
-                    Gerenciar keys
-                  </Link>
-                  <button
+                  <AdminLinkButton to={`/admin/games/${gameId}/listings/${listing.id}/edit`} tone="primary">Editar</AdminLinkButton>
+                  <AdminLinkButton to={`/admin/games/${gameId}/listings/${listing.id}/keys`}>Gerenciar keys</AdminLinkButton>
+                  <AdminButton
                     type="button"
-                    onClick={() => {
-                      void handleDelete(listing.id);
-                    }}
-                    disabled={deletingId === listing.id}
-                    className="rounded-full bg-rose-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    tone="danger"
+                    disabled={deletingListingId === listing.id}
+                    onClick={() => { void removeListing(listing.id); }}
                   >
-                    {deletingId === listing.id ? "Excluindo..." : "Excluir"}
-                  </button>
+                    {deletingListingId === listing.id ? "Excluindo..." : "Excluir"}
+                  </AdminButton>
                 </div>
               </article>
             ))}
           </div>
 
           <Pagination
-            page={meta.page}
-            totalPages={meta.totalPages}
-            onPageChange={setPage}
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setCurrentPage}
           />
         </>
-      )}
+      </AdminPageState>
     </AdminLayout>
   );
 }

@@ -1,139 +1,113 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminFormActions,
+  AdminNotice,
+  AdminSideCard,
+  AdminTextField,
+  adminFormClass,
+} from "./adminShared";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 
-type CategoryDetails = {
-  id: number;
-  name: string;
-};
+type CategoryResponse = { name: string };
 
 export default function AdminCategoryForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = Boolean(id);
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(isEditMode);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const isEditing = Boolean(id);
+  const [categoryName, setCategoryName] = useState("");
+  const [isLoading, setIsLoading] = useState(isEditing);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!id) {
       return;
     }
 
-    const loadCategory = async () => {
+    const fetchCategory = async () => {
       try {
-        setLoading(true);
-        setError("");
+        setIsLoading(true);
+        setErrorMessage("");
 
-        const { data } = await api.get<CategoryDetails>(`/categories/${id}`);
-        setName(data.name ?? "");
-      } catch (requestError) {
-        setError(
-          getApiErrorMessage(
-            requestError,
-            "Não foi possível carregar a categoria.",
-          ),
+        const { data } = await api.get<CategoryResponse>(`/categories/${id}`);
+        setCategoryName(data.name ?? "");
+      } catch (error) {
+        setErrorMessage(
+          getApiErrorMessage(error, "Não foi possível carregar a categoria."),
         );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    void loadCategory();
+    void fetchCategory();
   }, [id]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveCategory = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const name = categoryName.trim();
 
-    if (!name.trim()) {
-      setError("Informe o nome da categoria.");
+    if (!name) {
+      setErrorMessage("Informe o nome da categoria.");
       return;
     }
 
     try {
-      setSaving(true);
-      setError("");
+      setIsSaving(true);
+      setErrorMessage("");
 
-      if (isEditMode) {
-        await api.put(`/categories/${id}`, { name: name.trim() });
+      if (isEditing) {
+        await api.put(`/categories/${id}`, { name });
       } else {
-        await api.post("/categories", { name: name.trim() });
+        await api.post("/categories", { name });
       }
 
       void navigate("/admin/categories");
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível salvar a categoria.",
-        ),
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível salvar a categoria."),
       );
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
   return (
     <AdminLayout
-      title={isEditMode ? "Editar categoria" : "Nova categoria"}
+      title={isEditing ? "Editar categoria" : "Nova categoria"}
       description="Formulário simples para manter as categorias do projeto."
       backTo="/admin/categories"
       backLabel="Voltar para categorias"
     >
-      {loading && <p className="text-gray-300">Carregando formulário...</p>}
-
-      {!loading && (
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
-        >
+      {isLoading ? (
+        <p className="text-gray-300">Carregando formulário...</p>
+      ) : (
+        <form onSubmit={saveCategory} className={adminFormClass}>
           <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
-            <label className="text-sm text-gray-200">
-              Nome
-              <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70"
-                required
-              />
-            </label>
-
-            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
-                Estrutura
-              </p>
+            <AdminTextField
+              label="Nome"
+              type="text"
+              value={categoryName}
+              onChange={({ target }) => setCategoryName(target.value)}
+              required
+            />
+            <AdminSideCard eyebrow="Estrutura">
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 Use nomes curtos e claros para manter os filtros da loja e do
                 painel mais organizados.
               </p>
-            </aside>
+            </AdminSideCard>
           </div>
 
-          {error && (
-            <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {error}
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? "Salvando..." : "Salvar"}
-            </button>
-            <Link
-              to="/admin/categories"
-              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
-            >
-              Cancelar
-            </Link>
-          </div>
+          {errorMessage && <AdminNotice>{errorMessage}</AdminNotice>}
+          <AdminFormActions
+            backTo="/admin/categories"
+            saving={isSaving}
+            submitLabel="Salvar"
+          />
         </form>
       )}
     </AdminLayout>

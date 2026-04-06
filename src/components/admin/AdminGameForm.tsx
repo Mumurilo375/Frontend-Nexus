@@ -1,66 +1,52 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import {
+  AdminFormActions,
+  AdminNotice,
+  AdminSideCard,
+  AdminTextareaField,
+  AdminTextField,
+  AdminToggleField,
+  adminFormClass,
+} from "./adminShared";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 
-type GameDetails = {
-  id: number;
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive?: boolean;
-};
-
-type GameFormState = {
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive: boolean;
-};
-
-const initialForm: GameFormState = {
-  title: "",
-  description: "",
-  longDescription: "",
-  releaseDate: "",
-  coverImageUrl: "",
-  isActive: true,
-};
-const inputClass =
-  "mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500/70";
+type GameResponse = { title: string; description: string; longDescription: string; releaseDate: string; coverImageUrl: string; isActive?: boolean };
+type GameValues = { title: string; description: string; longDescription: string; releaseDate: string; coverImageUrl: string; isActive: boolean };
+const emptyGame: GameValues = { title: "", description: "", longDescription: "", releaseDate: "", coverImageUrl: "", isActive: true };
+const textareas = [
+  ["description", "Descrição curta", "min-h-24"],
+  ["longDescription", "Descrição longa", "min-h-36"],
+] as const;
+const inputs = [
+  ["releaseDate", "Data de lançamento", "date"],
+  ["coverImageUrl", "URL da capa", "url"],
+] as const;
 
 export default function AdminGameForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = Boolean(id);
-  const [form, setForm] = useState<GameFormState>(initialForm);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
-  const [selectedCoverFileName, setSelectedCoverFileName] = useState("");
-  const [selectedObjectUrl, setSelectedObjectUrl] = useState<string | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(isEditMode);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const isEditing = Boolean(id);
+  const [values, setValues] = useState<GameValues>(emptyGame);
+  const [isLoading, setIsLoading] = useState(isEditing);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!id) {
       return;
     }
 
-    const loadGame = async () => {
+    const fetchGame = async () => {
       try {
-        setLoading(true);
-        setError("");
+        setIsLoading(true);
+        setErrorMessage("");
 
-        const { data } = await api.get<GameDetails>(`/games/${id}`);
+        const { data } = await api.get<GameResponse>(`/games/${id}`);
 
-        setForm({
+        setValues({
           title: data.title ?? "",
           description: data.description ?? "",
           longDescription: data.longDescription ?? "",
@@ -68,241 +54,124 @@ export default function AdminGameForm() {
           coverImageUrl: data.coverImageUrl ?? "",
           isActive: data.isActive !== false,
         });
-        setCoverPreviewUrl(data.coverImageUrl ?? "");
-        setSelectedCoverFileName("");
-      } catch (requestError) {
-        setError(
-          getApiErrorMessage(requestError, "Não foi possível carregar o jogo."),
+      } catch (error) {
+        setErrorMessage(
+          getApiErrorMessage(error, "Não foi possível carregar o jogo."),
         );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    void loadGame();
+    void fetchGame();
   }, [id]);
 
-  useEffect(() => {
-    return () => {
-      if (selectedObjectUrl) {
-        URL.revokeObjectURL(selectedObjectUrl);
-      }
-    };
-  }, [selectedObjectUrl]);
+  const setField = <Field extends keyof GameValues>(field: Field, value: GameValues[Field]) =>
+    setValues((current) => ({ ...current, [field]: value }));
 
-  const handleChange = (
-    field: keyof GameFormState,
-    value: string | boolean,
-  ) => {
-    setForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const handleCoverFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-
-    if (selectedObjectUrl) {
-      URL.revokeObjectURL(selectedObjectUrl);
-    }
-
-    setSelectedObjectUrl(objectUrl);
-    setCoverPreviewUrl(objectUrl);
-    setSelectedCoverFileName(file.name);
-    handleChange("coverImageUrl", `/games/${encodeURIComponent(file.name)}`);
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveGame = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (
-      !form.title.trim() ||
-      !form.description.trim() ||
-      !form.longDescription.trim() ||
-      !form.releaseDate.trim() ||
-      !form.coverImageUrl.trim()
-    ) {
-      setError("Preencha todos os campos obrigatórios.");
+    const payload = {
+      title: values.title.trim(),
+      description: values.description.trim(),
+      longDescription: values.longDescription.trim(),
+      releaseDate: values.releaseDate,
+      coverImageUrl: values.coverImageUrl.trim(),
+    };
+
+    if (Object.values(payload).some((value) => !String(value).trim())) {
+      setErrorMessage("Preencha todos os campos obrigatórios.");
       return;
     }
 
     try {
-      setSaving(true);
-      setError("");
+      setIsSaving(true);
+      setErrorMessage("");
 
-      const payload = {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        longDescription: form.longDescription.trim(),
-        releaseDate: form.releaseDate,
-        coverImageUrl: form.coverImageUrl.trim(),
-      };
-
-      if (isEditMode) {
-        await api.put(`/games/${id}`, { ...payload, isActive: form.isActive });
+      if (isEditing) {
+        await api.put(`/games/${id}`, { ...payload, isActive: values.isActive });
       } else {
         await api.post("/games", payload);
       }
 
       void navigate("/admin/games");
-    } catch (requestError) {
-      setError(
-        getApiErrorMessage(requestError, "Não foi possível salvar o jogo."),
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Não foi possível salvar o jogo."),
       );
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
+  const previewImage = values.coverImageUrl.trim() || "/utils/logo.png";
+
   return (
     <AdminLayout
-      title={isEditMode ? "Editar jogo" : "Novo jogo"}
+      title={isEditing ? "Editar jogo" : "Novo jogo"}
       description="Preencha os dados obrigatórios do jogo. O listing continua sendo cadastrado em uma tela separada."
       backTo="/admin/games"
       backLabel="Voltar para jogos"
     >
-      {loading && <p className="text-gray-300">Carregando formulário...</p>}
-
-      {!loading && (
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-5 rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
-        >
+      {isLoading ? (
+        <p className="text-gray-300">Carregando formulário...</p>
+      ) : (
+        <form onSubmit={saveGame} className={adminFormClass}>
           <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
             <div className="space-y-5">
-              <label className="text-sm text-gray-200">
-                Título
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(event) =>
-                    handleChange("title", event.target.value)
-                  }
-                  className={inputClass}
+              <AdminTextField label="Título" type="text" value={values.title} onChange={({ target }) => setField("title", target.value)} required />
+              {textareas.map(([field, label, className]) => (
+                <AdminTextareaField
+                  key={field}
+                  label={label}
+                  value={values[field]}
+                  onChange={({ target }) => setField(field, target.value)}
+                  className={className}
                   required
                 />
-              </label>
-
-              <label className="text-sm text-gray-200">
-                Descrição curta
-                <textarea
-                  value={form.description}
-                  onChange={(event) =>
-                    handleChange("description", event.target.value)
-                  }
-                  className={`${inputClass} min-h-24`}
-                  required
-                />
-              </label>
-
-              <label className="text-sm text-gray-200">
-                Descrição longa
-                <textarea
-                  value={form.longDescription}
-                  onChange={(event) =>
-                    handleChange("longDescription", event.target.value)
-                  }
-                  className={`${inputClass} min-h-36`}
-                  required
-                />
-              </label>
+              ))}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm text-gray-200">
-                  Data de lançamento
-                  <input
-                    type="date"
-                    value={form.releaseDate}
-                    onChange={(event) =>
-                      handleChange("releaseDate", event.target.value)
-                    }
-                    className={inputClass}
+                {inputs.map(([field, label, type]) => (
+                  <AdminTextField
+                    key={field}
+                    label={label}
+                    type={type}
+                    value={values[field]}
+                    onChange={({ target }) => setField(field, target.value)}
                     required
                   />
-                </label>
-
-                <label className="text-sm text-gray-200">
-                  Arquivo da capa
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverFileChange}
-                    className={inputClass}
-                  />
-                  <p className="mt-2 text-xs text-slate-400">
-                    {selectedCoverFileName
-                      ? `Arquivo selecionado: ${selectedCoverFileName}`
-                      : form.coverImageUrl
-                        ? `Caminho salvo: ${form.coverImageUrl}`
-                        : "Selecione uma imagem para salvar como capa."}
-                  </p>
-                </label>
+                ))}
               </div>
             </div>
 
-            <aside className="rounded-3xl border border-slate-800 bg-slate-900/55 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
-                Preview
-              </p>
+            <AdminSideCard eyebrow="Preview" className="p-4">
               <img
-                src={
-                  coverPreviewUrl.trim() ||
-                  form.coverImageUrl.trim() ||
-                  "/utils/logo.png"
-                }
-                alt={form.title || "Preview do jogo"}
+                src={previewImage}
+                alt={values.title || "Preview do jogo"}
                 className="mt-4 h-56 w-full rounded-[20px] border border-slate-800 object-cover"
               />
               <h2 className="mt-4 text-lg font-semibold text-white">
-                {form.title || "Título do jogo"}
+                {values.title || "Título do jogo"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                {form.description ||
-                  "A descrição curta aparece aqui como apoio visual."}
+                {values.description || "A descrição curta aparece aqui como apoio visual."}
               </p>
-            </aside>
+            </AdminSideCard>
           </div>
 
-          {isEditMode && (
-            <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-gray-200">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(event) =>
-                  handleChange("isActive", event.target.checked)
-                }
-              />
-              Jogo ativo
-            </label>
+          {isEditing && (
+            <AdminToggleField
+              label="Jogo ativo"
+              checked={values.isActive}
+              onChange={(checked) => setField("isActive", checked)}
+            />
           )}
 
-          {error && (
-            <p className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {error}
-            </p>
-          )}
+          {errorMessage && <AdminNotice>{errorMessage}</AdminNotice>}
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? "Salvando..." : "Salvar"}
-            </button>
-            <Link
-              to="/admin/games"
-              className="rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white"
-            >
-              Cancelar
-            </Link>
-          </div>
+          <AdminFormActions backTo="/admin/games" saving={isSaving} submitLabel="Salvar" />
         </form>
       )}
     </AdminLayout>

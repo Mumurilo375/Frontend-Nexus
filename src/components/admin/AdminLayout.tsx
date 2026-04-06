@@ -40,10 +40,8 @@ export default function AdminLayout({
                 {description}
               </p>
             </div>
-
             {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
           </div>
-
           {children}
         </div>
       </main>

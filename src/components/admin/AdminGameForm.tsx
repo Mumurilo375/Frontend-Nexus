@@ -39,6 +39,11 @@ export default function AdminGameForm() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const [form, setForm] = useState<GameFormState>(initialForm);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
+  const [selectedCoverFileName, setSelectedCoverFileName] = useState("");
+  const [selectedObjectUrl, setSelectedObjectUrl] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(isEditMode);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -63,6 +68,8 @@ export default function AdminGameForm() {
           coverImageUrl: data.coverImageUrl ?? "",
           isActive: data.isActive !== false,
         });
+        setCoverPreviewUrl(data.coverImageUrl ?? "");
+        setSelectedCoverFileName("");
       } catch (requestError) {
         setError(
           getApiErrorMessage(requestError, "Não foi possível carregar o jogo."),
@@ -75,8 +82,35 @@ export default function AdminGameForm() {
     void loadGame();
   }, [id]);
 
+  useEffect(() => {
+    return () => {
+      if (selectedObjectUrl) {
+        URL.revokeObjectURL(selectedObjectUrl);
+      }
+    };
+  }, [selectedObjectUrl]);
+
   const handleChange = (field: keyof GameFormState, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleCoverFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+
+    if (selectedObjectUrl) {
+      URL.revokeObjectURL(selectedObjectUrl);
+    }
+
+    setSelectedObjectUrl(objectUrl);
+    setCoverPreviewUrl(objectUrl);
+    setSelectedCoverFileName(file.name);
+    handleChange("coverImageUrl", `/games/${encodeURIComponent(file.name)}`);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -187,26 +221,30 @@ export default function AdminGameForm() {
                 </label>
 
                 <label className="text-sm text-gray-200">
-                  URL da capa
+                  Arquivo da capa
                   <input
-                    type="url"
-                    value={form.coverImageUrl}
-                    onChange={(event) =>
-                      handleChange("coverImageUrl", event.target.value)
-                    }
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverFileChange}
                     className={inputClass}
-                    required
                   />
+                  <p className="mt-2 text-xs text-slate-400">
+                    {selectedCoverFileName
+                      ? `Arquivo selecionado: ${selectedCoverFileName}`
+                      : form.coverImageUrl
+                        ? `Caminho salvo: ${form.coverImageUrl}`
+                        : "Selecione uma imagem para salvar como capa."}
+                  </p>
                 </label>
               </div>
             </div>
 
-            <aside className="rounded-[24px] border border-slate-800 bg-slate-900/55 p-4">
+            <aside className="rounded-3xl border border-slate-800 bg-slate-900/55 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/80">
                 Preview
               </p>
               <img
-                src={form.coverImageUrl.trim() || "/utils/logo.png"}
+                src={coverPreviewUrl.trim() || form.coverImageUrl.trim() || "/utils/logo.png"}
                 alt={form.title || "Preview do jogo"}
                 className="mt-4 h-56 w-full rounded-[20px] border border-slate-800 object-cover"
               />

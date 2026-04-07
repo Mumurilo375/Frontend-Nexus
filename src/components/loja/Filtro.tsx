@@ -2,39 +2,13 @@ import { FilterIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../services/api";
-
-type Category = {
-  id: number;
-  name: string;
-};
-
-type Game = {
-  id: number;
-  categories?: Category[];
-};
-
-type GamesResponse = {
-  items: Game[];
-};
-
-type ListingItem = {
-  id: number;
-  isActive?: boolean;
-  platform?: {
-    name?: string;
-  };
-};
-
-type ListingsResponse = {
-  items: ListingItem[];
-};
-
-const normalizeText = (value: string) =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
+import type { GamesResponse, ListingsResponse } from "./loja.types";
+import {
+  collectFilterOptions,
+  normalizeText,
+  toggleNormalizedValue,
+  updateSearchListParam,
+} from "./loja.utils";
 
 function Filtro() {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
@@ -44,68 +18,88 @@ function Filtro() {
   const [loading, setLoading] = useState(true);
 
   const selectedPlatforms = useMemo(
-    () =>
-      searchParams
-        .getAll("platform")
-        .map((platform) => platform.trim())
-        .filter(Boolean),
+    () => searchParams.getAll("platform").map((value) => value.trim()).filter(Boolean),
     [searchParams],
   );
-
   const selectedCategories = useMemo(
-    () =>
-      searchParams
-        .getAll("category")
-        .map((category) => category.trim())
-        .filter(Boolean),
+    () => searchParams.getAll("category").map((value) => value.trim()).filter(Boolean),
     [searchParams],
   );
 
-  const selectedPlatformSet = useMemo(
-    () => new Set(selectedPlatforms.map((platform) => normalizeText(platform))),
-    [selectedPlatforms],
-  );
-
-  const selectedCategorySet = useMemo(
-    () =>
-      new Set(selectedCategories.map((category) => normalizeText(category))),
-    [selectedCategories],
-  );
-
-  const irParaTopo = () => {
+  const closeMenuAndScrollTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    setMenuAbertoMobile(false);
+  };
+
+  const updateSelection = (key: string, values: string[]) => {
+    setSearchParams(updateSearchListParam(searchParams, key, values));
+    closeMenuAndScrollTop();
+  };
+
+  const renderSection = (
+    title: string,
+    options: string[],
+    selectedValues: string[],
+    key: string,
+  ) => {
+    const selectedSet = new Set(selectedValues.map(normalizeText));
+
+    return (
+      <>
+        <h2 className="mb-2 p-4 text-2xl font-bold text-white">{title}</h2>
+        <ul className="mb-2">
+          <li>
+            <button
+              type="button"
+              onClick={() => updateSelection(key, [])}
+              className={
+                selectedValues.length === 0
+                  ? "font-bold text-blue-300"
+                  : "hover:text-white"
+              }
+            >
+              Todas
+            </button>
+          </li>
+          {options.map((option) => (
+            <li key={option}>
+              <button
+                type="button"
+                onClick={() =>
+                  updateSelection(key, toggleNormalizedValue(selectedValues, option))
+                }
+                className={
+                  selectedSet.has(normalizeText(option))
+                    ? "font-bold text-blue-300"
+                    : "hover:text-white"
+                }
+              >
+                {option}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </>
+    );
   };
 
   useEffect(() => {
-    const carregarFiltros = async () => {
+    const loadFilters = async () => {
       try {
         setLoading(true);
 
-        const [gamesResponse, listingsResponse] = await Promise.all([
-          api.get<GamesResponse>("/games", {
-            params: { page: 1, limit: 60 },
-          }),
-          api.get<ListingsResponse>("/listings", {
-            params: { page: 1, limit: 200 },
-          }),
+        const [{ data: gamesData }, { data: listingsData }] = await Promise.all([
+          api.get<GamesResponse>("/games", { params: { page: 1, limit: 60 } }),
+          api.get<ListingsResponse>("/listings", { params: { page: 1, limit: 200 } }),
         ]);
 
-        const categoryNames = (gamesResponse.data?.items ?? [])
-          .flatMap((game) => game.categories ?? [])
-          .map((category) => category.name)
-          .filter(Boolean);
-
-        const platformNames = (listingsResponse.data?.items ?? [])
-          .filter((listing) => listing.isActive !== false)
-          .map((listing) => String(listing.platform?.name ?? "").trim())
-          .filter(Boolean);
-
-        setCategories(
-          Array.from(new Set(categoryNames)).sort((a, b) => a.localeCompare(b)),
+        const options = collectFilterOptions(
+          gamesData.items ?? [],
+          listingsData.items ?? [],
         );
-        setPlatforms(
-          Array.from(new Set(platformNames)).sort((a, b) => a.localeCompare(b)),
-        );
+
+        setCategories(options.categories);
+        setPlatforms(options.platforms);
       } catch {
         setCategories([]);
         setPlatforms([]);
@@ -114,56 +108,14 @@ function Filtro() {
       }
     };
 
-    void carregarFiltros();
+    void loadFilters();
   }, []);
-
-  const atualizarParametroLista = (key: string, values: string[]) => {
-    const next = new URLSearchParams(searchParams);
-    next.delete(key);
-
-    values.forEach((value) => {
-      if (value.trim()) {
-        next.append(key, value.trim());
-      }
-    });
-
-    setSearchParams(next);
-  };
-
-  const alternarSelecionado = (values: string[], value: string) => {
-    const alvo = normalizeText(value);
-    const existe = values.some((current) => normalizeText(current) === alvo);
-
-    if (existe) {
-      return values.filter((current) => normalizeText(current) !== alvo);
-    }
-
-    return [...values, value];
-  };
-
-  const selecionarPlataforma = (plataforma: string) => {
-    atualizarParametroLista(
-      "platform",
-      alternarSelecionado(selectedPlatforms, plataforma),
-    );
-    irParaTopo();
-    setMenuAbertoMobile(false);
-  };
-
-  const selecionarCategoria = (categoria: string) => {
-    atualizarParametroLista(
-      "category",
-      alternarSelecionado(selectedCategories, categoria),
-    );
-    irParaTopo();
-    setMenuAbertoMobile(false);
-  };
 
   return (
     <aside className="w-full lg:w-64 lg:shrink-10 lg:self-start lg:sticky lg:top-24">
       <button
         type="button"
-        onClick={() => setMenuAbertoMobile((valorAtual) => !valorAtual)}
+        onClick={() => setMenuAbertoMobile((current) => !current)}
         className="mb-3 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-left font-semibold text-gray-100 lg:hidden"
         aria-expanded={menuAbertoMobile}
         aria-controls="filtro-categorias"
@@ -182,83 +134,13 @@ function Filtro() {
           Filtros
         </h2>
 
-        {loading && (
-          <p className="px-4 text-sm text-slate-400">Carregando...</p>
-        )}
+        {loading && <p className="px-4 text-sm text-slate-400">Carregando...</p>}
 
-        <h2 className="mb-2 p-4 text-2xl font-bold text-white">Plataformas</h2>
-        <ul className="mb-2">
-          <li>
-            <button
-              type="button"
-              onClick={() => {
-                atualizarParametroLista("platform", []);
-                irParaTopo();
-                setMenuAbertoMobile(false);
-              }}
-              className={
-                selectedPlatforms.length === 0
-                  ? "font-bold text-blue-300"
-                  : "hover:text-white"
-              }
-            >
-              Todas
-            </button>
-          </li>
-          {platforms.map((platform) => (
-            <li key={platform}>
-              <button
-                type="button"
-                onClick={() => selecionarPlataforma(platform)}
-                className={
-                  selectedPlatformSet.has(normalizeText(platform))
-                    ? "font-bold text-blue-300"
-                    : "hover:text-white"
-                }
-              >
-                {platform}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <h2 className="mb-1 p-4 text-2xl font-bold text-white">Categorias</h2>
-
-        <ul className="mb-2">
-          <li>
-            <button
-              type="button"
-              onClick={() => {
-                atualizarParametroLista("category", []);
-                irParaTopo();
-                setMenuAbertoMobile(false);
-              }}
-              className={
-                selectedCategories.length === 0
-                  ? "font-bold text-blue-300"
-                  : "hover:text-white"
-              }
-            >
-              Todas
-            </button>
-          </li>
-          {categories.map((category) => (
-            <li key={category}>
-              <button
-                type="button"
-                onClick={() => selecionarCategoria(category)}
-                className={
-                  selectedCategorySet.has(normalizeText(category))
-                    ? "font-bold text-blue-300"
-                    : "hover:text-white"
-                }
-              >
-                {category}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {renderSection("Plataformas", platforms, selectedPlatforms, "platform")}
+        {renderSection("Categorias", categories, selectedCategories, "category")}
       </nav>
     </aside>
   );
 }
+
 export default Filtro;

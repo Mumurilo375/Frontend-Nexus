@@ -1,85 +1,63 @@
-import { useEffect, useMemo, useState } from "react";
-import { Star, ThumbsUp } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import api from "../../services/api";
-import { getApiErrorMessage } from "../../services/http";
 import { getAuthUser, isAuthenticated } from "../../services/auth";
-
-type ReviewVote = { id: number; userId?: number; user?: { id?: number } };
-type ReviewItem = {
-  id: number;
-  rating?: number;
-  comment?: string;
-  createdAt?: string;
-  user?: { id?: number; username?: string; avatarUrl?: string | null };
-  votes?: ReviewVote[];
-};
-type ReviewsResponse = { items: ReviewItem[] };
-
-const REVIEW_COMMENT_MAX_LENGTH = 500;
-
-function formatDate(value?: string) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("pt-BR");
-}
-
-function renderStars(value: number) {
-  const safeValue = Math.round(Math.max(0, Math.min(5, value)));
-  return Array.from({ length: 5 }, (_, index) => (
-    <Star
-      key={`review-star-${index}`}
-      className={`h-4 w-4 ${index < safeValue ? "fill-yellow-400 text-yellow-400" : "text-zinc-500"}`}
-    />
-  ));
-}
+import type { ReviewItem, ReviewsResponse } from "./loja.types";
+import {
+  REVIEW_COMMENT_MAX_LENGTH,
+  formatDate,
+  getAverageRating,
+  getRequestErrorMessage,
+  hasUserReviewVote,
+} from "./loja.utils";
+import { Star, ThumbsUp } from "lucide-react";
 
 export default function Rating() {
   const { gameId } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
-  const authUser = getAuthUser();
+  const navigate = useNavigate();
+  const authUserId = Number(getAuthUser()?.id ?? 0);
   const isLoggedIn = isAuthenticated();
-  const authUserId = Number(authUser?.id ?? 0);
   const parsedGameId = Number(gameId);
   const gameIdIsValid = Number.isInteger(parsedGameId) && parsedGameId > 0;
 
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState(false);
-  const [reviewError, setReviewError] = useState("");
-  const [busyVoteReviewId, setBusyVoteReviewId] = useState<number | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [loadingReviews, setLoadingReviews] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [busyVoteReviewId, setBusyVoteReviewId] = useState<number | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const reviewTotal = reviews.length;
-  const reviewAverage = useMemo(() => {
-    if (reviews.length === 0) return 0;
-    const total = reviews.reduce(
-      (sum, review) => sum + Number(review.rating ?? 0),
-      0,
-    );
-    return total / reviews.length;
-  }, [reviews]);
+  const reviewAverage = getAverageRating(reviews);
 
+  const askLogin = () => setShowAuthModal(true);
+  const closeAuthModal = () => setShowAuthModal(false);
   const goToLogin = () => {
-    setShowAuthModal(false);
+    closeAuthModal();
     void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };
 
-  const askLogin = () => {
-    setShowAuthModal(true);
+  const renderStars = (value: number) => {
+    const safeValue = Math.round(Math.max(0, Math.min(5, value)));
+
+    return Array.from({ length: 5 }, (_, index) => (
+      <Star
+        key={`review-star-${index}`}
+        className={`h-4 w-4 ${index < safeValue ? "fill-yellow-400 text-yellow-400" : "text-zinc-500"}`}
+      />
+    ));
   };
 
   const loadReviews = async (targetGameId: number) => {
     const { data } = await api.get<ReviewsResponse>("/reviews", {
       params: { gameId: targetGameId, page: 1, limit: 20 },
     });
+
     return data.items ?? [];
   };
 
@@ -92,17 +70,25 @@ export default function Rating() {
 
     let active = true;
 
-    const load = async () => {
+    const fetchReviews = async () => {
       try {
         setLoadingReviews(true);
         setReviewError("");
+
         const items = await loadReviews(parsedGameId);
-        if (!active) return;
-        setReviews(items);
-      } catch {
-        if (!active) return;
-        setReviews([]);
-        setReviewError("Nao foi possivel carregar as avaliacoes.");
+        if (active) {
+          setReviews(items);
+        }
+      } catch (loadError) {
+        if (active) {
+          setReviews([]);
+          setReviewError(
+            getRequestErrorMessage(
+              loadError,
+              "Nao foi possivel carregar as avaliacoes.",
+            ),
+          );
+        }
       } finally {
         if (active) {
           setLoadingReviews(false);
@@ -110,20 +96,14 @@ export default function Rating() {
       }
     };
 
-    void load();
+    void fetchReviews();
 
     return () => {
       active = false;
     };
   }, [gameIdIsValid, parsedGameId]);
 
-  const hasUserVote = (review: ReviewItem) => {
-    return (review.votes ?? []).some(
-      (vote) => Number(vote.userId ?? vote.user?.id ?? 0) === authUserId,
-    );
-  };
-
-  const toggleReviewVote = async (reviewId: number, voted: boolean) => {
+  const handleToggleVote = async (reviewId: number, voted: boolean) => {
     if (!isLoggedIn) {
       askLogin();
       return;
@@ -140,23 +120,22 @@ export default function Rating() {
 
       setReviews((current) =>
         current.map((review) => {
-          if (review.id !== reviewId) return review;
-
-          const votes = review.votes ?? [];
-          if (voted) {
-            return {
-              ...review,
-              votes: votes.filter(
-                (vote) =>
-                  Number(vote.userId ?? vote.user?.id ?? 0) !== authUserId,
-              ),
-            };
+          if (review.id !== reviewId) {
+            return review;
           }
 
-          return {
-            ...review,
-            votes: [...votes, { id: Date.now(), userId: authUserId }],
-          };
+          const votes = review.votes ?? [];
+          return voted
+            ? {
+                ...review,
+                votes: votes.filter(
+                  (vote) => Number(vote.userId ?? vote.user?.id ?? 0) !== authUserId,
+                ),
+              }
+            : {
+                ...review,
+                votes: [...votes, { id: Date.now(), userId: authUserId }],
+              };
         }),
       );
     } finally {
@@ -170,7 +149,9 @@ export default function Rating() {
       return;
     }
 
-    if (!parsedGameId) return;
+    if (!parsedGameId) {
+      return;
+    }
 
     const trimmedComment = reviewComment.trim();
     if (!trimmedComment) {
@@ -197,12 +178,13 @@ export default function Rating() {
 
       setReviewComment("");
       setReviewRating(5);
-
-      const reviewItems = await loadReviews(parsedGameId);
-      setReviews(reviewItems);
-    } catch (error: unknown) {
+      setReviews(await loadReviews(parsedGameId));
+    } catch (submitError) {
       setReviewError(
-        getApiErrorMessage(error, "Nao foi possivel enviar sua avaliacao."),
+        getRequestErrorMessage(
+          submitError,
+          "Nao foi possivel enviar sua avaliacao.",
+        ),
       );
     } finally {
       setSubmittingReview(false);
@@ -215,7 +197,7 @@ export default function Rating() {
         open={showAuthModal}
         title="Entre para continuar"
         message="Essa acao exige login. Deseja entrar agora?"
-        onClose={() => setShowAuthModal(false)}
+        onClose={closeAuthModal}
         onConfirm={goToLogin}
       />
 
@@ -225,32 +207,20 @@ export default function Rating() {
             <header className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-white">Avaliacoes</h2>
-                <p className="text-sm text-zinc-300">
-                  {reviewTotal} avaliacoes
-                </p>
+                <p className="text-sm text-zinc-300">{reviews.length} avaliacoes</p>
               </div>
-              <div className="flex items-center gap-1">
-                {renderStars(reviewAverage)}
-              </div>
+              <div className="flex items-center gap-1">{renderStars(reviewAverage)}</div>
             </header>
 
-            {loadingReviews && (
-              <p className="text-zinc-300">Carregando avaliacoes...</p>
-            )}
-
-            {!loadingReviews && reviewError && (
-              <p className="text-red-300">{reviewError}</p>
-            )}
-
+            {loadingReviews && <p className="text-zinc-300">Carregando avaliacoes...</p>}
+            {!loadingReviews && reviewError && <p className="text-red-300">{reviewError}</p>}
             {!loadingReviews && !reviewError && reviews.length === 0 && (
-              <p className="text-zinc-300">
-                Ainda nao existem avaliacoes para este jogo.
-              </p>
+              <p className="text-zinc-300">Ainda nao existem avaliacoes para este jogo.</p>
             )}
 
             <div className="space-y-3">
               {reviews.map((review) => {
-                const voted = hasUserVote(review);
+                const voted = hasUserReviewVote(review, authUserId);
                 const votesCount = (review.votes ?? []).length;
 
                 return (
@@ -276,7 +246,7 @@ export default function Rating() {
                     <button
                       type="button"
                       onClick={() => {
-                        void toggleReviewVote(review.id, voted);
+                        void handleToggleVote(review.id, voted);
                       }}
                       disabled={busyVoteReviewId === review.id}
                       className={`mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
@@ -286,8 +256,7 @@ export default function Rating() {
                       } disabled:opacity-60`}
                     >
                       <ThumbsUp className="h-3.5 w-3.5" />
-                      {voted ? "Voto registrado" : "Marcar como util"} (
-                      {votesCount})
+                      {voted ? "Voto registrado" : "Marcar como util"} ({votesCount})
                     </button>
                   </div>
                 );
@@ -301,10 +270,7 @@ export default function Rating() {
               Compartilhe sua experiencia para ajudar outros jogadores.
             </p>
 
-            <label
-              className="mt-4 block text-sm text-zinc-300"
-              htmlFor="rating-select"
-            >
+            <label className="mt-4 block text-sm text-zinc-300" htmlFor="rating-select">
               Nota
             </label>
             <select
@@ -320,10 +286,7 @@ export default function Rating() {
               <option value={1}>1 - Fraco</option>
             </select>
 
-            <label
-              className="mt-4 block text-sm text-zinc-300"
-              htmlFor="review-comment"
-            >
+            <label className="mt-4 block text-sm text-zinc-300" htmlFor="review-comment">
               Comentario
             </label>
             <textarea
@@ -334,15 +297,13 @@ export default function Rating() {
               maxLength={REVIEW_COMMENT_MAX_LENGTH}
               className="mt-1 w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 outline-none focus:border-blue-400"
               placeholder="Escreva sua opiniao sobre jogabilidade, desempenho e historia."
-            ></textarea>
+            />
 
             <p className="mt-2 text-right text-xs text-zinc-400">
               {reviewComment.length}/{REVIEW_COMMENT_MAX_LENGTH}
             </p>
 
-            {reviewError && (
-              <p className="mt-3 text-sm text-red-300">{reviewError}</p>
-            )}
+            {reviewError && <p className="mt-3 text-sm text-red-300">{reviewError}</p>}
 
             <button
               type="button"

@@ -6,6 +6,7 @@ import playstationLogo from "../../assets/playlogo.png";
 import steamLogo from "../../assets/steam.png";
 import xboxLogo from "../../assets/xbox.png";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 
 type CartItem = {
   id: number;
@@ -133,7 +134,7 @@ export default function CarrinhoMid() {
                 <article key={item.id} className="nexus-card p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <img
-                      src={item.listing?.game?.coverImageUrl || "/logo.png"}
+                      src={resolveAssetUrl(item.listing?.game?.coverImageUrl)}
                       alt={item.listing?.game?.title || "Jogo"}
                       className="h-24 w-24 rounded-2xl border border-slate-800 object-cover"
                     />

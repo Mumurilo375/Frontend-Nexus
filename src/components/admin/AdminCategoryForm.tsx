@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
 import {
   AdminFormActions,
@@ -13,9 +13,8 @@ import { getApiErrorMessage } from "../../services/http";
 
 type CategoryResponse = { name: string };
 
-export default function AdminCategoryForm() {
+export default function AdminCategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();
-  const { id } = useParams();
   const isEditing = Boolean(id);
   const [categoryName, setCategoryName] = useState("");
   const [isLoading, setIsLoading] = useState(isEditing);

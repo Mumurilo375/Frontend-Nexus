@@ -2,6 +2,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
@@ -137,9 +138,7 @@ export default function MeusPedidosMid() {
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                       <img
-                        src={
-                          item.listing?.game?.coverImageUrl || "/utils/logo.png"
-                        }
+                        src={resolveAssetUrl(item.listing?.game?.coverImageUrl)}
                         alt={item.listing?.game?.title || "Jogo"}
                         className="h-28 w-full rounded-xl object-cover sm:w-20"
                       />

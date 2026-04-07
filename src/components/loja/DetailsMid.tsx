@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 import { isAuthenticated } from "../../services/auth";
 
 type Category = { id: number; name: string };
@@ -72,16 +73,6 @@ function formatDate(value?: string) {
   return date.toLocaleDateString("pt-BR");
 }
 
-function renderStars(value: number) {
-  const safeValue = Math.round(Math.max(0, Math.min(5, value)));
-  return Array.from({ length: 5 }, (_, index) => (
-    <Star
-      key={`star-${index}`}
-      className={`h-4 w-4 ${index < safeValue ? "fill-yellow-400 text-yellow-400" : "text-zinc-500"}`}
-    />
-  ));
-}
-
 export default function DetailsMid() {
   const { gameId } = useParams();
   const navigate = useNavigate();
@@ -106,9 +97,12 @@ export default function DetailsMid() {
   const gameTitle = details?.title || "Jogo";
   const gameDescription = details?.description || "Sem descricao curta.";
   const gameLongDescription = details?.longDescription || gameDescription;
-  const coverImage = String(details?.coverImageUrl ?? "").trim() || "/logo.png";
+  const coverImage = resolveAssetUrl(details?.coverImageUrl);
   const reviewAverage = Number(details?.reviewStats?.averageRating ?? 0);
-  const platformListings = details?.platformListings ?? [];
+  const platformListings = useMemo(
+    () => details?.platformListings ?? [],
+    [details?.platformListings],
+  );
   const currentListing = useMemo(() => {
     if (platformListings.length === 0) return null;
     if (!selectedListingId) return platformListings[0];
@@ -135,7 +129,7 @@ export default function DetailsMid() {
 
   const galleryImages = useMemo(() => {
     const extras = (details?.images ?? [])
-      .map((image) => String(image.imageUrl ?? "").trim())
+      .map((image) => resolveAssetUrl(image.imageUrl, ""))
       .filter(Boolean);
 
     return Array.from(new Set([coverImage, ...extras]));
@@ -148,7 +142,7 @@ export default function DetailsMid() {
 
   const goToLogin = () => {
     setShowAuthModal(false);
-    navigate("/login", {
+    void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };
@@ -309,7 +303,7 @@ export default function DetailsMid() {
         window.dispatchEvent(new Event("nexus:counts-updated"));
       }
 
-      navigate("/checkout");
+      void navigate("/checkout");
     } catch {
       setActionError("Nao foi possivel iniciar a compra agora.");
     } finally {

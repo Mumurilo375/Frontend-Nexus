@@ -7,6 +7,7 @@ import steamLogo from "../../assets/steam.png";
 import xboxLogo from "../../assets/xbox.png";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 
 type Game = {
   id: number;
@@ -311,7 +312,7 @@ export default function FavoritosMid() {
                     </button>
 
                     <img
-                      src={game.coverImageUrl || "/logo.png"}
+                      src={resolveAssetUrl(game.coverImageUrl)}
                       alt={game.title}
                       className="h-60 w-full object-cover"
                     />

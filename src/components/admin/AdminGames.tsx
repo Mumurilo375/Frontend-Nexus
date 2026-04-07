@@ -11,6 +11,7 @@ import {
 } from "./adminShared";
 import Pagination from "../../components/globals/Pagination";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
@@ -91,7 +92,7 @@ export default function AdminGames() {
   return (
     <AdminLayout
       title="Jogos"
-      description="CRUD completo de jogos com listagem paginada e acesso direto aos listings."
+      description="Cadastre jogos, ajuste o editorial e abra o monitor por plataforma para controlar preço, status e estoque."
       backTo="/admin"
       backLabel="Voltar ao painel"
       actions={
@@ -136,7 +137,7 @@ export default function AdminGames() {
                 className="nexus-card flex flex-col overflow-hidden p-4"
               >
                 <img
-                  src={game.coverImageUrl || "/utils/logo.png"}
+                  src={resolveAssetUrl(game.coverImageUrl)}
                   alt={game.title}
                   className="h-48 w-full rounded-[22px] border border-slate-800 object-cover"
                 />
@@ -155,7 +156,7 @@ export default function AdminGames() {
 
                 <div className="mt-4 flex flex-wrap gap-2 pt-2">
                   <AdminLinkButton to={`/admin/games/${game.id}/edit`} className={cardActionClass}>Editar</AdminLinkButton>
-                  <AdminLinkButton to={`/admin/games/${game.id}/listings`} className={cardActionClass}>Gerenciar listings</AdminLinkButton>
+                  <AdminLinkButton to={`/admin/games/${game.id}/platforms`} className={cardActionClass}>Monitorar plataformas</AdminLinkButton>
                   <AdminButton
                     type="button"
                     tone="subtleDanger"

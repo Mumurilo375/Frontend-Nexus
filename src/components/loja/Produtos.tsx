@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
+import { resolveAssetUrl } from "../../services/assets";
 import Pagination from "../globals/Pagination";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import steamLogo from "../../assets/steam.png";
@@ -450,7 +451,7 @@ export default function Produtos() {
 
                   <div className="flex h-44 w-full items-center justify-center rounded-[20px] border border-slate-800 bg-black/15 p-3">
                     <img
-                      src={game.coverImageUrl || "/logo.png"}
+                      src={resolveAssetUrl(game.coverImageUrl)}
                       alt={game.title}
                       className="max-h-full w-full object-contain"
                     />

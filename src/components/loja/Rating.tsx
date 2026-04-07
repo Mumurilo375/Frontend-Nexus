@@ -3,6 +3,7 @@ import { Star, ThumbsUp } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import api from "../../services/api";
+import { getApiErrorMessage } from "../../services/http";
 import { getAuthUser, isAuthenticated } from "../../services/auth";
 
 type ReviewVote = { id: number; userId?: number; user?: { id?: number } };
@@ -66,7 +67,7 @@ export default function Rating() {
 
   const goToLogin = () => {
     setShowAuthModal(false);
-    navigate("/login", {
+    void navigate("/login", {
       state: { from: `${location.pathname}${location.search}` },
     });
   };
@@ -199,12 +200,9 @@ export default function Rating() {
 
       const reviewItems = await loadReviews(parsedGameId);
       setReviews(reviewItems);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setReviewError(
-        String(
-          error?.response?.data?.message ??
-            "Nao foi possivel enviar sua avaliacao.",
-        ),
+        getApiErrorMessage(error, "Nao foi possivel enviar sua avaliacao."),
       );
     } finally {
       setSubmittingReview(false);

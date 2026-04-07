@@ -13,7 +13,7 @@ function Highlights() {
         <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="rounded-[30px] border border-slate-800 bg-slate-950/78 p-8 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">
             <img
-              src="/games/homemaranha.png"
+              src="/site/highlights/homemaranha.png"
               alt="wukong-game"
               className="mb-4 h-64 w-full rounded-2xl border border-slate-800 object-cover"
             />
@@ -24,7 +24,7 @@ function Highlights() {
           </div>
           <div className="rounded-[30px] border border-slate-800 bg-slate-950/78 p-8 shadow-[0_18px_45px_rgba(2,6,23,0.3)]">
             <img
-              src="/games/eldenring.jpg"
+              src="/site/highlights/eldenring.jpg"
               alt="eldenring-game"
               className="mb-4 h-64 w-full rounded-2xl border border-slate-800 object-cover"
             />

@@ -21,6 +21,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
+import { resolveAssetUrl } from "../../services/assets";
 import AuthRequiredModal from "./AuthRequiredModal";
 
 type GameSuggestion = {
@@ -390,7 +391,7 @@ function NavBar() {
                             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-900"
                           >
                             <img
-                              src={game.coverImageUrl || "/utils/logo.png"}
+                              src={resolveAssetUrl(game.coverImageUrl)}
                               alt={game.title}
                               className="h-9 w-9 rounded object-cover"
                             />

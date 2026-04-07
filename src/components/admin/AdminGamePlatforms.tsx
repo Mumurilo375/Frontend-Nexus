@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import {
   AdminButton,
   AdminNotice,
   AdminPageState,
-  AdminStatusBadge,
-  AdminTextareaField,
-  AdminTextField,
+  AdminStatusBadge,  AdminTextField,
   AdminToggleField,
   createEmptyMeta,
   getKeyStatusBadgeClass,
@@ -94,6 +92,9 @@ type PlatformConfirmationState =
   | { type: "removeKeys"; platformId: number };
 
 const keysPageSize = 8;
+const keyColumnSize = 6;
+const keyGridColumnCount = 3;
+const keyGridBlockSize = keyColumnSize * keyGridColumnCount;
 const emptyKeysMeta = createEmptyMeta(keysPageSize);
 
 function formatPlatformPrice(price: number | null) {
@@ -127,22 +128,39 @@ function sanitizePlatformPrice(value: string) {
 }
 
 function formatGameKeyValue(value: string) {
-  const rawKeyValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const rawKeyValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
   return rawKeyValue.match(/.{1,4}/g)?.join("-") ?? "";
 }
 
-function formatGameKeysText(value: string) {
-  return value
+function getGameKeyLines(text: string) {
+  return text ? text.split(/\r?\n/) : [];
+}
+
+function trimTrailingEmptyGameKeyLines(gameKeyLines: string[]) {
+  const nextGameKeyLines = [...gameKeyLines];
+
+  while (
+    nextGameKeyLines.length > 0 &&
+    !nextGameKeyLines[nextGameKeyLines.length - 1]?.trim()
+  ) {
+    nextGameKeyLines.pop();
+  }
+
+  return nextGameKeyLines;
+}
+
+function getPastedGameKeyValues(pastedText: string) {
+  return pastedText
     .toUpperCase()
-    .split(/\r?\n/)
+    .split(/\r?\n|[\s,;]+/)
     .flatMap((line) => line.replace(/[^A-Z0-9]/g, "").match(/.{1,12}/g) ?? [])
     .map(formatGameKeyValue)
-    .join("\n");
+    .filter(Boolean);
 }
 
 function getGameKeyValues(text: string) {
-  const keyValues = formatGameKeysText(text)
-    .split(/\r?\n/)
+  const keyValues = getGameKeyLines(text)
+    .map(formatGameKeyValue)
     .map((value) => value.trim())
     .filter(Boolean);
 
@@ -152,6 +170,62 @@ function getGameKeyValues(text: string) {
       (keyValue) => keyValue.replace(/[^A-Z0-9]/g, "").length !== 12,
     ),
   };
+}
+
+function getVisibleGameKeyLines(text: string) {
+  const gameKeyLines = trimTrailingEmptyGameKeyLines(
+    getGameKeyLines(text).map(formatGameKeyValue),
+  );
+  const visibleLineCount = Math.max(
+    keyGridBlockSize,
+    Math.ceil((gameKeyLines.length + 1) / keyGridBlockSize) * keyGridBlockSize,
+  );
+
+  return Array.from({ length: visibleLineCount }, (_, lineIndex) => gameKeyLines[lineIndex] ?? "");
+}
+
+function updateGameKeyLineText(text: string, lineIndex: number, lineText: string) {
+  const gameKeyLines = getGameKeyLines(text);
+
+  while (gameKeyLines.length <= lineIndex) {
+    gameKeyLines.push("");
+  }
+
+  gameKeyLines[lineIndex] = formatGameKeyValue(lineText);
+  return trimTrailingEmptyGameKeyLines(gameKeyLines).join("\n");
+}
+
+function pasteGameKeyLineText(text: string, startLineIndex: number, pastedText: string) {
+  const pastedKeyValues = getPastedGameKeyValues(pastedText);
+
+  if (pastedKeyValues.length === 0) {
+    return updateGameKeyLineText(text, startLineIndex, pastedText);
+  }
+
+  const gameKeyLines = getGameKeyLines(text);
+
+  while (gameKeyLines.length < startLineIndex) {
+    gameKeyLines.push("");
+  }
+
+  pastedKeyValues.forEach((keyValue, pastedIndex) => {
+    gameKeyLines[startLineIndex + pastedIndex] = keyValue;
+  });
+
+  return trimTrailingEmptyGameKeyLines(gameKeyLines).join("\n");
+}
+
+function getGameKeyLineSections(text: string): string[][] {
+  const visibleGameKeyLines = getVisibleGameKeyLines(text);
+
+  return Array.from(
+    { length: Math.ceil(visibleGameKeyLines.length / keyGridBlockSize) },
+    (_, sectionIndex) =>
+      visibleGameKeyLines.slice(
+        sectionIndex * keyGridBlockSize,
+        sectionIndex * keyGridBlockSize + keyGridBlockSize,
+      ),
+  );
 }
 
 function hasPlatformPriceChanged(platformFormState: PlatformFormState) {
@@ -245,6 +319,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   const [platformBeingManaged, setPlatformBeingManaged] = useState<number | null>(null);
   const [platformFormStateById, setPlatformFormStateById] = useState<Record<number, PlatformFormState>>({});
   const [platformKeysStateById, setPlatformKeysStateById] = useState<Record<number, PlatformKeysState>>({});
+  const gameKeyInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [pendingConfirmation, setPendingConfirmation] = useState<PlatformConfirmationState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -665,17 +740,16 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     platformBeingManaged === null ? null : platformFormStateById[platformBeingManaged] ?? null;
   const managedPlatformKeysState =
     platformBeingManaged === null ? null : platformKeysStateById[platformBeingManaged] ?? null;
-  const shouldShowGlobalPriceChangeWarning =
-    managedPlatform && managedPlatformFormState
-      ? shouldWarnAboutGlobalPriceChange(managedPlatform, managedPlatformFormState)
-      : false;
   const confirmationPlatform =
     pendingConfirmation === null ? null : findPlatformMonitorItem(pendingConfirmation.platformId);
   const selectedKeysCount =
     pendingConfirmation?.type === "removeKeys"
       ? platformKeysStateById[pendingConfirmation.platformId]?.selectedIds.length ?? 0
       : 0;
-
+  const managedPlatformKeyLineSections: string[][] =
+    managedPlatformFormState === null
+      ? []
+      : getGameKeyLineSections(managedPlatformFormState.newKeysText);
   return (
     <AdminLayout title="Plataformas" backTo="/admin/games" backLabel="Voltar para jogos">
       <AdminPageState
@@ -735,8 +809,8 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                       </span>
                       <AdminStatusBadge
                         active={platform.isActive}
-                        activeLabel="Venda ativa"
-                        inactiveLabel="Venda inativa"
+                        activeLabel="Plataforma ativa"
+                        inactiveLabel="Plataforma inativa"
                       />
                     </div>
                   </div>
@@ -757,7 +831,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
 
           {managedPlatform && managedPlatformFormState && managedPlatformKeysState && (
             <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4 py-6">
-              <div className="flex max-h-[75vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
+              <div className="flex max-h-[75vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-800 p-5">
                   <div className="flex min-w-0 items-center gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/90 p-2">
@@ -811,7 +885,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
 
                         <div className="mt-3">
                           <AdminToggleField
-                            label="Venda ativa"
+                            label="Plataforma ativa"
                             checked={managedPlatformFormState.isActive}
                             onChange={(checked) =>
                               updatePlatformFormState(managedPlatform.platform.id, (currentFormState) => ({
@@ -831,12 +905,6 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                           {managedPlatformFormState.isSaving ? "Salvando..." : "Salvar"}
                         </AdminButton>
                       </div>
-
-                      {shouldShowGlobalPriceChangeWarning && (
-                        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">
-                          O novo preco vai valer para todas as keys atuais e futuras desta plataforma.
-                        </div>
-                      )}
                     </section>
 
                     <section className="grid gap-4">
@@ -870,20 +938,96 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                           </AdminButton>
                         </div>
 
-                        <div className="mt-3">
-                          <AdminTextareaField
-                            label=""
-                            rows={6}
-                            value={managedPlatformFormState.newKeysText}
-                            onChange={({ target }) =>
-                              updatePlatformFormState(managedPlatform.platform.id, (currentFormState) => ({
-                                ...currentFormState,
-                                newKeysText: formatGameKeysText(target.value),
-                              }))
-                            }
-                            placeholder="AAAA-BBBB-CCCC"
-                            className="mt-0 min-h-[170px] resize-none font-mono text-sm uppercase tracking-[0.18em] leading-7"
-                          />
+                        <div className="mt-3 overflow-hidden rounded-[22px] border border-slate-700 bg-slate-950/80">
+                          {managedPlatformKeyLineSections.map((gameKeyLineSection, keySectionIndex) => (
+                            <div
+                              key={keySectionIndex}
+                              className={keySectionIndex === 0 ? "" : "border-t border-slate-800"}
+                            >
+                              <div className="grid xl:grid-cols-3">
+                                {Array.from({ length: keyGridColumnCount }, (_unused, keyColumnIndex) => {
+                                  const keyColumnLines = gameKeyLineSection.slice(
+                                    keyColumnIndex * keyColumnSize,
+                                    keyColumnIndex * keyColumnSize + keyColumnSize,
+                                  );
+
+                                  return (
+                                    <div
+                                      key={keyColumnIndex}
+                                      className={keyColumnIndex === 0 ? "" : "xl:border-l xl:border-slate-800"}
+                                    >
+                                      {keyColumnLines.map((keyLineValue, keyLineIndex) => {
+                                        const gameKeyLineIndex =
+                                          keySectionIndex * keyGridBlockSize +
+                                          keyColumnIndex * keyColumnSize +
+                                          keyLineIndex;
+
+                                        return (
+                                          <div
+                                            key={gameKeyLineIndex}
+                                            className={keyLineIndex === 0 ? "" : "border-t border-slate-800"}
+                                          >
+                                            <input
+                                              ref={(inputElement) => {
+                                                gameKeyInputRefs.current[gameKeyLineIndex] = inputElement;
+                                              }}
+                                              type="text"
+                                              value={keyLineValue}
+                                              placeholder={gameKeyLineIndex === 0 ? "AAAA-BBBB-CCCC" : ""}
+                                              onChange={({ target }) => {
+                                                const nextGameKeyValue = formatGameKeyValue(target.value);
+
+                                                updatePlatformFormState(
+                                                  managedPlatform.platform.id,
+                                                  (currentFormState) => ({
+                                                    ...currentFormState,
+                                                    newKeysText: updateGameKeyLineText(
+                                                      currentFormState.newKeysText,
+                                                      gameKeyLineIndex,
+                                                      nextGameKeyValue,
+                                                    ),
+                                                  }),
+                                                );
+
+                                                if (nextGameKeyValue.replace(/[^A-Z0-9]/g, "").length === 12) {
+                                                  requestAnimationFrame(() => {
+                                                    gameKeyInputRefs.current[gameKeyLineIndex + 1]?.focus();
+                                                  });
+                                                }
+                                              }}
+                                              onPaste={(event) => {
+                                                const pastedText = event.clipboardData.getData("text");
+                                                const pastedKeyValues = getPastedGameKeyValues(pastedText);
+
+                                                event.preventDefault();
+                                                updatePlatformFormState(
+                                                  managedPlatform.platform.id,
+                                                  (currentFormState) => ({
+                                                    ...currentFormState,
+                                                    newKeysText: pasteGameKeyLineText(
+                                                      currentFormState.newKeysText,
+                                                      gameKeyLineIndex,
+                                                      pastedText,
+                                                    ),
+                                                  }),
+                                                );
+                                                requestAnimationFrame(() => {
+                                                  gameKeyInputRefs.current[
+                                                    gameKeyLineIndex + Math.max(pastedKeyValues.length, 1)
+                                                  ]?.focus();
+                                                });
+                                              }}
+                                              className="w-full border-0 bg-transparent px-4 py-4 font-mono text-xs uppercase tracking-[0.14em] text-white outline-none placeholder:text-slate-600"
+                                            />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
 
                         {!managedPlatform.hasListing && (
@@ -997,3 +1141,15 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     </AdminLayout>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+

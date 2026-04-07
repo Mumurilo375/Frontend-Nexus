@@ -126,6 +126,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
 
   useEffect(() => {
     galleryItemsRef.current = galleryItems;
@@ -360,7 +361,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   return (
     <AdminLayout
       title={isEditing ? "Editar jogo" : "Novo jogo"}
-      description="Cadastre os dados editoriais do jogo, envie a capa principal, monte a galeria e vincule as categorias no mesmo formulário."
+      description="Edite os dados, a capa, a galeria e as categorias do jogo."
       backTo="/admin/games"
       backLabel="Voltar para jogos"
     >
@@ -468,7 +469,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
                   <div className="mt-4">
                     <AdminTextField
                       label="URL da capa"
-                      type="url"
+                      type="text"
                       value={values.coverImageUrl}
                       onChange={({ target }) => setField("coverImageUrl", target.value)}
                       note="Use apenas quando não quiser enviar um arquivo agora."
@@ -591,31 +592,47 @@ export default function AdminGameForm({ id }: { id?: string }) {
               </section>
 
               <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5">
-                <h2 className="text-lg font-semibold text-white">Categorias</h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Selecione pelo menos uma categoria para este jogo.
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">Categorias</h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {selectedCategories.length === 0
+                        ? "Nenhuma categoria selecionada."
+                        : `${selectedCategories.length} categoria(s) selecionada(s).`}
+                    </p>
+                  </div>
 
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {categories.map((category) => {
-                    const selected = values.categoryIds.includes(category.id);
-
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={() => toggleCategory(category.id)}
-                        className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                          selected
-                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white"
-                        }`}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
+                  <AdminButton
+                    type="button"
+                    tone="secondary"
+                    onClick={() => setIsCategoryPickerOpen((currentState) => !currentState)}
+                  >
+                    {isCategoryPickerOpen ? "Ocultar categorias" : "Escolher categorias"}
+                  </AdminButton>
                 </div>
+
+                {isCategoryPickerOpen && (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {categories.map((category) => {
+                      const selected = values.categoryIds.includes(category.id);
+
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => toggleCategory(category.id)}
+                          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                            selected
+                              ? "border-blue-400/50 bg-blue-500/15 text-blue-100"
+                              : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white"
+                          }`}
+                        >
+                          {category.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
             </div>
 
@@ -691,3 +708,5 @@ export default function AdminGameForm({ id }: { id?: string }) {
     </AdminLayout>
   );
 }
+
+

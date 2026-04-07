@@ -5,7 +5,7 @@ import NavBar from "../globals/NavBar";
 
 type AdminLayoutProps = {
   title: string;
-  description: string;
+  description?: string;
   children: ReactNode;
   backTo?: string;
   backLabel?: string;
@@ -36,9 +36,11 @@ export default function AdminLayout({
                 </Link>
               )}
               <h1 className="mt-3 text-3xl font-bold text-slate-50">{title}</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-                {description}
-              </p>
+              {description && (
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+                  {description}
+                </p>
+              )}
             </div>
             {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
           </div>

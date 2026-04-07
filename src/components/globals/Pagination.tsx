@@ -4,12 +4,14 @@ import MuiPagination from "@mui/material/Pagination";
 type PaginationProps = {
   page: number;
   totalPages: number;
+  scrollToTop?: boolean;
   onPageChange: (page: number) => void;
 };
 
 export default function Pagination({
   page,
   totalPages,
+  scrollToTop = true,
   onPageChange,
 }: PaginationProps) {
   if (totalPages <= 1) {
@@ -18,7 +20,9 @@ export default function Pagination({
 
   const handleChange = (_event: ChangeEvent<unknown>, value: number) => {
     onPageChange(value);
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    if (scrollToTop) {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    }
   };
 
   return (

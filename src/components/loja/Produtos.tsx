@@ -4,13 +4,9 @@ import { Heart } from "lucide-react";
 import api from "../../services/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
-import { resolveAssetUrl } from "../../services/assets";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
 import Pagination from "../globals/Pagination";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
-import steamLogo from "../../assets/steam.png";
-import playstationLogo from "../../assets/playlogo.png";
-import xboxLogo from "../../assets/xbox.png";
-import nintendoLogo from "../../assets/nintendo.png";
 
 type Category = {
   id: number;
@@ -57,13 +53,6 @@ type WishlistResponse = {
 };
 
 const PAGE_SIZE = 12;
-
-const platformLogoByName: Record<string, string> = {
-  steam: steamLogo,
-  playstation: playstationLogo,
-  xbox: xboxLogo,
-  "nintendo switch": nintendoLogo,
-};
 
 const normalizeText = (value: string) =>
   value
@@ -328,13 +317,6 @@ export default function Produtos() {
     }));
   };
 
-  const getPlatformLogo = (platformName?: string) => {
-    const key = String(platformName ?? "")
-      .trim()
-      .toLowerCase();
-    return platformLogoByName[key] || "/logo.png";
-  };
-
   const addToCart = async (gameId: number, listingId: number) => {
     if (!isLoggedIn) {
       askLogin();
@@ -491,7 +473,7 @@ export default function Produtos() {
                             title={listing.platform?.name || "Plataforma"}
                           >
                             <img
-                              src={getPlatformLogo(listing.platform?.name)}
+                              src={resolvePlatformLogoUrl(listing.platform?.name)}
                               alt={listing.platform?.name || "Plataforma"}
                               className="h-8 w-8 object-contain"
                             />

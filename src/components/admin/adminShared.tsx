@@ -4,10 +4,14 @@ import { Link, type LinkProps } from "react-router-dom";
 import type { PaginationMeta } from "../../services/http";
 
 const buttonClass = {
-  primary: "rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60",
-  secondary: "rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60",
-  danger: "rounded-full bg-rose-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60",
-  subtleDanger: "rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60",
+  primary:
+    "rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60",
+  secondary:
+    "rounded-full border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm text-gray-200 transition hover:border-blue-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60",
+  danger:
+    "rounded-full bg-rose-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60",
+  subtleDanger:
+    "rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60",
 } as const;
 const noticeClass = {
   error: "rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200",
@@ -38,9 +42,12 @@ export const AdminTextareaField = ({ label, note, className, ...props }: Compone
 export const AdminSelectField = ({ label, note, className, children, ...props }: ComponentProps<"select"> & FieldProps) => <Field label={label} note={note}><select {...props} className={cx(adminFieldClass, className)}>{children}</select></Field>;
 export const AdminReadonlyField = ({ label, value }: { label: string; value: string }) => <Field label={label}><input type="text" value={value} readOnly disabled className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-400" /></Field>;
 export const AdminToggleField = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) => (
-  <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-gray-200">
-    <input type="checkbox" checked={checked} onChange={({ target }) => onChange(target.checked)} />
-    {label}
+  <label className="flex min-h-14 items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+    <span className="font-medium text-white">{label}</span>
+    <span className={`relative inline-flex h-7 w-12 shrink-0 rounded-full border transition ${checked ? "border-blue-400/60 bg-blue-500/25" : "border-slate-700 bg-slate-950"}`}>
+      <input type="checkbox" checked={checked} onChange={({ target }) => onChange(target.checked)} className="sr-only" />
+      <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${checked ? "left-6" : "left-1"}`} />
+    </span>
   </label>
 );
 export const AdminSideCard = ({ eyebrow, className, children }: { eyebrow: string; className?: string; children: ReactNode }) => (

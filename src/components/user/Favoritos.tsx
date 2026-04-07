@@ -1,13 +1,9 @@
 import { Heart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import nintendoLogo from "../../assets/nintendo.png";
-import playstationLogo from "../../assets/playlogo.png";
-import steamLogo from "../../assets/steam.png";
-import xboxLogo from "../../assets/xbox.png";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
 
 type Game = {
   id: number;
@@ -42,13 +38,6 @@ type ListingItem = {
 
 type ListingsResponse = {
   items: ListingItem[];
-};
-
-const platformLogoByName: Record<string, string> = {
-  steam: steamLogo,
-  playstation: playstationLogo,
-  xbox: xboxLogo,
-  "nintendo switch": nintendoLogo,
 };
 
 export default function FavoritosMid() {
@@ -180,13 +169,6 @@ export default function FavoritosMid() {
       ...current,
       [gameId]: listingId,
     }));
-  };
-
-  const getPlatformLogo = (platformName?: string) => {
-    const key = String(platformName ?? "")
-      .trim()
-      .toLowerCase();
-    return platformLogoByName[key] || "/logo.png";
   };
 
   const addToCart = async (gameId: number, listingId: number) => {
@@ -352,7 +334,7 @@ export default function FavoritosMid() {
                                 title={listing.platform?.name || "Plataforma"}
                               >
                                 <img
-                                  src={getPlatformLogo(listing.platform?.name)}
+                                  src={resolvePlatformLogoUrl(listing.platform?.name)}
                                   alt={listing.platform?.name || "Plataforma"}
                                   className="h-8 w-8 object-contain"
                                 />

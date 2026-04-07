@@ -4,6 +4,7 @@ import {
   AdminButton,
   AdminNotice,
   AdminPageState,
+  AdminStatusBadge,
   AdminTextareaField,
   AdminTextField,
   AdminToggleField,
@@ -12,7 +13,7 @@ import {
 } from "./adminShared";
 import Pagination from "../globals/Pagination";
 import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
@@ -69,6 +70,7 @@ type DeleteKeysResponse = {
 
 type PlatformFormState = {
   price: string;
+  originalPrice: string;
   isActive: boolean;
   newKeysText: string;
   error: string;
@@ -77,8 +79,7 @@ type PlatformFormState = {
   isAddingKeys: boolean;
 };
 
-type KeysPanelState = {
-  isOpen: boolean;
+type PlatformKeysState = {
   isLoading: boolean;
   isRemoving: boolean;
   error: string;
@@ -88,15 +89,19 @@ type KeysPanelState = {
   selectedIds: number[];
 };
 
+type PlatformConfirmationState =
+  | { type: "priceChange"; platformId: number }
+  | { type: "removeKeys"; platformId: number };
+
 const keysPageSize = 8;
 const emptyKeysMeta = createEmptyMeta(keysPageSize);
 
-function getPlatformLogoUrl(platform: PlatformMonitorItem["platform"]) {
-  return resolveAssetUrl(platform.iconUrl, "/utils/logo.png");
-}
-
 function formatPlatformPrice(price: number | null) {
   return price === null ? "" : Number(price).toFixed(2).replace(".", ",");
+}
+
+function getPlatformPriceLabel(price: number | null) {
+  return price === null ? "Sem preco" : `R$ ${formatPlatformPrice(price)}`;
 }
 
 function parsePlatformPrice(value: string) {
@@ -121,9 +126,54 @@ function sanitizePlatformPrice(value: string) {
   return value.replace(/[^\d,.\s]/g, "");
 }
 
-function buildPlatformFormState(platform: PlatformMonitorItem): PlatformFormState {
+function formatGameKeyValue(value: string) {
+  const rawKeyValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return rawKeyValue.match(/.{1,4}/g)?.join("-") ?? "";
+}
+
+function formatGameKeysText(value: string) {
+  return value
+    .toUpperCase()
+    .split(/\r?\n/)
+    .flatMap((line) => line.replace(/[^A-Z0-9]/g, "").match(/.{1,12}/g) ?? [])
+    .map(formatGameKeyValue)
+    .join("\n");
+}
+
+function getGameKeyValues(text: string) {
+  const keyValues = formatGameKeysText(text)
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+
   return {
-    price: formatPlatformPrice(platform.price),
+    keyValues,
+    hasIncompleteKey: keyValues.some(
+      (keyValue) => keyValue.replace(/[^A-Z0-9]/g, "").length !== 12,
+    ),
+  };
+}
+
+function hasPlatformPriceChanged(platformFormState: PlatformFormState) {
+  return (
+    parsePlatformPrice(platformFormState.price) !==
+    parsePlatformPrice(platformFormState.originalPrice)
+  );
+}
+
+function shouldWarnAboutGlobalPriceChange(
+  platform: PlatformMonitorItem,
+  platformFormState: PlatformFormState,
+) {
+  return platform.hasListing && hasPlatformPriceChanged(platformFormState);
+}
+
+function createPlatformFormState(platform: PlatformMonitorItem): PlatformFormState {
+  const formattedPrice = formatPlatformPrice(platform.price);
+
+  return {
+    price: formattedPrice,
+    originalPrice: formattedPrice,
     isActive: platform.isActive,
     newKeysText: "",
     error: "",
@@ -133,9 +183,8 @@ function buildPlatformFormState(platform: PlatformMonitorItem): PlatformFormStat
   };
 }
 
-function buildKeysPanelState(): KeysPanelState {
+function createPlatformKeysState(): PlatformKeysState {
   return {
-    isOpen: false,
     isLoading: false,
     isRemoving: false,
     error: "",
@@ -146,31 +195,77 @@ function buildKeysPanelState(): KeysPanelState {
   };
 }
 
+function createFallbackPlatformMonitorItem(platformId: number): PlatformMonitorItem {
+  return {
+    platform: { id: platformId, name: "", slug: "" },
+    hasListing: false,
+    listingId: null,
+    price: null,
+    isActive: false,
+    stock: { available: 0, reserved: 0, sold: 0, total: 0 },
+  };
+}
+
+function PlatformConfirmModal({
+  title,
+  message,
+  confirmLabel,
+  tone = "primary",
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  tone?: "primary" | "danger";
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/75 px-4 py-6">
+      <div className="w-full max-w-md rounded-[28px] border border-slate-800 bg-slate-950 p-5 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <p className="mt-3 text-sm leading-6 text-slate-300">{message}</p>
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <AdminButton type="button" tone="secondary" onClick={onCancel}>
+            Cancelar
+          </AdminButton>
+          <AdminButton type="button" tone={tone === "danger" ? "danger" : "primary"} onClick={onConfirm}>
+            {confirmLabel}
+          </AdminButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   const [game, setGame] = useState<GamePlatformsResponse["game"] | null>(null);
   const [platforms, setPlatforms] = useState<PlatformMonitorItem[]>([]);
-  const [platformForms, setPlatformForms] = useState<Record<number, PlatformFormState>>({});
-  const [keysPanels, setKeysPanels] = useState<Record<number, KeysPanelState>>({});
+  const [platformBeingManaged, setPlatformBeingManaged] = useState<number | null>(null);
+  const [platformFormStateById, setPlatformFormStateById] = useState<Record<number, PlatformFormState>>({});
+  const [platformKeysStateById, setPlatformKeysStateById] = useState<Record<number, PlatformKeysState>>({});
+  const [pendingConfirmation, setPendingConfirmation] = useState<PlatformConfirmationState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const configurePlatformForms = useCallback((items: PlatformMonitorItem[]) => {
-    setPlatformForms((currentForms) =>
+  const syncPlatformState = useCallback((items: PlatformMonitorItem[]) => {
+    setPlatformFormStateById((currentFormStateById) =>
       Object.fromEntries(
         items.map((platform) => [
           platform.platform.id,
           {
-            ...buildPlatformFormState(platform),
-            newKeysText: currentForms[platform.platform.id]?.newKeysText ?? "",
+            ...createPlatformFormState(platform),
+            newKeysText: currentFormStateById[platform.platform.id]?.newKeysText ?? "",
           },
         ]),
       ),
     );
-    setKeysPanels((currentPanels) =>
+    setPlatformKeysStateById((currentKeysStateById) =>
       Object.fromEntries(
         items.map((platform) => [
           platform.platform.id,
-          currentPanels[platform.platform.id] ?? buildKeysPanelState(),
+          currentKeysStateById[platform.platform.id] ?? createPlatformKeysState(),
         ]),
       ),
     );
@@ -179,7 +274,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   const fetchPlatformMonitor = useCallback(async () => {
     if (!gameId) {
       setIsLoading(false);
-      setErrorMessage("Jogo inválido.");
+      setErrorMessage("Jogo invalido.");
       return;
     }
 
@@ -191,29 +286,52 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
 
       setGame(data.game);
       setPlatforms(data.platforms ?? []);
-      configurePlatformForms(data.platforms ?? []);
+      syncPlatformState(data.platforms ?? []);
     } catch (error) {
       setGame(null);
       setPlatforms([]);
-      setErrorMessage(
-        getApiErrorMessage(error, "Não foi possível carregar as plataformas do jogo."),
-      );
+      setErrorMessage(getApiErrorMessage(error, "Nao foi possivel carregar as plataformas do jogo."));
     } finally {
       setIsLoading(false);
     }
-  }, [configurePlatformForms, gameId]);
+  }, [gameId, syncPlatformState]);
 
   useEffect(() => {
     void fetchPlatformMonitor();
   }, [fetchPlatformMonitor]);
 
-  const getPlatformById = useCallback(
+  const findPlatformMonitorItem = useCallback(
     (platformId: number) =>
       platforms.find((platform) => platform.platform.id === platformId) ?? null,
     [platforms],
   );
 
-  const replacePlatformState = useCallback((nextPlatform: PlatformMonitorItem) => {
+  const updatePlatformFormState = (
+    platformId: number,
+    updateFormState: (currentFormState: PlatformFormState) => PlatformFormState,
+  ) => {
+    setPlatformFormStateById((currentFormStateById) => ({
+      ...currentFormStateById,
+      [platformId]: updateFormState(
+        currentFormStateById[platformId] ??
+          createPlatformFormState(createFallbackPlatformMonitorItem(platformId)),
+      ),
+    }));
+  };
+
+  const updatePlatformKeysState = (
+    platformId: number,
+    updateKeysState: (currentKeysState: PlatformKeysState) => PlatformKeysState,
+  ) => {
+    setPlatformKeysStateById((currentKeysStateById) => ({
+      ...currentKeysStateById,
+      [platformId]: updateKeysState(
+        currentKeysStateById[platformId] ?? createPlatformKeysState(),
+      ),
+    }));
+  };
+
+  const replacePlatformMonitorItem = useCallback((nextPlatform: PlatformMonitorItem) => {
     setPlatforms((currentPlatforms) =>
       currentPlatforms.map((platform) =>
         platform.platform.id === nextPlatform.platform.id ? nextPlatform : platform,
@@ -221,7 +339,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     );
   }, []);
 
-  const replacePlatformStock = useCallback(
+  const updatePlatformStockSummary = useCallback(
     (platformId: number, stock: StockSummary, listingId?: number) => {
       setPlatforms((currentPlatforms) =>
         currentPlatforms.map((platform) =>
@@ -239,47 +357,17 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     [],
   );
 
-  const updatePlatformForm = (
-    platformId: number,
-    updater: (current: PlatformFormState) => PlatformFormState,
-  ) => {
-    setPlatformForms((currentForms) => ({
-      ...currentForms,
-      [platformId]: updater(
-        currentForms[platformId] ??
-          buildPlatformFormState({
-            platform: { id: platformId, name: "", slug: "" },
-            hasListing: false,
-            listingId: null,
-            price: null,
-            isActive: false,
-            stock: { available: 0, reserved: 0, sold: 0, total: 0 },
-          }),
-      ),
-    }));
-  };
-
-  const updateKeysPanel = (
-    platformId: number,
-    updater: (current: KeysPanelState) => KeysPanelState,
-  ) => {
-    setKeysPanels((currentPanels) => ({
-      ...currentPanels,
-      [platformId]: updater(currentPanels[platformId] ?? buildKeysPanelState()),
-    }));
-  };
-
-  const fetchKeysPage = useCallback(
+  const fetchPlatformKeysPage = useCallback(
     async (platformId: number, page = 1) => {
-      const platform = getPlatformById(platformId);
+      const platform = findPlatformMonitorItem(platformId);
 
       if (!platform?.listingId) {
         return;
       }
 
       try {
-        updateKeysPanel(platformId, (current) => ({
-          ...current,
+        updatePlatformKeysState(platformId, (currentKeysState) => ({
+          ...currentKeysState,
           isLoading: true,
           error: "",
           page,
@@ -293,8 +381,8 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
           },
         });
 
-        updateKeysPanel(platformId, (current) => ({
-          ...current,
+        updatePlatformKeysState(platformId, (currentKeysState) => ({
+          ...currentKeysState,
           isLoading: false,
           items: data.items ?? [],
           meta: data.meta ?? emptyKeysMeta,
@@ -302,54 +390,86 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
           selectedIds: [],
         }));
       } catch (error) {
-        updateKeysPanel(platformId, (current) => ({
-          ...current,
+        updatePlatformKeysState(platformId, (currentKeysState) => ({
+          ...currentKeysState,
           isLoading: false,
           items: [],
           meta: emptyKeysMeta,
-          error: getApiErrorMessage(error, "Não foi possível carregar as keys."),
+          error: getApiErrorMessage(error, "Nao foi possivel carregar as keys."),
         }));
       }
     },
-    [getPlatformById],
+    [findPlatformMonitorItem],
   );
 
-  const savePlatform = async (platformId: number) => {
-    const platform = getPlatformById(platformId);
-    const form = platformForms[platformId];
+  const openPlatformManagementModal = async (platformId: number) => {
+    const platform = findPlatformMonitorItem(platformId);
 
-    if (!platform || !form || !gameId) {
+    if (!platform) {
       return;
     }
 
-    const parsedPrice = form.price.trim() ? parsePlatformPrice(form.price) : null;
+    setPlatformBeingManaged(platformId);
+    setPendingConfirmation(null);
+    setPlatformFormStateById((currentFormStateById) => ({
+      ...currentFormStateById,
+      [platformId]: createPlatformFormState(platform),
+    }));
 
-    if (form.price.trim() && parsedPrice === null) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
-        error: "Informe um preço válido usando vírgula ou ponto.",
+    if (!platform.listingId) {
+      setPlatformKeysStateById((currentKeysStateById) => ({
+        ...currentKeysStateById,
+        [platformId]: createPlatformKeysState(),
+      }));
+      return;
+    }
+
+    await fetchPlatformKeysPage(platformId, 1);
+  };
+
+  const closePlatformManagementModal = () => {
+    setPlatformBeingManaged(null);
+    setPendingConfirmation(null);
+  };
+
+  const savePlatformSettings = async (platformId: number) => {
+    const platform = findPlatformMonitorItem(platformId);
+    const platformFormState = platformFormStateById[platformId];
+
+    if (!platform || !platformFormState || !gameId) {
+      return;
+    }
+
+    const parsedPrice = platformFormState.price.trim()
+      ? parsePlatformPrice(platformFormState.price)
+      : null;
+
+    if (platformFormState.price.trim() && parsedPrice === null) {
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
+        error: "Informe um preco valido usando virgula ou ponto.",
       }));
       return;
     }
 
     if (!platform.hasListing && parsedPrice === null) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
-        error: "Informe um preço para configurar a plataforma.",
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
+        error: "Informe um preco para configurar a plataforma.",
       }));
       return;
     }
 
     try {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         isSaving: true,
         error: "",
         success: "",
       }));
 
       const payload: { price?: number; isActive: boolean } = {
-        isActive: form.isActive,
+        isActive: platformFormState.isActive,
       };
 
       if (parsedPrice !== null) {
@@ -361,414 +481,517 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
         payload,
       );
 
-      replacePlatformState(data);
-      updatePlatformForm(platformId, (current) => ({
-        ...buildPlatformFormState(data),
-        newKeysText: current.newKeysText,
-        success: "Preço e status atualizados para esta plataforma.",
+      replacePlatformMonitorItem(data);
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...createPlatformFormState(data),
+        newKeysText: currentFormState.newKeysText,
+        success: "Plataforma salva.",
       }));
     } catch (error) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         isSaving: false,
-        error: getApiErrorMessage(error, "Não foi possível salvar a plataforma."),
+        error: getApiErrorMessage(error, "Nao foi possivel salvar a plataforma."),
       }));
     }
   };
 
-  const addKeys = async (platformId: number) => {
-    const platform = getPlatformById(platformId);
-    const form = platformForms[platformId];
+  const requestPlatformSettingsSave = (platformId: number) => {
+    const platform = findPlatformMonitorItem(platformId);
+    const platformFormState = platformFormStateById[platformId];
 
-    if (!platform || !form || !gameId) {
+    if (!platform || !platformFormState) {
+      return;
+    }
+
+    if (shouldWarnAboutGlobalPriceChange(platform, platformFormState)) {
+      setPendingConfirmation({ type: "priceChange", platformId });
+      return;
+    }
+
+    void savePlatformSettings(platformId);
+  };
+
+  const addKeysToPlatform = async (platformId: number) => {
+    const platform = findPlatformMonitorItem(platformId);
+    const platformFormState = platformFormStateById[platformId];
+
+    if (!platform || !platformFormState || !gameId) {
       return;
     }
 
     if (!platform.hasListing) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
-        error: "Salve a plataforma antes de adicionar keys.",
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
+        error: "Salve o preco antes de adicionar keys.",
       }));
       return;
     }
 
-    if (!form.newKeysText.trim()) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+    const { keyValues, hasIncompleteKey } = getGameKeyValues(platformFormState.newKeysText);
+
+    if (keyValues.length === 0) {
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         error: "Cole pelo menos uma key.",
       }));
       return;
     }
 
+    if (hasIncompleteKey) {
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
+        error: "Complete todas as keys no formato XXXX-XXXX-XXXX.",
+      }));
+      return;
+    }
+
     try {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         isAddingKeys: true,
         error: "",
         success: "",
       }));
-
-      const keyValues = form.newKeysText
-        .split(/\r?\n/)
-        .map((value) => value.trim())
-        .filter(Boolean);
 
       const { data } = await api.post<SaveKeysResponse>(
         `/games/${gameId}/platforms/${platformId}/keys`,
         { keyValues },
       );
 
-      replacePlatformStock(platformId, data.stock, data.listingId);
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+      updatePlatformStockSummary(platformId, data.stock, data.listingId);
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         isAddingKeys: false,
         newKeysText: "",
         success: data.skippedCount
-          ? `${data.createdCount} key(s) adicionada(s), ${data.skippedCount} ignorada(s).`
-          : `${data.createdCount} key(s) adicionada(s).`,
+          ? `${data.createdCount} adicionadas, ${data.skippedCount} ignoradas.`
+          : `${data.createdCount} adicionadas.`,
       }));
-
-      if (keysPanels[platformId]?.isOpen) {
-        await fetchKeysPage(platformId, 1);
-      }
+      await fetchPlatformKeysPage(platformId, 1);
     } catch (error) {
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
         isAddingKeys: false,
-        error: getApiErrorMessage(error, "Não foi possível adicionar as keys."),
+        error: getApiErrorMessage(error, "Nao foi possivel adicionar as keys."),
       }));
     }
   };
 
   const toggleSelectedKey = (platformId: number, keyId: number) => {
-    updateKeysPanel(platformId, (current) => ({
-      ...current,
-      selectedIds: current.selectedIds.includes(keyId)
-        ? current.selectedIds.filter((id) => id !== keyId)
-        : [...current.selectedIds, keyId],
+    updatePlatformKeysState(platformId, (currentKeysState) => ({
+      ...currentKeysState,
+      selectedIds: currentKeysState.selectedIds.includes(keyId)
+        ? currentKeysState.selectedIds.filter((selectedId) => selectedId !== keyId)
+        : [...currentKeysState.selectedIds, keyId],
     }));
   };
 
-  const removeSelectedKeys = async (platformId: number) => {
-    const platform = getPlatformById(platformId);
-    const keysPanel = keysPanels[platformId];
+  const removeSelectedPlatformKeys = async (platformId: number) => {
+    const platform = findPlatformMonitorItem(platformId);
+    const platformKeysState = platformKeysStateById[platformId];
 
-    if (!platform?.listingId || !keysPanel || keysPanel.selectedIds.length === 0) {
-      return;
-    }
-
-    if (!window.confirm("Deseja remover as keys selecionadas?")) {
+    if (!platform?.listingId || !platformKeysState || platformKeysState.selectedIds.length === 0) {
       return;
     }
 
     try {
-      updateKeysPanel(platformId, (current) => ({
-        ...current,
+      updatePlatformKeysState(platformId, (currentKeysState) => ({
+        ...currentKeysState,
         isRemoving: true,
         error: "",
       }));
 
       const { data } = await api.post<DeleteKeysResponse>("/game-keys/bulk-delete", {
         listingId: platform.listingId,
-        ids: keysPanel.selectedIds,
+        ids: platformKeysState.selectedIds,
       });
 
-      replacePlatformStock(platformId, data.stock);
-      await fetchKeysPage(platformId, keysPanel.page);
-      updatePlatformForm(platformId, (current) => ({
-        ...current,
-        success: "Keys removidas com sucesso.",
+      updatePlatformStockSummary(platformId, data.stock);
+      await fetchPlatformKeysPage(platformId, platformKeysState.page);
+      updatePlatformFormState(platformId, (currentFormState) => ({
+        ...currentFormState,
+        success: "Keys removidas.",
       }));
-      updateKeysPanel(platformId, (current) => ({
-        ...current,
+      updatePlatformKeysState(platformId, (currentKeysState) => ({
+        ...currentKeysState,
         isRemoving: false,
         selectedIds: [],
       }));
     } catch (error) {
-      updateKeysPanel(platformId, (current) => ({
-        ...current,
+      updatePlatformKeysState(platformId, (currentKeysState) => ({
+        ...currentKeysState,
         isRemoving: false,
-        error: getApiErrorMessage(error, "Não foi possível remover as keys."),
+        error: getApiErrorMessage(error, "Nao foi possivel remover as keys."),
       }));
     }
   };
 
-  const toggleKeysPanel = async (platformId: number) => {
-    const nextOpenState = !(keysPanels[platformId]?.isOpen ?? false);
+  const requestSelectedKeysRemoval = (platformId: number) => {
+    const platformKeysState = platformKeysStateById[platformId];
 
-    setKeysPanels((currentPanels) =>
-      Object.fromEntries(
-        platforms.map((platform) => [
-          platform.platform.id,
-          {
-            ...(currentPanels[platform.platform.id] ?? buildKeysPanelState()),
-            isOpen: platform.platform.id === platformId ? nextOpenState : false,
-          },
-        ]),
-      ),
-    );
-
-    if (nextOpenState) {
-      await fetchKeysPage(platformId, keysPanels[platformId]?.page ?? 1);
+    if (!platformKeysState || platformKeysState.selectedIds.length === 0) {
+      return;
     }
+
+    setPendingConfirmation({ type: "removeKeys", platformId });
+  };
+
+  const confirmPendingAction = () => {
+    if (!pendingConfirmation) {
+      return;
+    }
+
+    const platformId = pendingConfirmation.platformId;
+    const confirmationType = pendingConfirmation.type;
+
+    setPendingConfirmation(null);
+
+    if (confirmationType === "priceChange") {
+      void savePlatformSettings(platformId);
+      return;
+    }
+
+    void removeSelectedPlatformKeys(platformId);
   };
 
   const availableKeysCount = platforms.reduce(
-    (total, platform) => total + Number(platform.stock.available ?? 0),
+    (totalKeys, platform) => totalKeys + Number(platform.stock.available ?? 0),
     0,
   );
+  const managedPlatform =
+    platformBeingManaged === null ? null : findPlatformMonitorItem(platformBeingManaged);
+  const managedPlatformFormState =
+    platformBeingManaged === null ? null : platformFormStateById[platformBeingManaged] ?? null;
+  const managedPlatformKeysState =
+    platformBeingManaged === null ? null : platformKeysStateById[platformBeingManaged] ?? null;
+  const shouldShowGlobalPriceChangeWarning =
+    managedPlatform && managedPlatformFormState
+      ? shouldWarnAboutGlobalPriceChange(managedPlatform, managedPlatformFormState)
+      : false;
+  const confirmationPlatform =
+    pendingConfirmation === null ? null : findPlatformMonitorItem(pendingConfirmation.platformId);
+  const selectedKeysCount =
+    pendingConfirmation?.type === "removeKeys"
+      ? platformKeysStateById[pendingConfirmation.platformId]?.selectedIds.length ?? 0
+      : 0;
 
   return (
-    <AdminLayout
-      title={game?.title || "Preço e estoque"}
-      description="Preço por plataforma e reposição de keys."
-      backTo="/admin/games"
-      backLabel="Voltar para jogos"
-    >
+    <AdminLayout title="Plataformas" backTo="/admin/games" backLabel="Voltar para jogos">
       <AdminPageState
         loading={isLoading}
         error={errorMessage}
         isEmpty={platforms.length === 0}
-        loadingText="Carregando monitor de plataformas..."
+        loadingText="Carregando plataformas..."
         emptyText="Nenhuma plataforma cadastrada no sistema."
       >
         <>
-          <section className="max-w-5xl">
-            <article className="nexus-card p-4 sm:p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                <img
-                  src={resolveAssetUrl(game?.coverImageUrl)}
-                  alt={game?.title || "Jogo"}
-                  className="aspect-[21/10] w-full max-w-[360px] shrink-0 rounded-[24px] border border-slate-800 object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-semibold text-white">
-                    {game?.title || "Jogo"}
-                  </h2>
-                  <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                    <span className="rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1.5 text-blue-100">
-                      {availableKeysCount} keys disponíveis
-                    </span>
-                  </div>
-                </div>
+          <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.28)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <img
+                src={resolveAssetUrl(game?.coverImageUrl)}
+                alt={game?.title || "Jogo"}
+                className="aspect-[21/10] w-full max-w-[170px] shrink-0 rounded-[24px] border border-slate-800 object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Jogo
+                </p>
+                <h2 className="mt-2 truncate text-2xl font-semibold text-white">
+                  {game?.title || "Jogo"}
+                </h2>
               </div>
-            </article>
+              <span className="shrink-0 rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-100">
+                {availableKeysCount} keys disponiveis
+              </span>
+            </div>
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            {platforms.map((platform) => {
-              const platformId = platform.platform.id;
-              const form = platformForms[platformId] ?? buildPlatformFormState(platform);
-              const keysPanel = keysPanels[platformId] ?? buildKeysPanelState();
-
-              return (
-                <article
-                  key={platformId}
-                  className="rounded-[24px] border border-slate-800 bg-slate-950/82 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
-                >
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <img
-                          src={getPlatformLogoUrl(platform.platform)}
-                          alt={platform.platform.name}
-                          className="h-14 w-14 shrink-0 rounded-2xl border border-slate-800 bg-slate-900 object-contain p-2"
-                        />
-                        <div className="min-w-0">
-                          <h3 className="text-lg font-semibold text-white">
-                            {platform.platform.name}
-                          </h3>
-                          <p className="mt-1 text-sm text-slate-400">
-                            {platform.stock.available} disponíveis
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 lg:ml-auto">
-                        <AdminButton
-                          type="button"
-                          tone="secondary"
-                          onClick={() => {
-                            void toggleKeysPanel(platformId);
-                          }}
-                        >
-                          {keysPanel.isOpen ? "Fechar estoque" : "Abrir estoque"}
-                        </AdminButton>
-                        <AdminToggleField
-                          label="Venda ativa"
-                          checked={form.isActive}
-                          onChange={(checked) =>
-                            updatePlatformForm(platformId, (current) => ({
-                              ...current,
-                              isActive: checked,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-[180px,auto]">
-                      <AdminTextField
-                        label="Preço de venda"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="10,00"
-                        value={form.price}
-                        onChange={({ target }) =>
-                          updatePlatformForm(platformId, (current) => ({
-                            ...current,
-                            price: sanitizePlatformPrice(target.value),
-                          }))
-                        }
-                        note="Não varia por key."
-                      />
-
-                      <div className="flex items-end">
-                        <AdminButton
-                          type="button"
-                          disabled={form.isSaving}
-                          onClick={() => {
-                            void savePlatform(platformId);
-                          }}
-                        >
-                          {form.isSaving
-                            ? "Salvando..."
-                            : platform.hasListing
-                              ? "Salvar"
-                              : "Criar"}
-                        </AdminButton>
-                      </div>
-                    </div>
-
-                    {form.error && (
-                      <div>
-                        <AdminNotice>{form.error}</AdminNotice>
-                      </div>
-                    )}
-                    {form.success && (
-                      <div>
-                        <AdminNotice tone="success">{form.success}</AdminNotice>
-                      </div>
-                    )}
-
-                    {keysPanel.isOpen && (
-                      <div className="rounded-[22px] border border-slate-800 bg-slate-900/35 p-4">
-                        <div className="grid gap-4 xl:grid-cols-2">
-                          <div>
-                            <AdminTextareaField
-                              label="Novas keys"
-                              rows={4}
-                              value={form.newKeysText}
-                              onChange={({ target }) =>
-                                updatePlatformForm(platformId, (current) => ({
-                                  ...current,
-                                  newKeysText: target.value,
-                                }))
-                              }
-                              placeholder="AAAAA-BBBBB-CCCCC&#10;DDDDD-EEEEE-FFFFF"
-                              note="Uma por linha."
-                              className="text-sm"
-                            />
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <AdminButton
-                                type="button"
-                                disabled={form.isAddingKeys || !platform.hasListing}
-                                onClick={() => {
-                                  void addKeys(platformId);
-                                }}
-                              >
-                                {form.isAddingKeys ? "Adicionando..." : "Adicionar"}
-                              </AdminButton>
-                              {!platform.hasListing && (
-                                <p className="self-center text-sm text-slate-400">
-                                  Salve a plataforma antes de abastecer o estoque.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <p className="text-sm text-slate-400">
-                                {keysPanel.meta.total} cadastradas
-                              </p>
-                              <AdminButton
-                                type="button"
-                                tone="subtleDanger"
-                                disabled={
-                                  keysPanel.isRemoving || keysPanel.selectedIds.length === 0
-                                }
-                                onClick={() => {
-                                  void removeSelectedKeys(platformId);
-                                }}
-                              >
-                                {keysPanel.isRemoving ? "Removendo..." : "Remover selecionadas"}
-                              </AdminButton>
-                            </div>
-
-                            {keysPanel.error && (
-                              <div className="mt-3">
-                                <AdminNotice>{keysPanel.error}</AdminNotice>
-                              </div>
-                            )}
-
-                            {keysPanel.isLoading ? (
-                              <p className="mt-3 text-sm text-slate-300">Carregando keys...</p>
-                            ) : keysPanel.items.length === 0 ? (
-                              <p className="mt-3 rounded-2xl border border-slate-800 bg-slate-900/45 p-4 text-sm text-slate-300">
-                                Nenhuma key cadastrada para esta plataforma.
-                              </p>
-                            ) : (
-                              <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
-                                {keysPanel.items.map((gameKey) => {
-                                  const canRemove = gameKey.status === "available";
-
-                                  return (
-                                    <div
-                                      key={gameKey.id}
-                                      className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/45 p-3 sm:grid-cols-[20px,1fr,auto]"
-                                    >
-                                      <div className="flex items-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={keysPanel.selectedIds.includes(gameKey.id)}
-                                          disabled={!canRemove}
-                                          onChange={() =>
-                                            toggleSelectedKey(platformId, gameKey.id)
-                                          }
-                                        />
-                                      </div>
-
-                                      <p className="truncate font-mono text-sm text-white">
-                                        {gameKey.keyValue}
-                                      </p>
-
-                                      <span className={getKeyStatusBadgeClass(gameKey.status)}>
-                                        {gameKey.status}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            <Pagination
-                              page={keysPanel.page}
-                              totalPages={keysPanel.meta.totalPages}
-                              onPageChange={(page) => {
-                                void fetchKeysPage(platformId, page);
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
+            {platforms.map((platform) => (
+              <article
+                key={platform.platform.id}
+                className="rounded-[24px] border border-slate-800 bg-slate-950/82 p-4 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/90 p-2">
+                    <img
+                      src={resolvePlatformLogoUrl(platform.platform.name, platform.platform.iconUrl)}
+                      alt={platform.platform.name}
+                      className="h-full w-full object-contain"
+                    />
                   </div>
-                </article>
-              );
-            })}
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-lg font-semibold text-white">
+                      {platform.platform.name}
+                    </h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300">
+                        {getPlatformPriceLabel(platform.price)}
+                      </span>
+                      <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300">
+                        {platform.stock.available} disponiveis
+                      </span>
+                      <AdminStatusBadge
+                        active={platform.isActive}
+                        activeLabel="Venda ativa"
+                        inactiveLabel="Venda inativa"
+                      />
+                    </div>
+                  </div>
+
+                  <AdminButton
+                    type="button"
+                    tone="secondary"
+                    onClick={() => {
+                      void openPlatformManagementModal(platform.platform.id);
+                    }}
+                  >
+                    Gerenciar
+                  </AdminButton>
+                </div>
+              </article>
+            ))}
           </section>
+
+          {managedPlatform && managedPlatformFormState && managedPlatformKeysState && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 px-4 py-6">
+              <div className="flex max-h-[75vh] w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-800 p-5">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/90 p-2">
+                      <img
+                        src={resolvePlatformLogoUrl(
+                          managedPlatform.platform.name,
+                          managedPlatform.platform.iconUrl,
+                        )}
+                        alt={managedPlatform.platform.name}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-xl font-semibold text-white">
+                        {managedPlatform.platform.name}
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {managedPlatform.stock.available} keys disponiveis
+                      </p>
+                    </div>
+                  </div>
+
+                  <AdminButton
+                    type="button"
+                    tone="secondary"
+                    onClick={closePlatformManagementModal}
+                  >
+                    Fechar
+                  </AdminButton>
+                </div>
+
+                <div className="overflow-y-auto p-5">
+                  <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)]">
+                    <section className="space-y-4">
+                      <div className="rounded-[24px] border border-slate-800 bg-slate-900/35 p-4">
+                        <div className="max-w-[180px]">
+                          <AdminTextField
+                            label="Preco"
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="10,00"
+                            value={managedPlatformFormState.price}
+                            onChange={({ target }) =>
+                              updatePlatformFormState(managedPlatform.platform.id, (currentFormState) => ({
+                                ...currentFormState,
+                                price: sanitizePlatformPrice(target.value),
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="mt-3">
+                          <AdminToggleField
+                            label="Venda ativa"
+                            checked={managedPlatformFormState.isActive}
+                            onChange={(checked) =>
+                              updatePlatformFormState(managedPlatform.platform.id, (currentFormState) => ({
+                                ...currentFormState,
+                                isActive: checked,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <AdminButton
+                          type="button"
+                          className="mt-3 w-full"
+                          disabled={managedPlatformFormState.isSaving}
+                          onClick={() => requestPlatformSettingsSave(managedPlatform.platform.id)}
+                        >
+                          {managedPlatformFormState.isSaving ? "Salvando..." : "Salvar"}
+                        </AdminButton>
+                      </div>
+
+                      {shouldShowGlobalPriceChangeWarning && (
+                        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">
+                          O novo preco vai valer para todas as keys atuais e futuras desta plataforma.
+                        </div>
+                      )}
+                    </section>
+
+                    <section className="grid gap-4">
+                      {(managedPlatformFormState.error || managedPlatformFormState.success) && (
+                        <div className="grid gap-3">
+                          {managedPlatformFormState.error && (
+                            <AdminNotice>{managedPlatformFormState.error}</AdminNotice>
+                          )}
+                          {managedPlatformFormState.success && (
+                            <AdminNotice tone="success">
+                              {managedPlatformFormState.success}
+                            </AdminNotice>
+                          )}
+                        </div>
+                      )}
+
+                      <section className="rounded-[24px] border border-slate-800 bg-slate-900/35 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-white">Novas keys</h3>
+                            <p className="mt-1 text-xs text-slate-400">Formato XXXX-XXXX-XXXX</p>
+                          </div>
+                          <AdminButton
+                            type="button"
+                            disabled={managedPlatformFormState.isAddingKeys || !managedPlatform.hasListing}
+                            onClick={() => {
+                              void addKeysToPlatform(managedPlatform.platform.id);
+                            }}
+                          >
+                            {managedPlatformFormState.isAddingKeys ? "Adicionando..." : "Adicionar"}
+                          </AdminButton>
+                        </div>
+
+                        <div className="mt-3">
+                          <AdminTextareaField
+                            label=""
+                            rows={6}
+                            value={managedPlatformFormState.newKeysText}
+                            onChange={({ target }) =>
+                              updatePlatformFormState(managedPlatform.platform.id, (currentFormState) => ({
+                                ...currentFormState,
+                                newKeysText: formatGameKeysText(target.value),
+                              }))
+                            }
+                            placeholder="AAAA-BBBB-CCCC"
+                            className="mt-0 min-h-[170px] resize-none font-mono text-sm uppercase tracking-[0.18em] leading-7"
+                          />
+                        </div>
+
+                        {!managedPlatform.hasListing && (
+                          <p className="mt-3 text-sm text-slate-400">Salve o preco para liberar o estoque.</p>
+                        )}
+                      </section>
+
+                      <section className="rounded-[24px] border border-slate-800 bg-slate-900/35 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-white">Keys cadastradas</h3>
+                            <p className="mt-1 text-xs text-slate-400">
+                              {managedPlatformKeysState.meta.total} no estoque
+                            </p>
+                          </div>
+                          <AdminButton
+                            type="button"
+                            tone="subtleDanger"
+                            disabled={
+                              managedPlatformKeysState.isRemoving ||
+                              managedPlatformKeysState.selectedIds.length === 0
+                            }
+                            onClick={() => requestSelectedKeysRemoval(managedPlatform.platform.id)}
+                          >
+                            {managedPlatformKeysState.isRemoving ? "Removendo..." : "Remover selecionadas"}
+                          </AdminButton>
+                        </div>
+
+                        {managedPlatformKeysState.error && (
+                          <div className="mt-3">
+                            <AdminNotice>{managedPlatformKeysState.error}</AdminNotice>
+                          </div>
+                        )}
+
+                        {managedPlatformKeysState.isLoading ? (
+                          <p className="mt-3 text-sm text-slate-300">Carregando keys...</p>
+                        ) : managedPlatformKeysState.items.length === 0 ? (
+                          <p className="mt-3 rounded-2xl border border-slate-800 bg-slate-900/45 p-4 text-sm text-slate-300">
+                            Nenhuma key cadastrada.
+                          </p>
+                        ) : (
+                          <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                            {managedPlatformKeysState.items.map((gameKey) => {
+                              const canRemove = gameKey.status === "available";
+
+                              return (
+                                <label
+                                  key={gameKey.id}
+                                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/45 p-3"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={managedPlatformKeysState.selectedIds.includes(gameKey.id)}
+                                    disabled={!canRemove}
+                                    onChange={() =>
+                                      toggleSelectedKey(managedPlatform.platform.id, gameKey.id)
+                                    }
+                                  />
+                                  <span className="rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 font-mono text-xs tracking-[0.18em] text-white break-all">
+                                    {formatGameKeyValue(gameKey.keyValue)}
+                                  </span>
+                                  <span className={getKeyStatusBadgeClass(gameKey.status)}>
+                                    {gameKey.status}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        <Pagination
+                          page={managedPlatformKeysState.page}
+                          totalPages={managedPlatformKeysState.meta.totalPages}
+                          scrollToTop={false}
+                          onPageChange={(page) => {
+                            void fetchPlatformKeysPage(managedPlatform.platform.id, page);
+                          }}
+                        />
+                      </section>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {pendingConfirmation && confirmationPlatform && (
+            <PlatformConfirmModal
+              title={
+                pendingConfirmation.type === "priceChange"
+                  ? "Confirmar novo preco"
+                  : "Remover keys selecionadas"
+              }
+              message={
+                pendingConfirmation.type === "priceChange"
+                  ? `Esse novo preco sera aplicado a todas as keys existentes e futuras de ${confirmationPlatform.platform.name}.`
+                  : `${selectedKeysCount} key(s) disponivel(is) selecionada(s) sera(ao) removida(s) agora.`
+              }
+              confirmLabel={
+                pendingConfirmation.type === "priceChange"
+                  ? "Salvar novo preco"
+                  : "Remover keys"
+              }
+              tone={pendingConfirmation.type === "priceChange" ? "primary" : "danger"}
+              onCancel={() => setPendingConfirmation(null)}
+              onConfirm={confirmPendingAction}
+            />
+          )}
         </>
       </AdminPageState>
     </AdminLayout>

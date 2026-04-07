@@ -1,12 +1,8 @@
 import { Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import nintendoLogo from "../../assets/nintendo.png";
-import playstationLogo from "../../assets/playlogo.png";
-import steamLogo from "../../assets/steam.png";
-import xboxLogo from "../../assets/xbox.png";
 import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
 
 type CartItem = {
   id: number;
@@ -24,22 +20,8 @@ type CartResponse = {
   meta?: { subtotal?: number; totalItems?: number };
 };
 
-const platformLogoByName: Record<string, string> = {
-  steam: steamLogo,
-  playstation: playstationLogo,
-  xbox: xboxLogo,
-  "nintendo switch": nintendoLogo,
-};
-
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;
-}
-
-function getPlatformLogo(platformName?: string) {
-  const key = String(platformName ?? "")
-    .trim()
-    .toLowerCase();
-  return platformLogoByName[key] || "/logo.png";
 }
 
 export default function CarrinhoMid() {
@@ -145,7 +127,7 @@ export default function CarrinhoMid() {
                         </h2>
                         <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-950/90 p-1.5">
                           <img
-                            src={getPlatformLogo(item.listing?.platform?.name)}
+                            src={resolvePlatformLogoUrl(item.listing?.platform?.name)}
                             alt={item.listing?.platform?.name || "Plataforma"}
                             title={item.listing?.platform?.name || "Plataforma"}
                             className="h-full w-full object-contain"

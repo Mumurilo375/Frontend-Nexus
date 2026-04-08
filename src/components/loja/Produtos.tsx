@@ -309,7 +309,7 @@ export default function Produtos() {
 
       {filteredGames.length > 0 && (
         <>
-          <div className="mt-25 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className=" grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedGames.map((game) => {
               const listings = getListingsForGame(game.id);
               const selectedListing = getSelectedListing(

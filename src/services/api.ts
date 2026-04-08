@@ -2,6 +2,7 @@ import axios, { AxiosHeaders, isAxiosError } from "axios";
 import { clearAuth, getToken } from "./auth";
 
 const baseURL = (import.meta.env.VITE_API_BASE_URL ?? "/api").trim() || "/api";
+const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
 
 const api = axios.create({
   baseURL,
@@ -26,6 +27,8 @@ api.interceptors.response.use(
       clearAuth();
 
       if (window.location.pathname !== "/login") {
+        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, currentPath);
         window.location.assign("/login");
       }
     }

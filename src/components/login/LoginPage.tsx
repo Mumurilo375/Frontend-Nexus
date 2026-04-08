@@ -7,6 +7,7 @@ import { type AuthUser } from "../../services/auth";
 import Back from "./Back";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
 const inputClass =
   "mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500/70";
 
@@ -29,6 +30,10 @@ function getFriendlyLoginError(error: unknown): string {
   }
 
   return message || "Não foi possível fazer login agora. Tente novamente.";
+}
+
+function isSafeRedirectPath(value: string): boolean {
+  return value.startsWith("/") && !value.startsWith("//") && value !== "/login";
 }
 
 export default function LoginPage() {
@@ -61,14 +66,18 @@ export default function LoginPage() {
       });
 
       login(data.token, data.user);
-      const from = (location.state as { from?: string } | null)?.from;
-      if (from) {
-        void navigate(from);
-      } else if (window.history.length > 1) {
-        void navigate(-1);
-      } else {
-        void navigate("/");
+      const fromState = (location.state as { from?: unknown } | null)?.from;
+      const fromSession = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+      const from = typeof fromState === "string" ? fromState : fromSession;
+
+      sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+
+      if (from && isSafeRedirectPath(from)) {
+        void navigate(from, { replace: true });
+        return;
       }
+
+      void navigate("/", { replace: true });
     } catch (error: unknown) {
       setErrorMessage(getFriendlyLoginError(error));
     } finally {

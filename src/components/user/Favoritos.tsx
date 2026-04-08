@@ -1,44 +1,18 @@
+import { isAxiosError } from "axios";
 import { Heart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
 import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
-
-type Game = {
-  id: number;
-  title: string;
-  description: string;
-  coverImageUrl?: string;
-  price?: number;
-};
-
-type WishlistItem = {
-  id: number;
-  gameId: number;
-  game?: Game;
-};
-
-type WishlistResponse = {
-  items: WishlistItem[];
-};
-
-type ListingItem = {
-  id: number;
-  gameId?: number;
-  price?: number | string;
-  isActive?: boolean;
-  game?: {
-    id?: number;
-  };
-  platform?: {
-    name?: string;
-  };
-};
-
-type ListingsResponse = {
-  items: ListingItem[];
-};
+import { getListingAvailableStock, getRequestErrorMessage } from "../loja/loja.utils";
+import type {
+  CartResponse,
+  ListingsResponse,
+  ListingItem,
+  WishlistItem,
+  WishlistResponse,
+} from "../loja/loja.types";
 
 export default function FavoritosMid() {
   const navigate = useNavigate();
@@ -79,9 +53,9 @@ export default function FavoritosMid() {
         ] = await Promise.all([
           api.get<WishlistResponse>("/wishlists"),
           api.get<ListingsResponse>("/listings", {
-            params: { page: 1, limit: 100 },
+            params: { page: 1, limit: 100, includeStock: true },
           }),
-          api.get<{ items: Array<{ listingId: number }> }>("/cart"),
+          api.get<CartResponse>("/cart"),
         ]);
 
         const listingItems = (listingsData.items ?? []).filter(
@@ -184,6 +158,31 @@ export default function FavoritosMid() {
         current.includes(listingId) ? current : [...current, listingId],
       );
       window.dispatchEvent(new Event("nexus:counts-updated"));
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.data?.code === "OUT_OF_STOCK") {
+        setListingByGame((current) => {
+          const listings = current.get(gameId);
+          if (!listings) return current;
+
+          const nextListingByGame = new Map(current);
+          nextListingByGame.set(
+            gameId,
+            listings.map((listing) =>
+              listing.id === listingId
+                ? { ...listing, stock: { ...listing.stock, available: 0 } }
+                : listing,
+            ),
+          );
+          return nextListingByGame;
+        });
+      }
+
+      setInfoMessage(
+        getRequestErrorMessage(
+          error,
+          "Não foi possível adicionar o item ao carrinho.",
+        ),
+      );
     } finally {
       setPendingCartGameId(null);
     }
@@ -191,9 +190,16 @@ export default function FavoritosMid() {
 
   const handleAddToCartClick = (gameTitle: string, gameId: number) => {
     const selectedListing = getSelectedListingForGame(gameId);
+    const selectedListingIsOutOfStock =
+      Boolean(selectedListing?.stock) && getListingAvailableStock(selectedListing) <= 0;
 
     if (!selectedListing) {
       setInfoMessage("Escolha uma plataforma antes de adicionar ao carrinho.");
+      return;
+    }
+
+    if (selectedListingIsOutOfStock) {
+      setInfoMessage("Esta plataforma está sem estoque no momento.");
       return;
     }
 
@@ -267,6 +273,9 @@ export default function FavoritosMid() {
               const game = item.game;
               const listings = getListingsForGame(item.gameId);
               const selectedListing = getSelectedListingForGame(item.gameId);
+              const selectedListingIsOutOfStock =
+                Boolean(selectedListing?.stock) &&
+                getListingAvailableStock(selectedListing) <= 0;
               const inCart = selectedListing
                 ? cartListingIds.includes(selectedListing.id)
                 : false;
@@ -318,6 +327,9 @@ export default function FavoritosMid() {
                         <div className="flex flex-wrap gap-2">
                           {listings.map((listing) => {
                             const selected = selectedListing?.id === listing.id;
+                            const listingIsOutOfStock =
+                              Boolean(listing.stock) &&
+                              getListingAvailableStock(listing) <= 0;
 
                             return (
                               <button
@@ -328,15 +340,19 @@ export default function FavoritosMid() {
                                 }}
                                 className={`rounded-xl border p-2 transition ${
                                   selected
-                                    ? "border-blue-500/70 bg-blue-500/15"
-                                    : "border-slate-700 bg-slate-950/90 hover:border-slate-500"
+                                    ? listingIsOutOfStock
+                                      ? "border-rose-400/70 bg-rose-500/10"
+                                      : "border-blue-500/70 bg-blue-500/15"
+                                    : listingIsOutOfStock
+                                      ? "border-rose-500/40 bg-rose-500/5 hover:border-rose-400/60"
+                                      : "border-slate-700 bg-slate-950/90 hover:border-slate-500"
                                 }`}
                                 title={listing.platform?.name || "Plataforma"}
                               >
                                 <img
                                   src={resolvePlatformLogoUrl(listing.platform?.name)}
                                   alt={listing.platform?.name || "Plataforma"}
-                                  className="h-8 w-8 object-contain"
+                                  className={`h-8 w-8 object-contain ${listingIsOutOfStock ? "opacity-55" : ""}`}
                                 />
                               </button>
                             );
@@ -345,6 +361,18 @@ export default function FavoritosMid() {
                       ) : (
                         <p className="text-sm text-slate-400">
                           Nenhuma plataforma disponível para este jogo.
+                        </p>
+                      )}
+
+                      {selectedListing?.stock && (
+                        <p
+                          className={`text-xs font-medium ${
+                            selectedListingIsOutOfStock ? "text-rose-200" : "text-emerald-200"
+                          }`}
+                        >
+                          {selectedListingIsOutOfStock
+                            ? "Plataforma indisponível no momento."
+                            : `Estoque disponível: ${getListingAvailableStock(selectedListing)}`}
                         </p>
                       )}
                     </div>
@@ -360,15 +388,24 @@ export default function FavoritosMid() {
                         onClick={() => {
                           handleAddToCartClick(game.title, item.gameId);
                         }}
-                        className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                        className={`rounded-full px-5 py-2.5 text-sm font-semibold text-white transition ${
+                          selectedListingIsOutOfStock
+                            ? "cursor-not-allowed border border-rose-500/40 bg-rose-500/10 text-rose-100"
+                            : "bg-blue-600 hover:bg-blue-500"
+                        }`}
                         disabled={
-                          !selectedListing || pendingCartGameId === item.gameId
+                          !selectedListing ||
+                          pendingCartGameId === item.gameId ||
+                          inCart ||
+                          selectedListingIsOutOfStock
                         }
                       >
                         {!selectedListing
                           ? "Escolha a plataforma"
                           : inCart
                             ? "No carrinho"
+                            : selectedListingIsOutOfStock
+                              ? "Sem estoque"
                             : pendingCartGameId === item.gameId
                               ? "Adicionando..."
                               : "Adicionar no carrinho"}

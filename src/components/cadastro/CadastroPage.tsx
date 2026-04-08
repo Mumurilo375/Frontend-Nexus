@@ -1,9 +1,9 @@
-import { isAxiosError } from "axios";
 import { UserCircleIcon } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Back from "../login/Back";
 import api from "../../services/api";
+import { getApiErrorMessage } from "../../services/http";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const inputClassName =
@@ -44,39 +44,9 @@ function isValidCpf(rawCpf: string): boolean {
 }
 
 function getFriendlyRegisterError(error: Error) {
-  const message = isAxiosError<{ message?: string }>(error)
-    ? String(error.response?.data?.message ?? error.message ?? "")
-    : error.message;
-
-  if (message.includes("Email is already in use")) {
-    return "Este email já está em uso.";
-  }
-
-  if (message.includes("Username is already in use")) {
-    return "Este nome de usuário já está em uso.";
-  }
-
-  if (message.includes("CPF is already in use")) {
-    return "Este CPF já está cadastrado.";
-  }
-
-  if (message.includes("Password must")) {
-    return "A senha deve ter no mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.";
-  }
-
-  if (
-    message.includes("Invalid CPF") ||
-    message.includes("CPF must have 11 digits")
-  ) {
-    return "CPF inválido. Verifique os dados informados.";
-  }
-
-  if (message.includes("Network Error")) {
-    return "Não foi possível conectar com o servidor.";
-  }
-
-  return (
-    message || "Não foi possível concluir o cadastro agora. Tente novamente."
+  return getApiErrorMessage(
+    error,
+    "Não foi possível concluir o cadastro agora. Tente novamente.",
   );
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
+import { getApiErrorMessage } from "../../services/http";
 
 type UserProfile = {
   id: number;
@@ -71,45 +72,9 @@ function getPasswordStrengthError(password: string): string | null {
 }
 
 function getFriendlyUpdateError(error: unknown): string {
-  const maybeError = error as {
-    response?: {
-      data?: {
-        message?: string;
-      };
-    };
-  };
-
-  const message = String(maybeError?.response?.data?.message ?? "");
-
-  if (message.includes("Email cannot be changed")) {
-    return "O email não pode ser alterado.";
-  }
-
-  if (message.includes("Username is already in use")) {
-    return "Este nome de usuário já está em uso.";
-  }
-
-  if (message.includes("CPF is already in use")) {
-    return "Este CPF já está cadastrado.";
-  }
-
-  if (message.includes("Password must")) {
-    return "A senha deve ter no mínimo 8 caracteres, com caractere maiúsculo, minúsculo, número e caractere especial.";
-  }
-
-  if (
-    message.includes("Invalid CPF") ||
-    message.includes("CPF must have 11 digits")
-  ) {
-    return "CPF inválido. Verifique os dados informados.";
-  }
-
-  if (message.includes("Network Error")) {
-    return "Não foi possível conectar com o servidor.";
-  }
-
-  return (
-    message || "Não foi possível atualizar seus dados agora. Tente novamente."
+  return getApiErrorMessage(
+    error,
+    "Não foi possível atualizar seus dados agora. Tente novamente.",
   );
 }
 

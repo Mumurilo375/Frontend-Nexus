@@ -15,7 +15,9 @@ export function RequireAuth({ children }: GuardProps) {
       <Navigate
         to="/login"
         replace
-        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+        state={{
+          from: `${location.pathname}${location.search}${location.hash}`,
+        }}
       />
     );
   }
@@ -32,7 +34,9 @@ export function RequireAdmin({ children }: GuardProps) {
       <Navigate
         to="/login"
         replace
-        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+        state={{
+          from: `${location.pathname}${location.search}${location.hash}`,
+        }}
       />
     );
   }

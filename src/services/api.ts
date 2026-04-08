@@ -33,7 +33,9 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error instanceof Error ? error : new Error("Unexpected request error"));
+    return Promise.reject(
+      error instanceof Error ? error : new Error("Erro inesperado na requisição"),
+    );
   },
 );
 

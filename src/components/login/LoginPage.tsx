@@ -1,9 +1,9 @@
-import { isAxiosError } from "axios";
 import { type FormEvent, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
 import { type AuthUser } from "../../services/auth";
+import { getApiErrorMessage } from "../../services/http";
 import Back from "./Back";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -17,19 +17,10 @@ type LoginResponse = {
 };
 
 function getFriendlyLoginError(error: unknown): string {
-  const message = isAxiosError<{ message?: string }>(error)
-    ? String(error.response?.data?.message ?? error.message ?? "")
-    : "";
-
-  if (message.includes("Invalid email or password")) {
-    return "Email ou senha incorretos.";
-  }
-
-  if (message.includes("Network Error")) {
-    return "Não foi possível conectar com o servidor.";
-  }
-
-  return message || "Não foi possível fazer login agora. Tente novamente.";
+  return getApiErrorMessage(
+    error,
+    "Não foi possível fazer login agora. Tente novamente.",
+  );
 }
 
 function isSafeRedirectPath(value: string): boolean {

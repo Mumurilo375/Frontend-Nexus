@@ -94,6 +94,7 @@ function NavBar() {
     user: authUser,
   } = useAuth();
   const avatarSrc = authUser?.avatarUrl?.trim() || "";
+  const resolvedAvatarSrc = avatarSrc ? resolveAssetUrl(avatarSrc, "") : "";
   const profileLabel = authUser?.username || "Minha conta";
   const visibleNavLinks = navLinks.filter((link) => !link.adminOnly || isAdmin);
 
@@ -444,9 +445,9 @@ function NavBar() {
               <HeadlessMenu as="div" className="relative hidden md:block">
                 <MenuButton className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/80 px-2 py-1.5 text-left text-sm text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 focus:outline-none">
                   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 text-slate-200">
-                    {avatarSrc && !avatarBroken ? (
+                    {resolvedAvatarSrc && !avatarBroken ? (
                       <img
-                        src={avatarSrc}
+                        src={resolvedAvatarSrc}
                         alt="Foto do usuário"
                         className="h-full w-full object-cover"
                         onError={() => setAvatarBroken(true)}

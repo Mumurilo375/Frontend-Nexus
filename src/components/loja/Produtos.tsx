@@ -267,7 +267,7 @@ export default function Produtos() {
         tone: "error",
         message: getRequestErrorMessage(
           cartError,
-          "Nao foi possivel adicionar o item ao carrinho.",
+          "Não foi possível adicionar o item ao carrinho.",
         ),
       });
     } finally {
@@ -292,7 +292,7 @@ export default function Produtos() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Para adicionar aos favoritos ou ao carrinho, faca login na sua conta."
+        message="Para adicionar aos favoritos ou ao carrinho, faça login na sua conta."
         onClose={closeAuthModal}
         onConfirm={goToLogin}
       />

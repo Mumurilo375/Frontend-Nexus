@@ -58,14 +58,14 @@ export default function DetailsMid() {
   }, [coverImage, details?.images]);
 
   const gameTitle = details?.title || "Jogo";
-  const gameDescription = details?.description || "Sem descricao curta.";
+  const gameDescription = details?.description || "Sem descrição curta.";
   const gameLongDescription = details?.longDescription || gameDescription;
   const reviewAverage = Number(details?.reviewStats?.averageRating ?? 0);
   const inCart = currentListingId > 0 && cartListingIds.includes(currentListingId);
   const infoItems = useMemo(
     () => [
-      { label: "Lancamento", value: formatDate(details?.releaseDate) },
-      { label: "Avaliacao", value: `${reviewAverage.toFixed(1)} / 5` },
+      { label: "Lançamento", value: formatDate(details?.releaseDate) },
+      { label: "Avaliação", value: `${reviewAverage.toFixed(1)} / 5` },
     ],
     [details?.releaseDate, reviewAverage],
   );
@@ -82,7 +82,7 @@ export default function DetailsMid() {
   useEffect(() => {
     if (!gameIdIsValid) {
       setLoading(false);
-      setError("Jogo invalido.");
+      setError("Jogo inválido.");
       setDetails(null);
       return;
     }
@@ -105,7 +105,7 @@ export default function DetailsMid() {
         setError(
           getRequestErrorMessage(
             loadError,
-            "Nao foi possivel carregar os detalhes do jogo.",
+            "Não foi possível carregar os detalhes do jogo.",
           ),
         );
       } finally {
@@ -196,7 +196,7 @@ export default function DetailsMid() {
       setActionError(
         getRequestErrorMessage(
           cartError,
-          "Nao foi possivel adicionar o item ao carrinho.",
+          "Não foi possível adicionar o item ao carrinho.",
         ),
       );
     } finally {
@@ -226,7 +226,7 @@ export default function DetailsMid() {
       setActionError(
         getRequestErrorMessage(
           buyNowError,
-          "Nao foi possivel iniciar a compra agora.",
+          "Não foi possível iniciar a compra agora.",
         ),
       );
     } finally {
@@ -239,7 +239,7 @@ export default function DetailsMid() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Essa acao exige login. Deseja entrar agora?"
+        message="Essa ação exige login. Deseja entrar agora?"
         onClose={closeAuthModal}
         onConfirm={goToLogin}
       />

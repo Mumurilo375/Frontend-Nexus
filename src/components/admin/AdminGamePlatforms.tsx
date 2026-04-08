@@ -102,7 +102,7 @@ function formatPlatformPrice(price: number | null) {
 }
 
 function getPlatformPriceLabel(price: number | null) {
-  return price === null ? "Sem preco" : `R$ ${formatPlatformPrice(price)}`;
+  return price === null ? "Sem preço" : `R$ ${formatPlatformPrice(price)}`;
 }
 
 function parsePlatformPrice(value: string) {
@@ -349,7 +349,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   const fetchPlatformMonitor = useCallback(async () => {
     if (!gameId) {
       setIsLoading(false);
-      setErrorMessage("Jogo invalido.");
+      setErrorMessage("Jogo inválido.");
       return;
     }
 
@@ -365,7 +365,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     } catch (error) {
       setGame(null);
       setPlatforms([]);
-      setErrorMessage(getApiErrorMessage(error, "Nao foi possivel carregar as plataformas do jogo."));
+      setErrorMessage(getApiErrorMessage(error, "Não foi possível carregar as plataformas do jogo."));
     } finally {
       setIsLoading(false);
     }
@@ -470,7 +470,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
           isLoading: false,
           items: [],
           meta: emptyKeysMeta,
-          error: getApiErrorMessage(error, "Nao foi possivel carregar as keys."),
+          error: getApiErrorMessage(error, "Não foi possível carregar as keys."),
         }));
       }
     },
@@ -522,7 +522,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     if (platformFormState.price.trim() && parsedPrice === null) {
       updatePlatformFormState(platformId, (currentFormState) => ({
         ...currentFormState,
-        error: "Informe um preco valido usando virgula ou ponto.",
+        error: "Informe um preço válido usando vírgula ou ponto.",
       }));
       return;
     }
@@ -530,7 +530,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     if (!platform.hasListing && parsedPrice === null) {
       updatePlatformFormState(platformId, (currentFormState) => ({
         ...currentFormState,
-        error: "Informe um preco para configurar a plataforma.",
+        error: "Informe um preço para configurar a plataforma.",
       }));
       return;
     }
@@ -566,7 +566,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
       updatePlatformFormState(platformId, (currentFormState) => ({
         ...currentFormState,
         isSaving: false,
-        error: getApiErrorMessage(error, "Nao foi possivel salvar a plataforma."),
+        error: getApiErrorMessage(error, "Não foi possível salvar a plataforma."),
       }));
     }
   };
@@ -598,7 +598,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     if (!platform.hasListing) {
       updatePlatformFormState(platformId, (currentFormState) => ({
         ...currentFormState,
-        error: "Salve o preco antes de adicionar keys.",
+        error: "Salve o preço antes de adicionar keys.",
       }));
       return;
     }
@@ -648,7 +648,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
       updatePlatformFormState(platformId, (currentFormState) => ({
         ...currentFormState,
         isAddingKeys: false,
-        error: getApiErrorMessage(error, "Nao foi possivel adicionar as keys."),
+        error: getApiErrorMessage(error, "Não foi possível adicionar as keys."),
       }));
     }
   };
@@ -697,7 +697,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
       updatePlatformKeysState(platformId, (currentKeysState) => ({
         ...currentKeysState,
         isRemoving: false,
-        error: getApiErrorMessage(error, "Nao foi possivel remover as keys."),
+        error: getApiErrorMessage(error, "Não foi possível remover as keys."),
       }));
     }
   };
@@ -776,7 +776,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                 </h2>
               </div>
               <span className="shrink-0 rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-100">
-                {availableKeysCount} keys disponiveis
+                {availableKeysCount} keys disponíveis
               </span>
             </div>
           </section>
@@ -805,7 +805,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                         {getPlatformPriceLabel(platform.price)}
                       </span>
                       <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300">
-                        {platform.stock.available} disponiveis
+                        {platform.stock.available} disponíveis
                       </span>
                       <AdminStatusBadge
                         active={platform.isActive}
@@ -849,7 +849,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                         {managedPlatform.platform.name}
                       </h2>
                       <p className="mt-1 text-sm text-slate-400">
-                        {managedPlatform.stock.available} keys disponiveis
+                        {managedPlatform.stock.available} keys disponíveis
                       </p>
                     </div>
                   </div>
@@ -869,7 +869,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                       <div className="rounded-[24px] border border-slate-800 bg-slate-900/35 p-4">
                         <div className="max-w-[180px]">
                           <AdminTextField
-                            label="Preco"
+                            label="Preço"
                             type="text"
                             inputMode="decimal"
                             placeholder="10,00"
@@ -1031,7 +1031,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                         </div>
 
                         {!managedPlatform.hasListing && (
-                          <p className="mt-3 text-sm text-slate-400">Salve o preco para liberar o estoque.</p>
+                          <p className="mt-3 text-sm text-slate-400">Salve o preço para liberar o estoque.</p>
                         )}
                       </section>
 
@@ -1118,17 +1118,17 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
             <PlatformConfirmModal
               title={
                 pendingConfirmation.type === "priceChange"
-                  ? "Confirmar novo preco"
+                  ? "Confirmar novo preço"
                   : "Remover keys selecionadas"
               }
               message={
                 pendingConfirmation.type === "priceChange"
-                  ? `Esse novo preco sera aplicado a todas as keys existentes e futuras de ${confirmationPlatform.platform.name}.`
-                  : `${selectedKeysCount} key(s) disponivel(is) selecionada(s) sera(ao) removida(s) agora.`
+                  ? `Esse novo preço será aplicado a todas as keys existentes e futuras de ${confirmationPlatform.platform.name}.`
+                  : `${selectedKeysCount} key(s) disponível(is) selecionada(s) será(ão) removida(s) agora.`
               }
               confirmLabel={
                 pendingConfirmation.type === "priceChange"
-                  ? "Salvar novo preco"
+                  ? "Salvar novo preço"
                   : "Remover keys"
               }
               tone={pendingConfirmation.type === "priceChange" ? "primary" : "danger"}

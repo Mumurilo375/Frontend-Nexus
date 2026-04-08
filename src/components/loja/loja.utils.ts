@@ -4,7 +4,7 @@ import type { GameImage, GameSummary, ListingItem, ListingMap, ReviewItem } from
 
 export const PAGE_SIZE = 12;
 export const REVIEW_COMMENT_MAX_LENGTH = 500;
-export const OFFLINE_API_MESSAGE = "Nao foi possivel conectar ao backend. Verifique se a API esta rodando na porta 3000.";
+export const OFFLINE_API_MESSAGE = "Não foi possível conectar ao backend. Verifique se a API está rodando na porta 3000.";
 export const clampTextStyle = { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" };
 
 export const normalizeText = (value: string) =>

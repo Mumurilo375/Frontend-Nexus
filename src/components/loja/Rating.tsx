@@ -64,7 +64,7 @@ export default function Rating() {
   useEffect(() => {
     if (!gameIdIsValid) {
       setReviews([]);
-      setReviewError("Jogo invalido.");
+      setReviewError("Jogo inválido.");
       return;
     }
 
@@ -85,7 +85,7 @@ export default function Rating() {
           setReviewError(
             getRequestErrorMessage(
               loadError,
-              "Nao foi possivel carregar as avaliacoes.",
+              "Não foi possível carregar as avaliações.",
             ),
           );
         }
@@ -155,13 +155,13 @@ export default function Rating() {
 
     const trimmedComment = reviewComment.trim();
     if (!trimmedComment) {
-      setReviewError("Escreva um comentario para enviar sua avaliacao.");
+      setReviewError("Escreva um comentário para enviar sua avaliação.");
       return;
     }
 
     if (trimmedComment.length > REVIEW_COMMENT_MAX_LENGTH) {
       setReviewError(
-        `A avaliacao deve ter no maximo ${REVIEW_COMMENT_MAX_LENGTH} caracteres.`,
+        `A avaliação deve ter no máximo ${REVIEW_COMMENT_MAX_LENGTH} caracteres.`,
       );
       return;
     }
@@ -183,7 +183,7 @@ export default function Rating() {
       setReviewError(
         getRequestErrorMessage(
           submitError,
-          "Nao foi possivel enviar sua avaliacao.",
+          "Não foi possível enviar sua avaliação.",
         ),
       );
     } finally {
@@ -196,7 +196,7 @@ export default function Rating() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Essa acao exige login. Deseja entrar agora?"
+        message="Essa ação exige login. Deseja entrar agora?"
         onClose={closeAuthModal}
         onConfirm={goToLogin}
       />
@@ -206,16 +206,16 @@ export default function Rating() {
           <article className="nexus-card p-5 sm:p-6">
             <header className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-white">Avaliacoes</h2>
-                <p className="text-sm text-zinc-300">{reviews.length} avaliacoes</p>
+                <h2 className="text-2xl font-bold text-white">Avaliações</h2>
+                <p className="text-sm text-zinc-300">{reviews.length} avaliações</p>
               </div>
               <div className="flex items-center gap-1">{renderStars(reviewAverage)}</div>
             </header>
 
-            {loadingReviews && <p className="text-zinc-300">Carregando avaliacoes...</p>}
+            {loadingReviews && <p className="text-zinc-300">Carregando avaliações...</p>}
             {!loadingReviews && reviewError && <p className="text-red-300">{reviewError}</p>}
             {!loadingReviews && !reviewError && reviews.length === 0 && (
-              <p className="text-zinc-300">Ainda nao existem avaliacoes para este jogo.</p>
+              <p className="text-zinc-300">Ainda não existem avaliações para este jogo.</p>
             )}
 
             <div className="space-y-3">
@@ -228,7 +228,7 @@ export default function Rating() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-zinc-100">
-                          {review.user?.username || "Usuario"}
+                          {review.user?.username || "Usuário"}
                         </p>
                         <p className="text-xs text-zinc-400">
                           {formatDate(review.createdAt)}
@@ -240,7 +240,7 @@ export default function Rating() {
                     </div>
 
                     <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-zinc-200">
-                      {review.comment || "Sem comentario."}
+                      {review.comment || "Sem comentário."}
                     </p>
 
                     <button
@@ -256,7 +256,7 @@ export default function Rating() {
                       } disabled:opacity-60`}
                     >
                       <ThumbsUp className="h-3.5 w-3.5" />
-                      {voted ? "Voto registrado" : "Marcar como util"} ({votesCount})
+                      {voted ? "Voto registrado" : "Marcar como útil"} ({votesCount})
                     </button>
                   </div>
                 );
@@ -265,9 +265,9 @@ export default function Rating() {
           </article>
 
           <aside className="nexus-card p-5 sm:p-6">
-            <h2 className="text-xl font-bold text-white">Escrever avaliacao</h2>
+            <h2 className="text-xl font-bold text-white">Escrever avaliação</h2>
             <p className="mt-1 text-sm text-zinc-300">
-              Compartilhe sua experiencia para ajudar outros jogadores.
+              Compartilhe sua experiência para ajudar outros jogadores.
             </p>
 
             <label className="mt-4 block text-sm text-zinc-300" htmlFor="rating-select">
@@ -287,7 +287,7 @@ export default function Rating() {
             </select>
 
             <label className="mt-4 block text-sm text-zinc-300" htmlFor="review-comment">
-              Comentario
+              Comentário
             </label>
             <textarea
               id="review-comment"
@@ -296,7 +296,7 @@ export default function Rating() {
               rows={5}
               maxLength={REVIEW_COMMENT_MAX_LENGTH}
               className="mt-1 w-full rounded-xl border border-white/12 bg-black/40 px-3 py-2 outline-none focus:border-blue-400"
-              placeholder="Escreva sua opiniao sobre jogabilidade, desempenho e historia."
+              placeholder="Escreva sua opinião sobre jogabilidade, desempenho e história."
             />
 
             <p className="mt-2 text-right text-xs text-zinc-400">
@@ -313,7 +313,7 @@ export default function Rating() {
               disabled={submittingReview}
               className="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-2.5 font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
             >
-              {submittingReview ? "Enviando..." : "Publicar avaliacao"}
+              {submittingReview ? "Enviando..." : "Publicar avaliação"}
             </button>
           </aside>
         </div>

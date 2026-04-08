@@ -16,6 +16,8 @@ import { getApiErrorMessage } from "../../services/http";
 type CartItem = {
   id: number;
   quantity?: number;
+  isQuantityAvailable?: boolean;
+  stock?: { available?: number };
   listing?: {
     price: number | string;
     game?: { title?: string };
@@ -176,6 +178,10 @@ function getQuantity(item: CartItem) {
   return Math.max(1, Number(item.quantity ?? 1));
 }
 
+function getAvailableStock(item: CartItem) {
+  return Math.max(0, Number(item.stock?.available ?? 0));
+}
+
 function PaymentOption({
   icon: Icon,
   title,
@@ -244,6 +250,10 @@ export default function CheckoutMid() {
     () => items.reduce((sum, item) => sum + getQuantity(item), 0),
     [items],
   );
+  const hasStockIssues = useMemo(
+    () => items.some((item) => item.isQuantityAvailable === false),
+    [items],
+  );
   const cardBrand = useMemo(() => getCardBrand(cardNumber), [cardNumber]);
   const formattedCardNumber = useMemo(
     () => formatCardNumber(cardNumber),
@@ -256,16 +266,21 @@ export default function CheckoutMid() {
   );
   const pixQrSrc = useMemo(() => createPixQrDataUrl(pixCode), [pixCode]);
   const canSubmit =
-    !placingOrder && (paymentMethod !== "pix" || pixConfirmed === true);
+    !placingOrder &&
+    !hasStockIssues &&
+    (paymentMethod !== "pix" || pixConfirmed === true);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
+  const loadCart = async (showLoading = false) => {
+    try {
+      if (showLoading) {
         setLoading(true);
         setError("");
-        const { data } = await api.get<CartResponse>("/cart");
-        setItems(data.items ?? []);
-      } catch (requestError) {
+      }
+
+      const { data } = await api.get<CartResponse>("/cart");
+      setItems(data.items ?? []);
+    } catch (requestError) {
+      if (showLoading) {
         setItems([]);
         setError(
           getApiErrorMessage(
@@ -273,12 +288,16 @@ export default function CheckoutMid() {
             "Não foi possível carregar o checkout.",
           ),
         );
-      } finally {
+      }
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    void load();
+  useEffect(() => {
+    void loadCart(true);
   }, []);
 
   useEffect(() => {
@@ -312,7 +331,7 @@ export default function CheckoutMid() {
 
     if (paymentMethod === "paypal") {
       if (!EMAIL_REGEX.test(paypalEmail.trim().toLowerCase())) {
-        return "Informe um email valido para o PayPal.";
+        return "Informe um email válido para o PayPal.";
       }
       if (paypalPassword.trim().length < 6) {
         return "Informe a senha da conta PayPal com pelo menos 6 caracteres.";
@@ -328,6 +347,13 @@ export default function CheckoutMid() {
   };
 
   const createOrder = async () => {
+    if (hasStockIssues) {
+      setError(
+        "O estoque de um ou mais itens mudou. Volte ao carrinho e ajuste as quantidades.",
+      );
+      return;
+    }
+
     const paymentError = validatePaymentDetails();
     if (paymentError) {
       setError(paymentError);
@@ -344,11 +370,13 @@ export default function CheckoutMid() {
       setItems([]);
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } catch (requestError) {
+      const message = getApiErrorMessage(
+        requestError,
+        "Não foi possível finalizar o pedido.",
+      );
+      await loadCart();
       setError(
-        getApiErrorMessage(
-          requestError,
-          "Não foi possível finalizar o pedido.",
-        ),
+        message,
       );
     } finally {
       setPlacingOrder(false);
@@ -403,6 +431,12 @@ export default function CheckoutMid() {
       )}
       {!loading && !order && (
         <section className="mt-6 rounded-2xl border border-gray-800 bg-gray-950/80 p-5">
+          {error && items.length === 0 && (
+            <p className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+              {error}
+            </p>
+          )}
+
           {items.length === 0 ? (
             <>
               <p className="text-gray-300">Seu carrinho está vazio.</p>
@@ -423,24 +457,33 @@ export default function CheckoutMid() {
                       (() => {
                         const quantity = getQuantity(item);
                         const unitPrice = Number(item.listing?.price ?? 0);
+                        const availableStock = getAvailableStock(item);
 
                         return (
                           <li
                             key={item.id}
-                            className="flex items-center justify-between rounded-xl bg-gray-800/80 px-4 py-3"
+                            className="rounded-xl bg-gray-800/80 px-4 py-3"
                           >
-                            <div>
+                            <div className="flex items-center justify-between gap-4">
+                              <div>
+                                <p className="font-medium">
+                                  {item.listing?.game?.title || "Jogo"}
+                                </p>
+                                <p className="text-sm text-gray-300">
+                                  {item.listing?.platform?.name || "-"} • {quantity}x
+                                </p>
+                              </div>
                               <p className="font-medium">
-                                {item.listing?.game?.title || "Jogo"}
-                              </p>
-                              <p className="text-sm text-gray-300">
-                                {item.listing?.platform?.name || "-"} •{" "}
-                                {quantity}x
+                                {toMoney(unitPrice * quantity)}
                               </p>
                             </div>
-                            <p className="font-medium">
-                              {toMoney(unitPrice * quantity)}
-                            </p>
+
+                            {item.isQuantityAvailable === false && (
+                              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                                No carrinho: {quantity} • Disponível agora:{" "}
+                                {availableStock}. Ajuste no carrinho para continuar.
+                              </p>
+                            )}
                           </li>
                         );
                       })(),
@@ -466,6 +509,21 @@ export default function CheckoutMid() {
                     </p>
                   </div>
                 </div>
+
+                {hasStockIssues && (
+                  <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
+                    <p>
+                      O estoque do seu carrinho mudou. Ajuste as quantidades antes
+                      de finalizar o pedido.
+                    </p>
+                    <Link
+                      to="/carrinho"
+                      className="mt-3 inline-flex rounded-lg bg-slate-950 px-4 py-2 font-semibold text-white transition hover:bg-slate-900"
+                    >
+                      Voltar ao carrinho
+                    </Link>
+                  </div>
+                )}
 
                 <div className="grid gap-3 md:grid-cols-3">
                   <PaymentOption
@@ -813,7 +871,11 @@ export default function CheckoutMid() {
                   disabled={!canSubmit}
                   className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {placingOrder ? "Finalizando..." : "Finalizar pedido"}
+                  {placingOrder
+                    ? "Finalizando..."
+                    : hasStockIssues
+                      ? "Ajuste o carrinho para continuar"
+                      : "Finalizar pedido"}
                 </button>
               </div>
             </div>

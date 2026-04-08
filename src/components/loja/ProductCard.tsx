@@ -128,8 +128,8 @@ export default function ProductCard({
             }`}
           >
             {selectedListingIsOutOfStock
-              ? "Plataforma indisponivel no momento."
-              : `Estoque disponivel: ${selectedListingAvailableStock}`}
+              ? "Plataforma indisponível no momento."
+              : `Estoque disponível: ${selectedListingAvailableStock}`}
           </p>
         )}
       </div>

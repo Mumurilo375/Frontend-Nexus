@@ -94,11 +94,11 @@ export default function DetailsSidebar({
               )}
             </div>
 
-            <p className="mt-3 text-sm text-zinc-300">Estoque disponivel: {availableStock}</p>
+            <p className="mt-3 text-sm text-zinc-300">Estoque disponível: {availableStock}</p>
 
             {availableStock <= 0 && (
               <p className="mt-2 text-sm font-semibold text-red-300">
-                Esta plataforma esta sem estoque no momento.
+                Esta plataforma está sem estoque no momento.
               </p>
             )}
 
@@ -106,7 +106,7 @@ export default function DetailsSidebar({
               <ul className="mt-3 space-y-1 text-xs text-emerald-200">
                 {activePromotions.map((promotion) => (
                   <li key={`promo-${promotion.id}`}>
-                    Promocao ativa: {promotion.name || "Oferta especial"}
+                    Promoção ativa: {promotion.name || "Oferta especial"}
                   </li>
                 ))}
               </ul>
@@ -114,7 +114,7 @@ export default function DetailsSidebar({
           </>
         ) : (
           <p className="text-sm text-zinc-300">
-            Nenhuma plataforma disponivel para este jogo no momento.
+            Nenhuma plataforma disponível para este jogo no momento.
           </p>
         )}
       </div>
@@ -155,7 +155,7 @@ export default function DetailsSidebar({
         >
           <ShoppingCart className="h-4 w-4" />
           {inCart
-            ? "Ja esta no carrinho"
+            ? "Já está no carrinho"
             : busyCart
               ? "Adicionando..."
               : "Adicionar ao carrinho"}

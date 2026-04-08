@@ -34,7 +34,9 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(
-      error instanceof Error ? error : new Error("Erro inesperado na requisição"),
+      error instanceof Error
+        ? error
+        : new Error("Erro inesperado na requisição"),
     );
   },
 );

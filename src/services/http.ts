@@ -93,7 +93,10 @@ export function translateErrorMessage(
     return "Você só pode visualizar sua própria conta.";
   }
 
-  if (normalizedMessage.includes("Route") && normalizedMessage.includes("not found")) {
+  if (
+    normalizedMessage.includes("Route") &&
+    normalizedMessage.includes("not found")
+  ) {
     return "Rota não encontrada.";
   }
 
@@ -102,7 +105,9 @@ export function translateErrorMessage(
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (isAxiosError<{ message?: string }>(error)) {
-    const rawMessage = String(error.response?.data?.message ?? error.message ?? "");
+    const rawMessage = String(
+      error.response?.data?.message ?? error.message ?? "",
+    );
     return translateErrorMessage(rawMessage, fallback);
   }
 

@@ -168,9 +168,7 @@ function NavBar() {
 
         setWishlistCount((wishlistData.items ?? []).length);
         setCartCount(
-          Number(
-            cartData.meta?.totalItems ?? (cartData.items ?? []).length,
-          ),
+          Number(cartData.meta?.totalItems ?? (cartData.items ?? []).length),
         );
       } catch {
         setWishlistCount(0);
@@ -312,7 +310,11 @@ function NavBar() {
       <nav className="fixed top-0 z-50 w-full border-b border-slate-900/80 bg-black/85 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link to="/" className="shrink-0 transition-opacity hover:opacity-90">
-            <img src="/utils/logo.png" alt="Logo Nexus" className="h-10 w-auto" />
+            <img
+              src="/utils/logo.png"
+              alt="Logo Nexus"
+              className="h-10 w-auto"
+            />
           </Link>
 
           <div className="hidden items-center gap-6 md:flex">

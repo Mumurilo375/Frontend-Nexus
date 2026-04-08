@@ -1,7 +1,21 @@
-import { ChevronDown, ChevronUp, ImagePlus, Link2, Trash2, Upload } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import AdminGameFormMedia from "./AdminGameFormMedia";
+import {
+  buildGameFormData,
+  createExistingGalleryItem,
+  createFileGalleryItem,
+  createUrlGalleryItem,
+  emptyGame,
+  mapGameToValues,
+  moveItem,
+  revokeGalleryItemPreview,
+  type Category,
+  type GalleryItem,
+  type GameResponse,
+  type GameValues,
+} from "./AdminGameForm.helpers";
 import {
   AdminButton,
   AdminFormActions,
@@ -12,106 +26,7 @@ import {
 } from "./adminShared";
 import api from "../../services/api";
 import { resolveAssetUrl } from "../../services/assets";
-import {
-  getApiErrorMessage,
-  type PaginatedResponse,
-} from "../../services/http";
-
-type Category = {
-  id: number;
-  name: string;
-};
-
-type GameImage = {
-  id: number;
-  imageUrl?: string;
-  sortOrder?: number;
-};
-
-type GameResponse = {
-  id: number;
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive?: boolean;
-  categories?: Category[];
-  images?: GameImage[];
-};
-
-type GameValues = {
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive: boolean;
-  categoryIds: number[];
-};
-
-type GalleryItem = {
-  key: string;
-  kind: "existing" | "file" | "url";
-  imageUrl: string;
-  previewUrl: string;
-  id?: number;
-  file?: File;
-};
-
-const emptyGame: GameValues = {
-  title: "",
-  description: "",
-  longDescription: "",
-  releaseDate: "",
-  coverImageUrl: "",
-  isActive: true,
-  categoryIds: [],
-};
-
-function createGalleryKey() {
-  return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-}
-
-function createExistingGalleryItem(image: GameImage): GalleryItem {
-  const imageUrl = String(image.imageUrl ?? "").trim();
-
-  return {
-    key: `existing-${image.id}`,
-    kind: "existing",
-    id: image.id,
-    imageUrl,
-    previewUrl: resolveAssetUrl(imageUrl),
-  };
-}
-
-function createFileGalleryItem(file: File): GalleryItem {
-  const previewUrl = URL.createObjectURL(file);
-
-  return {
-    key: `file-${createGalleryKey()}`,
-    kind: "file",
-    imageUrl: "",
-    previewUrl,
-    file,
-  };
-}
-
-function createUrlGalleryItem(imageUrl: string): GalleryItem {
-  return {
-    key: `url-${createGalleryKey()}`,
-    kind: "url",
-    imageUrl,
-    previewUrl: resolveAssetUrl(imageUrl),
-  };
-}
-
-function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
-  const nextItems = [...items];
-  const [item] = nextItems.splice(fromIndex, 1);
-  nextItems.splice(toIndex, 0, item);
-  return nextItems;
-}
+import { getApiErrorMessage, type PaginatedResponse } from "../../services/http";
 
 export default function AdminGameForm({ id }: { id?: string }) {
   const navigate = useNavigate();
@@ -121,7 +36,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState("/utils/logo.png");
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState(resolveAssetUrl(emptyGame.coverImageUrl));
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -134,11 +49,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
 
   useEffect(
     () => () => {
-      for (const galleryItem of galleryItemsRef.current) {
-        if (galleryItem.kind === "file") {
-          URL.revokeObjectURL(galleryItem.previewUrl);
-        }
-      }
+      galleryItemsRef.current.forEach(revokeGalleryItemPreview);
     },
     [],
   );
@@ -147,12 +58,18 @@ export default function AdminGameForm({ id }: { id?: string }) {
     if (coverFile) {
       const objectUrl = URL.createObjectURL(coverFile);
       setCoverPreviewUrl(objectUrl);
-
       return () => URL.revokeObjectURL(objectUrl);
     }
 
     setCoverPreviewUrl(resolveAssetUrl(values.coverImageUrl));
   }, [coverFile, values.coverImageUrl]);
+
+  const replaceGalleryItems = (nextItems: GalleryItem[]) => {
+    setGalleryItems((currentItems) => {
+      currentItems.forEach(revokeGalleryItemPreview);
+      return nextItems;
+    });
+  };
 
   useEffect(() => {
     const fetchFormData = async () => {
@@ -160,41 +77,29 @@ export default function AdminGameForm({ id }: { id?: string }) {
         setIsLoading(true);
         setErrorMessage("");
 
-        const categoryRequest = api.get<PaginatedResponse<Category>>("/categories", {
-          params: { page: 1, limit: 100 },
-        });
-
         const [categoryResponse, gameResponse] = await Promise.all([
-          categoryRequest,
+          api.get<PaginatedResponse<Category>>("/categories", {
+            params: { page: 1, limit: 100 },
+          }),
           id ? api.get<GameResponse>(`/games/${id}`) : Promise.resolve(null),
         ]);
 
         setCategories(categoryResponse.data.items ?? []);
+        setGalleryUrlInput("");
+        setIsCategoryPickerOpen(false);
 
         if (!gameResponse) {
           setValues(emptyGame);
-          setGalleryItems([]);
+          replaceGalleryItems([]);
           setCoverFile(null);
           return;
         }
 
-        const game = gameResponse.data;
-
-        setValues({
-          title: game.title ?? "",
-          description: game.description ?? "",
-          longDescription: game.longDescription ?? "",
-          releaseDate: game.releaseDate ?? "",
-          coverImageUrl: game.coverImageUrl ?? "",
-          isActive: game.isActive !== false,
-          categoryIds: (game.categories ?? []).map((category) => category.id),
-        });
-        setGalleryItems((game.images ?? []).map(createExistingGalleryItem));
+        setValues(mapGameToValues(gameResponse.data));
+        replaceGalleryItems((gameResponse.data.images ?? []).map(createExistingGalleryItem));
         setCoverFile(null);
       } catch (error) {
-        setErrorMessage(
-          getApiErrorMessage(error, "Não foi possível carregar o formulário do jogo."),
-        );
+        setErrorMessage(getApiErrorMessage(error, "Não foi possível carregar o formulário do jogo."));
       } finally {
         setIsLoading(false);
       }
@@ -204,24 +109,20 @@ export default function AdminGameForm({ id }: { id?: string }) {
   }, [id]);
 
   const selectedCategories = useMemo(
-    () =>
-      categories.filter((category) => values.categoryIds.includes(category.id)),
+    () => categories.filter((category) => values.categoryIds.includes(category.id)),
     [categories, values.categoryIds],
   );
 
-  const setField = <Field extends keyof GameValues>(
-    field: Field,
-    value: GameValues[Field],
-  ) => {
-    setValues((current) => ({ ...current, [field]: value }));
+  const setField = <Field extends keyof GameValues>(field: Field, value: GameValues[Field]) => {
+    setValues((currentValues) => ({ ...currentValues, [field]: value }));
   };
 
   const toggleCategory = (categoryId: number) => {
-    setValues((current) => ({
-      ...current,
-      categoryIds: current.categoryIds.includes(categoryId)
-        ? current.categoryIds.filter((id) => id !== categoryId)
-        : [...current.categoryIds, categoryId],
+    setValues((currentValues) => ({
+      ...currentValues,
+      categoryIds: currentValues.categoryIds.includes(categoryId)
+        ? currentValues.categoryIds.filter((currentId) => currentId !== categoryId)
+        : [...currentValues.categoryIds, categoryId],
     }));
   };
 
@@ -230,8 +131,10 @@ export default function AdminGameForm({ id }: { id?: string }) {
       return;
     }
 
-    const nextItems = Array.from(files).map(createFileGalleryItem);
-    setGalleryItems((current) => [...current, ...nextItems]);
+    setGalleryItems((currentItems) => [
+      ...currentItems,
+      ...Array.from(files).map(createFileGalleryItem),
+    ]);
   };
 
   const addGalleryUrl = () => {
@@ -241,45 +144,44 @@ export default function AdminGameForm({ id }: { id?: string }) {
       return;
     }
 
-    setGalleryItems((current) => [...current, createUrlGalleryItem(imageUrl)]);
+    setGalleryItems((currentItems) => [...currentItems, createUrlGalleryItem(imageUrl)]);
     setGalleryUrlInput("");
   };
 
   const removeGalleryItem = (itemKey: string) => {
-    setGalleryItems((current) => {
-      const item = current.find((candidate) => candidate.key === itemKey);
+    setGalleryItems((currentItems) => {
+      const itemToRemove = currentItems.find((item) => item.key === itemKey);
 
-      if (item?.kind === "file") {
-        URL.revokeObjectURL(item.previewUrl);
+      if (itemToRemove) {
+        revokeGalleryItemPreview(itemToRemove);
       }
 
-      return current.filter((candidate) => candidate.key !== itemKey);
+      return currentItems.filter((item) => item.key !== itemKey);
     });
   };
 
   const moveGalleryItem = (itemKey: string, direction: -1 | 1) => {
-    setGalleryItems((current) => {
-      const currentIndex = current.findIndex((item) => item.key === itemKey);
+    setGalleryItems((currentItems) => {
+      const currentIndex = currentItems.findIndex((item) => item.key === itemKey);
       const nextIndex = currentIndex + direction;
 
-      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= current.length) {
-        return current;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentItems.length) {
+        return currentItems;
       }
 
-      return moveItem(current, currentIndex, nextIndex);
+      return moveItem(currentItems, currentIndex, nextIndex);
     });
   };
 
-  const saveGame = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveGame = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const title = values.title.trim();
-    const description = values.description.trim();
-    const longDescription = values.longDescription.trim();
-    const releaseDate = values.releaseDate.trim();
-    const coverImageUrl = values.coverImageUrl.trim();
-
-    if (!title || !description || !longDescription || !releaseDate) {
+    if (
+      !values.title.trim() ||
+      !values.description.trim() ||
+      !values.longDescription.trim() ||
+      !values.releaseDate.trim()
+    ) {
       setErrorMessage("Preencha título, descrições e data de lançamento.");
       return;
     }
@@ -289,7 +191,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
       return;
     }
 
-    if (!coverFile && !coverImageUrl) {
+    if (!coverFile && !values.coverImageUrl.trim()) {
       setErrorMessage("Envie uma capa ou informe uma URL de fallback.");
       return;
     }
@@ -298,48 +200,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
       setIsSaving(true);
       setErrorMessage("");
 
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("longDescription", longDescription);
-      formData.append("releaseDate", releaseDate);
-      formData.append("isActive", String(values.isActive));
-      formData.append("categoryIds", JSON.stringify(values.categoryIds));
-
-      if (coverImageUrl) {
-        formData.append("coverImageUrl", coverImageUrl);
-      }
-
-      if (coverFile) {
-        formData.append("coverFile", coverFile);
-      }
-
-      const galleryFiles: File[] = [];
-      const galleryPayload = galleryItems.map((galleryItem) => {
-        if (galleryItem.kind === "existing") {
-          return {
-            kind: "existing",
-            id: galleryItem.id,
-          };
-        }
-
-        if (galleryItem.kind === "url") {
-          return {
-            kind: "url",
-            url: galleryItem.imageUrl,
-          };
-        }
-
-        const fileIndex = galleryFiles.push(galleryItem.file as File) - 1;
-
-        return {
-          kind: "file",
-          fileIndex,
-        };
-      });
-
-      formData.append("galleryItems", JSON.stringify(galleryPayload));
-      galleryFiles.forEach((file) => formData.append("galleryFiles", file));
+      const formData = buildGameFormData(values, coverFile, galleryItems);
 
       if (isEditing) {
         await api.put(`/games/${id}`, formData);
@@ -350,9 +211,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
       const { data } = await api.post<GameResponse>("/games", formData);
       void navigate(`/admin/games/${data.id}/platforms`);
     } catch (error) {
-      setErrorMessage(
-        getApiErrorMessage(error, "Não foi possível salvar o jogo."),
-      );
+      setErrorMessage(getApiErrorMessage(error, "Não foi possível salvar o jogo."));
     } finally {
       setIsSaving(false);
     }
@@ -422,176 +281,6 @@ export default function AdminGameForm({ id }: { id?: string }) {
               </section>
 
               <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5">
-                <div className="flex items-center gap-3">
-                  <Upload className="h-5 w-5 text-blue-200" />
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">Capa principal</h2>
-                    <p className="text-sm text-slate-400">
-                      O fluxo principal é por arquivo. A URL fica como alternativa discreta.
-                    </p>
-                  </div>
-                </div>
-
-                <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-700 bg-slate-900/45 px-6 py-8 text-center text-slate-300 transition hover:border-blue-400/45 hover:bg-slate-900/70">
-                  <ImagePlus className="h-8 w-8 text-blue-200" />
-                  <span className="mt-3 text-base font-medium text-white">
-                    {coverFile ? coverFile.name : "Clique para enviar a capa"}
-                  </span>
-                  <span className="mt-1 text-sm text-slate-400">
-                    JPG, PNG ou WEBP. O arquivo enviado tem prioridade sobre a URL.
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={({ target }) =>
-                      setCoverFile(target.files?.[0] ?? null)
-                    }
-                  />
-                </label>
-
-                {coverFile && (
-                  <div className="mt-3 flex justify-end">
-                    <AdminButton
-                      type="button"
-                      tone="secondary"
-                      onClick={() => setCoverFile(null)}
-                    >
-                      Remover arquivo da capa
-                    </AdminButton>
-                  </div>
-                )}
-
-                <details className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-slate-200">
-                    Usar URL de fallback
-                  </summary>
-                  <div className="mt-4">
-                    <AdminTextField
-                      label="URL da capa"
-                      type="text"
-                      value={values.coverImageUrl}
-                      onChange={({ target }) => setField("coverImageUrl", target.value)}
-                      note="Use apenas quando não quiser enviar um arquivo agora."
-                    />
-                  </div>
-                </details>
-              </section>
-
-              <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5">
-                <div className="flex items-center gap-3">
-                  <ImagePlus className="h-5 w-5 text-blue-200" />
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">Galeria</h2>
-                    <p className="text-sm text-slate-400">
-                      Envie imagens extras, adicione URLs quando necessário e organize a ordem visual da página do jogo.
-                    </p>
-                  </div>
-                </div>
-
-                <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-700 bg-slate-900/45 px-6 py-7 text-center text-slate-300 transition hover:border-blue-400/45 hover:bg-slate-900/70">
-                  <Upload className="h-7 w-7 text-blue-200" />
-                  <span className="mt-3 text-base font-medium text-white">
-                    Adicionar imagens da galeria
-                  </span>
-                  <span className="mt-1 text-sm text-slate-400">
-                    Você pode selecionar várias imagens de uma vez.
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={({ target }) => addGalleryFiles(target.files)}
-                  />
-                </label>
-
-                <details className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-slate-200">
-                    Adicionar imagem da galeria por URL
-                  </summary>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                    <div className="flex-1">
-                      <AdminTextField
-                        label="URL da galeria"
-                        type="url"
-                        value={galleryUrlInput}
-                        onChange={({ target }) => setGalleryUrlInput(target.value)}
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <AdminButton type="button" tone="secondary" onClick={addGalleryUrl}>
-                        <Link2 className="mr-2 h-4 w-4" />
-                        Adicionar URL
-                      </AdminButton>
-                    </div>
-                  </div>
-                </details>
-
-                {galleryItems.length === 0 ? (
-                  <p className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/35 p-4 text-sm text-slate-300">
-                    Nenhuma imagem extra adicionada. A galeria é opcional.
-                  </p>
-                ) : (
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    {galleryItems.map((galleryItem, index) => (
-                      <article
-                        key={galleryItem.key}
-                        className="rounded-[24px] border border-slate-800 bg-slate-900/50 p-4"
-                      >
-                        <img
-                          src={galleryItem.previewUrl}
-                          alt={`Galeria ${index + 1}`}
-                          className="h-40 w-full rounded-[18px] border border-slate-800 object-cover"
-                        />
-
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-medium text-white">
-                              {galleryItem.kind === "existing"
-                                ? "Imagem atual"
-                                : galleryItem.kind === "file"
-                                  ? galleryItem.file?.name
-                                  : "Imagem por URL"}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              Ordem {index + 1}
-                            </p>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <AdminButton
-                              type="button"
-                              tone="secondary"
-                              disabled={index === 0}
-                              onClick={() => moveGalleryItem(galleryItem.key, -1)}
-                            >
-                              <ChevronUp className="h-4 w-4" />
-                            </AdminButton>
-                            <AdminButton
-                              type="button"
-                              tone="secondary"
-                              disabled={index === galleryItems.length - 1}
-                              onClick={() => moveGalleryItem(galleryItem.key, 1)}
-                            >
-                              <ChevronDown className="h-4 w-4" />
-                            </AdminButton>
-                            <AdminButton
-                              type="button"
-                              tone="subtleDanger"
-                              onClick={() => removeGalleryItem(galleryItem.key)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </AdminButton>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-white">Categorias</h2>
@@ -634,6 +323,21 @@ export default function AdminGameForm({ id }: { id?: string }) {
                   </div>
                 )}
               </section>
+
+              <AdminGameFormMedia
+                values={values}
+                coverFile={coverFile}
+                galleryItems={galleryItems}
+                galleryUrlInput={galleryUrlInput}
+                onSetField={setField}
+                onCoverFileChange={setCoverFile}
+                onClearCoverFile={() => setCoverFile(null)}
+                onGalleryUrlInputChange={setGalleryUrlInput}
+                onAddGalleryUrl={addGalleryUrl}
+                onAddGalleryFiles={addGalleryFiles}
+                onMoveGalleryItem={moveGalleryItem}
+                onRemoveGalleryItem={removeGalleryItem}
+              />
             </div>
 
             <aside className="space-y-5 xl:sticky xl:top-28 xl:h-fit">
@@ -708,5 +412,3 @@ export default function AdminGameForm({ id }: { id?: string }) {
     </AdminLayout>
   );
 }
-
-

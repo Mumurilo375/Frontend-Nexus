@@ -77,11 +77,13 @@ export default function FavoritosMid() {
         setItems(wishlistData.items ?? []);
         setListingByGame(nextListingMap);
         setCartListingIds((cartData.items ?? []).map((item) => item.listingId));
-      } catch {
+      } catch (error) {
         setItems([]);
         setListingByGame(new Map());
         setCartListingIds([]);
-        setError("Não foi possível carregar seus favoritos.");
+        setError(
+          getRequestErrorMessage(error, "Não foi possível carregar seus favoritos."),
+        );
       } finally {
         setLoading(false);
       }

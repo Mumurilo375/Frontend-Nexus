@@ -9,6 +9,7 @@ type AdminLayoutProps = {
   children: ReactNode;
   backTo?: string;
   backLabel?: string;
+  backClassName?: string;
   actions?: ReactNode;
 };
 
@@ -18,8 +19,12 @@ export default function AdminLayout({
   children,
   backTo,
   backLabel = "Voltar",
+  backClassName,
   actions,
 }: AdminLayoutProps) {
+  const defaultBackClassName =
+    "inline-flex rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white";
+
   return (
     <div className="nexus-page-shell">
       <NavBar />
@@ -30,7 +35,7 @@ export default function AdminLayout({
               {backTo && (
                 <Link
                   to={backTo}
-                  className="inline-flex rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
+                  className={`${defaultBackClassName} ${backClassName ?? ""}`.trim()}
                 >
                   {backLabel}
                 </Link>

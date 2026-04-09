@@ -17,6 +17,10 @@ type Category = { id: number; name: string };
 
 const PAGE_SIZE = 8;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);
+const backToPanelClass = "border-slate-600 bg-slate-900/90 px-4 py-1.5 font-medium text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-blue-400/50 hover:bg-slate-800";
+const actionBaseClass = "inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
+const editActionClass = `${actionBaseClass} border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
+const deleteActionClass = `${actionBaseClass} border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20`;
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -82,9 +86,10 @@ export default function AdminCategories() {
   return (
     <AdminLayout
       title="Categorias"
-      description="CRUD completo de categorias com listagem paginada."
+      description=""
       backTo="/admin"
       backLabel="Voltar ao painel"
+      backClassName={backToPanelClass}
       actions={
         <AdminLinkButton to="/admin/categories/new" tone="primary">
           Nova categoria
@@ -100,7 +105,7 @@ export default function AdminCategories() {
       >
         <>
           <div className="nexus-card p-4">
-            <p className="pb-4 text-sm text-slate-300">{totalLabel}</p>
+            <p className="pb-4 ml-4.5 text-sm text-slate-300">{totalLabel}</p>
             <div className="overflow-hidden rounded-[24px] border border-slate-800">
               <table className="min-w-full divide-y divide-slate-800 bg-slate-950 text-sm">
                 <thead className="bg-slate-900 text-left text-gray-300">
@@ -116,16 +121,19 @@ export default function AdminCategories() {
                       <td className="px-4 py-4 text-gray-400">{id}</td>
                       <td className="px-4 py-4 font-medium">{name}</td>
                       <td className="px-4 py-4">
-                        <div className="flex justify-end gap-2">
-                          <AdminLinkButton to={`/admin/categories/${id}/edit`} tone="primary">Editar</AdminLinkButton>
+                        <div className="flex justify-end">
+                          <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800/90 bg-slate-900/45 p-1.5">
+                          <AdminLinkButton to={`/admin/categories/${id}/edit`} tone="secondary" className={editActionClass}>Editar</AdminLinkButton>
                           <AdminButton
                             type="button"
-                            tone="danger"
+                            tone="subtleDanger"
+                            className={deleteActionClass}
                             disabled={deletingCategoryId === id}
                             onClick={() => { void removeCategory(id); }}
                           >
                             {deletingCategoryId === id ? "Excluindo..." : "Excluir"}
                           </AdminButton>
+                          </div>
                         </div>
                       </td>
                     </tr>

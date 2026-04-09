@@ -17,11 +17,24 @@ import {
   type PaginatedResponse,
 } from "../../services/http";
 
-type Game = { id: number; title: string; description: string; coverImageUrl?: string; releaseDate: string; isActive?: boolean };
+type Game = {
+  id: number;
+  title: string;
+  description: string;
+  coverImageUrl?: string;
+  releaseDate: string;
+  isActive?: boolean;
+};
 
 const PAGE_SIZE = 9;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);
-const cardActionClass = "inline-flex flex-1 items-center justify-center";
+const backToPanelClass =
+  "border-slate-600 bg-slate-900/90 px-4 py-1.5 font-medium text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-blue-400/50 hover:bg-slate-800";
+const actionBaseClass =
+  "inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
+const editActionClass = `${actionBaseClass} flex-1 border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
+const monitorActionClass = `${actionBaseClass} flex-1 border-blue-500/35 bg-blue-500/12 px-2.5 text-center text-[10px] font-medium leading-[1.1] normal-case tracking-normal whitespace-normal text-blue-100 hover:border-blue-400/60 hover:bg-blue-500/20`;
+const deleteActionClass = `${actionBaseClass} flex-1 border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20`;
 
 export default function AdminGames() {
   const [games, setGames] = useState<Game[]>([]);
@@ -32,31 +45,34 @@ export default function AdminGames() {
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingGameId, setDeletingGameId] = useState<number | null>(null);
 
-  const fetchGamesPage = useCallback(async (page = currentPage) => {
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
+  const fetchGamesPage = useCallback(
+    async (page = currentPage) => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-      const { data } = await api.get<PaginatedResponse<Game>>("/games", {
-        params: {
-          page,
-          limit: PAGE_SIZE,
-          q: searchQuery.trim() || undefined,
-        },
-      });
+        const { data } = await api.get<PaginatedResponse<Game>>("/games", {
+          params: {
+            page,
+            limit: PAGE_SIZE,
+            q: searchQuery.trim() || undefined,
+          },
+        });
 
-      setGames(data.items ?? []);
-      setPagination(data.meta ?? emptyPagination);
-    } catch (error) {
-      setGames([]);
-      setPagination(emptyPagination);
-      setErrorMessage(
-        getApiErrorMessage(error, "Não foi possível carregar os jogos."),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, searchQuery]);
+        setGames(data.items ?? []);
+        setPagination(data.meta ?? emptyPagination);
+      } catch (error) {
+        setGames([]);
+        setPagination(emptyPagination);
+        setErrorMessage(
+          getApiErrorMessage(error, "Não foi possível carregar os jogos."),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentPage, searchQuery],
+  );
 
   useEffect(() => {
     void fetchGamesPage();
@@ -95,6 +111,7 @@ export default function AdminGames() {
       description="Cadastre jogos, ajuste o editorial e abra o monitor por plataforma para controlar preço, status e estoque."
       backTo="/admin"
       backLabel="Voltar ao painel"
+      backClassName={backToPanelClass}
       actions={
         <AdminLinkButton to="/admin/games/new" tone="primary">
           Novo jogo
@@ -115,7 +132,10 @@ export default function AdminGames() {
           <input
             type="text"
             value={searchQuery}
-            onChange={({ target }) => (setSearchQuery(target.value), setCurrentPage(1))}
+            onChange={({ target }) => (
+              setSearchQuery(target.value),
+              setCurrentPage(1)
+            )}
             placeholder="Pesquisar por título..."
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-slate-500"
           />
@@ -154,15 +174,29 @@ export default function AdminGames() {
                   {game.description}
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-2 pt-2">
-                  <AdminLinkButton to={`/admin/games/${game.id}/edit`} className={cardActionClass}>Editar</AdminLinkButton>
-                  <AdminLinkButton to={`/admin/games/${game.id}/platforms`} className={cardActionClass}>Monitorar plataformas</AdminLinkButton>
+                <div className="mt-4 grid gap-2 rounded-2xl border border-slate-800/90 bg-slate-900/45 p-2 sm:grid-cols-3">
+                  <AdminLinkButton
+                    to={`/admin/games/${game.id}/edit`}
+                    tone="secondary"
+                    className={editActionClass}
+                  >
+                    Editar
+                  </AdminLinkButton>
+                  <AdminLinkButton
+                    to={`/admin/games/${game.id}/platforms`}
+                    tone="secondary"
+                    className={monitorActionClass}
+                  >
+                    Monitorar plataforma
+                  </AdminLinkButton>
                   <AdminButton
                     type="button"
                     tone="subtleDanger"
-                    className={cardActionClass}
+                    className={deleteActionClass}
                     disabled={deletingGameId === game.id}
-                    onClick={() => { void removeGame(game.id); }}
+                    onClick={() => {
+                      void removeGame(game.id);
+                    }}
                   >
                     {deletingGameId === game.id ? "Excluindo..." : "Excluir"}
                   </AdminButton>

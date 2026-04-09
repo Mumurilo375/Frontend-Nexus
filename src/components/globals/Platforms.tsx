@@ -30,7 +30,7 @@ const platforms = [
   },
 ];
 
-export default function Plataforms() {
+export default function Platforms() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToPrevious = () => {

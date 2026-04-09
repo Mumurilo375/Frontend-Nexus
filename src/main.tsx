@@ -8,8 +8,8 @@ import Footer from "./components/globals/Footer";
 import NavBar from "./components/globals/NavBar";
 import { AuthProvider } from "./contexts/AuthContext";
 import RootLayout from "./components/globals/RootLayout";
-import CheckoutMid from "./components/user/CheckoutMid";
-import MeusPedidosMid from "./components/user/MeusPedidosMid";
+import Checkout from "./components/user/checkout/Checkout";
+import OrderLibrary from "./components/user/orders/OrderLibrary";
 import App from "./pages/App";
 import AdminControl from "./pages/AdminControl";
 import Cadastro from "./pages/Cadastro";
@@ -26,7 +26,7 @@ function CheckoutPage() {
   return (
     <div className="nexus-page-shell">
       <NavBar />
-      <CheckoutMid />
+      <Checkout />
       <Footer />
     </div>
   );
@@ -36,7 +36,7 @@ function MeusPedidosPage() {
   return (
     <div className="nexus-page-shell">
       <NavBar />
-      <MeusPedidosMid />
+      <OrderLibrary />
       <Footer />
     </div>
   );

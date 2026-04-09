@@ -1,5 +1,5 @@
-import CadastroPage from "../components/cadastro/CadastroPage";
+import RegisterPage from "../components/cadastro/RegisterPage";
 
 export default function Cadastro() {
-  return <CadastroPage />;
+  return <RegisterPage />;
 }

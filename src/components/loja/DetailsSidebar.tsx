@@ -1,6 +1,6 @@
 import { BadgePercent, ShoppingCart } from "lucide-react";
-import type { GameDetails } from "./loja.types";
-import { getListingDisplayPrice, toMoney } from "./loja.utils";
+import type { GameDetails } from "./store.types";
+import { getListingDisplayPrice, toMoney } from "./store.utils";
 
 type DetailsSidebarProps = {
   details: GameDetails;

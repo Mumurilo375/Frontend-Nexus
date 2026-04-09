@@ -1,7 +1,7 @@
 import { UserCircleIcon } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Back from "../login/Back";
+import BackButton from "../login/BackButton";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 
@@ -50,7 +50,7 @@ function getFriendlyRegisterError(error: Error) {
   );
 }
 
-export default function CadastroPage() {
+export default function RegisterPage() {
   const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
@@ -319,7 +319,7 @@ export default function CadastroPage() {
           </div>
         </div>
       </div>
-      <Back />
+      <BackButton />
     </div>
   );
 }

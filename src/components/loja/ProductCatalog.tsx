@@ -13,7 +13,7 @@ import type {
   ListingMap,
   ListingsResponse,
   WishlistResponse,
-} from "./loja.types";
+} from "./store.types";
 import {
   PAGE_SIZE,
   buildCatalogState,
@@ -21,9 +21,9 @@ import {
   getRequestErrorMessage,
   getSelectedListing,
   normalizeText,
-} from "./loja.utils";
+} from "./store.utils";
 
-export default function Produtos() {
+export default function ProductCatalog() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();

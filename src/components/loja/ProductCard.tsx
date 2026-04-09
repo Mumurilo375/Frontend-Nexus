@@ -1,8 +1,8 @@
 import type { KeyboardEvent, MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
-import type { CartFeedback, GameSummary, ListingItem } from "./loja.types";
-import { clampTextStyle, getListingAvailableStock } from "./loja.utils";
+import type { CartFeedback, GameSummary, ListingItem } from "./store.types";
+import { clampTextStyle, getListingAvailableStock } from "./store.utils";
 
 type ProductCardProps = {
   game: GameSummary;

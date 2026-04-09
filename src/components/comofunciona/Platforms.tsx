@@ -87,7 +87,7 @@ const platformGuides = [
   },
 ];
 
-export default function Plataforms() {
+export default function Platforms() {
   return (
     <section className="w-full bg-slate-950 px-4 py-14 sm:px-6 sm:py-16">
       <div className="mx-auto w-full max-w-6xl">

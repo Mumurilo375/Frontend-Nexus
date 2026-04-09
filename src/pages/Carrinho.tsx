@@ -1,12 +1,12 @@
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
-import CarrinhoMid from "../components/Carrinho/CarrinhoMid";
+import Cart from "../components/user/cart/Cart";
 
 export default function Carrinho() {
   return (
     <div className="nexus-page-shell">
       <NavBar />
-      <CarrinhoMid />
+      <Cart />
       <Footer />
     </div>
   );

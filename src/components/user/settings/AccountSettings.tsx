@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/useAuth";
-import api from "../../services/api";
-import { getApiErrorMessage } from "../../services/http";
+import { useAuth } from "../../../contexts/useAuth";
+import api from "../../../services/api";
+import { getApiErrorMessage } from "../../../services/http";
 
 type UserProfile = {
   id: number;
@@ -78,7 +78,7 @@ function getFriendlyUpdateError(error: unknown): string {
   );
 }
 
-export default function UserConfigMid() {
+export default function AccountSettings() {
   const navigate = useNavigate();
   const { syncUser, user: authUser } = useAuth();
   const [loading, setLoading] = useState(true);

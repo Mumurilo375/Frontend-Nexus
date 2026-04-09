@@ -1,13 +1,13 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import Pagination from "../../components/globals/Pagination";
-import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
+import Pagination from "../../globals/Pagination";
+import api from "../../../services/api";
+import { resolveAssetUrl } from "../../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
   type PaginationMeta,
-} from "../../services/http";
+} from "../../../services/http";
 
 type LibraryItem = {
   id: number;
@@ -36,7 +36,7 @@ function maskKey(value: string) {
   return value.replace(/[^\s]/g, "*");
 }
 
-export default function MeusPedidosMid() {
+export default function OrderLibrary() {
   const [library, setLibrary] = useState<LibraryItem[]>([]);
   const [libraryMeta, setLibraryMeta] = useState<PaginationMeta>(emptyMeta);
   const [page, setPage] = useState(1);

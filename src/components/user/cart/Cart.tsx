@@ -1,9 +1,9 @@
 import { Minus, Plus, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../../services/api";
-import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
-import { getApiErrorMessage } from "../../services/http";
+import api from "../../../services/api";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../../services/assets";
+import { getApiErrorMessage } from "../../../services/http";
 
 type CartItem = {
   id: number;
@@ -39,7 +39,7 @@ function getItemTotal(item: CartItem) {
   return Number(item.listing?.price ?? 0) * getQuantity(item);
 }
 
-export default function CarrinhoMid() {
+export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

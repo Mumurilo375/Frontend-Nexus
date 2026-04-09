@@ -16,7 +16,7 @@ const faqItems = [
   },
 ];
 
-export default function PerguntasFrequentes() {
+export default function FrequentlyAskedQuestions() {
   return (
     <section className="bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.1),_transparent_35%),linear-gradient(180deg,#020617_0%,#030712_100%)] px-4 py-18 sm:py-20">
       <div className="mx-auto w-full max-w-5xl">

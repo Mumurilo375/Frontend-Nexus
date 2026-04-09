@@ -3,14 +3,14 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import api from "../../services/api";
 import { getAuthUser, isAuthenticated } from "../../services/auth";
-import type { ReviewItem, ReviewsResponse } from "./loja.types";
+import type { ReviewItem, ReviewsResponse } from "./store.types";
 import {
   REVIEW_COMMENT_MAX_LENGTH,
   formatDate,
   getAverageRating,
   getRequestErrorMessage,
   hasUserReviewVote,
-} from "./loja.utils";
+} from "./store.utils";
 import { Star, ThumbsUp } from "lucide-react";
 
 export default function Rating() {

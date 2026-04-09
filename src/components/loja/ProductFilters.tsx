@@ -2,15 +2,15 @@ import { FilterIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../services/api";
-import type { GamesResponse, ListingsResponse } from "./loja.types";
+import type { GamesResponse, ListingsResponse } from "./store.types";
 import {
   collectFilterOptions,
   normalizeText,
   toggleNormalizedValue,
   updateSearchListParam,
-} from "./loja.utils";
+} from "./store.utils";
 
-function Filtro() {
+function ProductFilters() {
   const [menuAbertoMobile, setMenuAbertoMobile] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [platforms, setPlatforms] = useState<string[]>([]);
@@ -143,4 +143,4 @@ function Filtro() {
   );
 }
 
-export default Filtro;
+export default ProductFilters;

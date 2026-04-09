@@ -2,19 +2,19 @@ import { isAxiosError } from "axios";
 import { Heart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/useAuth";
-import api from "../../services/api";
-import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
-import { getListingAvailableStock, getRequestErrorMessage } from "../loja/loja.utils";
+import { useAuth } from "../../../contexts/useAuth";
+import api from "../../../services/api";
+import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../../services/assets";
+import { getListingAvailableStock, getRequestErrorMessage } from "../../loja/store.utils";
 import type {
   CartResponse,
   ListingsResponse,
   ListingItem,
   WishlistItem,
   WishlistResponse,
-} from "../loja/loja.types";
+} from "../../loja/store.types";
 
-export default function FavoritosMid() {
+export default function Favorites() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();

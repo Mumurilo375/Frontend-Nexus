@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 import { getApiErrorMessage } from "../../services/http";
-import type { GameImage, GameSummary, ListingItem, ListingMap, ReviewItem } from "./loja.types";
+import type { GameImage, GameSummary, ListingItem, ListingMap, ReviewItem } from "./store.types";
 
 export const PAGE_SIZE = 12;
 export const REVIEW_COMMENT_MAX_LENGTH = 500;

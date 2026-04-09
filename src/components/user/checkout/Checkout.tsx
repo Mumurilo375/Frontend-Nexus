@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Back from "../../components/login/Back";
-import api from "../../services/api";
-import { getApiErrorMessage } from "../../services/http";
+import BackButton from "../../login/BackButton";
+import api from "../../../services/api";
+import { getApiErrorMessage } from "../../../services/http";
 
 type CartItem = {
   id: number;
@@ -218,7 +218,7 @@ function PaymentOption({
   );
 }
 
-export default function CheckoutMid() {
+export default function Checkout() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -887,7 +887,7 @@ export default function CheckoutMid() {
         </section>
       )}
 
-      {!order && <Back />}
+      {!order && <BackButton />}
     </main>
   );
 }

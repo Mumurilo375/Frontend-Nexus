@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
 import { type AuthUser } from "../../services/auth";
 import { getApiErrorMessage } from "../../services/http";
-import Back from "./Back";
+import BackButton from "./BackButton";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
@@ -163,7 +163,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <Back />
+      <BackButton />
     </div>
   );
 }

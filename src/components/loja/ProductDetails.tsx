@@ -7,16 +7,16 @@ import { resolveAssetUrl } from "../../services/assets";
 import { isAuthenticated } from "../../services/auth";
 import DetailsGallery from "./DetailsGallery";
 import DetailsSidebar from "./DetailsSidebar";
-import type { CartResponse, GameDetails } from "./loja.types";
+import type { CartResponse, GameDetails } from "./store.types";
 import {
   formatDate,
   getGalleryImages,
   getListingAvailableStock,
   getRequestErrorMessage,
   getSelectedListing,
-} from "./loja.utils";
+} from "./store.utils";
 
-export default function DetailsMid() {
+export default function ProductDetails() {
   const { gameId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();

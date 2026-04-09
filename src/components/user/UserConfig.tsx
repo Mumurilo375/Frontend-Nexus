@@ -251,10 +251,7 @@ export default function UserConfigMid() {
           <h1 className="mt-2 text-3xl font-bold text-white">
             Configurações da conta
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            Atualize seus dados com segurança. O email fica bloqueado para
-            preservar a autenticação da conta.
-          </p>
+        
         </div>
 
         {loading && <p className="mt-6 text-gray-300">Carregando dados...</p>}

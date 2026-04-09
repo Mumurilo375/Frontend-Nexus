@@ -153,11 +153,11 @@ export default function UserConfigMid() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
 
-    if (!fullName.trim() || !username.trim() || !cpf.trim() || !password) {
-      setErrorMessage(
-        "Preencha os campos obrigatórios: nome, usuário, CPF e senha.",
-      );
+    if (!fullName.trim() || !username.trim() || !cpf.trim()) {
+      setErrorMessage("Preencha os campos obrigatórios: nome, usuário e CPF.");
       setSuccessMessage("");
       return;
     }
@@ -174,17 +174,20 @@ export default function UserConfigMid() {
       return;
     }
 
-    const passwordStrengthError = getPasswordStrengthError(password);
-    if (passwordStrengthError) {
-      setErrorMessage(passwordStrengthError);
-      setSuccessMessage("");
-      return;
-    }
+    if (trimmedPassword || trimmedConfirmPassword) {
+      const passwordStrengthError = getPasswordStrengthError(trimmedPassword);
 
-    if (password !== confirmPassword) {
-      setErrorMessage("As senhas não conferem.");
-      setSuccessMessage("");
-      return;
+      if (passwordStrengthError) {
+        setErrorMessage(passwordStrengthError);
+        setSuccessMessage("");
+        return;
+      }
+
+      if (trimmedPassword !== trimmedConfirmPassword) {
+        setErrorMessage("As senhas não conferem.");
+        setSuccessMessage("");
+        return;
+      }
     }
 
     if (!authUser?.id) {
@@ -198,13 +201,22 @@ export default function UserConfigMid() {
       setErrorMessage("");
       setSuccessMessage("");
 
-      const payload = {
+      const payload: {
+        fullName: string;
+        username: string;
+        cpf: string;
+        avatarUrl: string | null;
+        password?: string;
+      } = {
         fullName: fullName.trim(),
         username: username.trim(),
         cpf: cpf.trim(),
-        password,
         avatarUrl: avatarUrl.trim() || null,
       };
+
+      if (trimmedPassword) {
+        payload.password = trimmedPassword;
+      }
 
       const { data } = await api.put<UserProfile>(
         `/users/${authUser.id}`,
@@ -250,7 +262,7 @@ export default function UserConfigMid() {
         {!loading && (
           <div className="mt-6 grid gap-6 lg:grid-cols-[320px,1fr]">
             <aside className="rounded-[28px] border border-slate-800 bg-slate-900/60 p-6">
-              <div className="flex flex-col items-center text-center">
+              <div className="flex flex-col  items-center text-center">
                 {avatarPreview ? (
                   <img
                     src={avatarPreview}
@@ -262,27 +274,36 @@ export default function UserConfigMid() {
                     Sem foto
                   </div>
                 )}
-                <h2 className="mt-4 text-xl font-semibold text-white">
+
+                <h2 className="mt-4 mb-4 text-xl font-semibold text-white">
                   {fullName || authUser?.username || "Usuário Nexus"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  @{username || authUser?.username || "usuario"}
-                </p>
-              </div>
-
-              <div className="mt-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-sm">
-                <div>
-                  <p className="text-slate-500">Email</p>
-                  <p className="mt-1 text-slate-200">{email || "-"}</p>
+                <div className="rounded-3xl border border-slate-800 bg-slate-950/75 p-5">
+                  <label
+                    htmlFor="avatarFile"
+                    className="block text-sm font-medium text-slate-100"
+                  >
+                    Foto de perfil
+                  </label>
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <input
+                      id="avatarFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="avatarFile"
+                      className="inline-flex justify-between mx-auto  cursor-pointer rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/60 hover:text-white"
+                    >
+                      Escolher imagem
+                    </label>
+                    <p className="text-xs  text-slate-400">
+                      Atualize a imagem usada na navbar e no perfil.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-500">CPF</p>
-                  <p className="mt-1 text-slate-200">{cpf || "-"}</p>
-                </div>
-                <p className="text-xs leading-6 text-slate-400">
-                  A alteração de email fica bloqueada. Nome, usuário, CPF, senha
-                  e avatar continuam editáveis.
-                </p>
               </div>
             </aside>
 
@@ -346,33 +367,6 @@ export default function UserConfigMid() {
                 </label>
               </div>
 
-              <div className="rounded-3xl border border-slate-800 bg-slate-950/75 p-5">
-                <label
-                  htmlFor="avatarFile"
-                  className="block text-sm font-medium text-slate-100"
-                >
-                  Foto de perfil
-                </label>
-                <div className="mt-3 flex flex-wrap items-center gap-4">
-                  <input
-                    id="avatarFile"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarFileChange}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="avatarFile"
-                    className="inline-flex cursor-pointer rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/60 hover:text-white"
-                  >
-                    Escolher imagem
-                  </label>
-                  <p className="text-xs text-slate-400">
-                    Atualize a imagem usada na navbar e no perfil.
-                  </p>
-                </div>
-              </div>
-
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="text-sm font-medium text-slate-100">
                   Senha
@@ -382,8 +376,7 @@ export default function UserConfigMid() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className={inputClass}
-                    placeholder="Digite sua nova senha"
-                    required
+                    placeholder="Digite sua nova senha (opcional)"
                   />
                 </label>
 
@@ -395,15 +388,14 @@ export default function UserConfigMid() {
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     className={inputClass}
-                    placeholder="Repita a senha"
-                    required
+                    placeholder="Repita a senha (opcional)"
                   />
                 </label>
               </div>
 
               <p className="text-xs leading-6 text-slate-400">
-                A nova senha precisa manter nível forte: 8 caracteres, letras
-                maiúsculas e minúsculas, número e caractere especial.
+                Se quiser alterar a senha, use um padrão forte: 8 caracteres,
+                letras maiúsculas e minúsculas, número e caractere especial.
               </p>
 
               {errorMessage && (

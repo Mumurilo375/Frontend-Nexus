@@ -260,6 +260,10 @@ export default function CheckoutMid() {
     [cardNumber],
   );
   const formattedExpiry = useMemo(() => formatExpiry(cardExpiry), [cardExpiry]);
+  const maskedCardCvv = useMemo(
+    () => "*".repeat(digitsOnly(cardCvv).length) || "---",
+    [cardCvv],
+  );
   const pixCode = useMemo(
     () => buildPixCode(subtotal, totalQuantity),
     [subtotal, totalQuantity],
@@ -630,7 +634,7 @@ export default function CheckoutMid() {
                                 CVV
                               </p>
                               <p className="text-lg font-semibold tracking-[0.35em] text-slate-900">
-                                {digitsOnly(cardCvv).padEnd(3, "•")}
+                                {maskedCardCvv}
                               </p>
                             </div>
                           </div>

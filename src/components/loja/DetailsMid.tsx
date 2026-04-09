@@ -60,14 +60,18 @@ export default function DetailsMid() {
   const gameTitle = details?.title || "Jogo";
   const gameDescription = details?.description || "Sem descrição curta.";
   const gameLongDescription = details?.longDescription || gameDescription;
+  const reviewCount = Number(details?.reviewStats?.totalReviews ?? 0);
   const reviewAverage = Number(details?.reviewStats?.averageRating ?? 0);
   const inCart = currentListingId > 0 && cartListingIds.includes(currentListingId);
   const infoItems = useMemo(
     () => [
       { label: "Lançamento", value: formatDate(details?.releaseDate) },
-      { label: "Avaliação", value: `${reviewAverage.toFixed(1)} / 5` },
+      {
+        label: "Avaliação",
+        value: reviewCount === 0 ? "Ainda sem avaliações." : `${reviewAverage.toFixed(1)} / 5`,
+      },
     ],
-    [details?.releaseDate, reviewAverage],
+    [details?.releaseDate, reviewAverage, reviewCount],
   );
 
   const askLogin = () => setShowAuthModal(true);

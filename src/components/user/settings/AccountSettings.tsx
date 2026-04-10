@@ -30,12 +30,29 @@ function isRenderableAvatar(value: string | null | undefined): boolean {
   );
 }
 
+function calculateCpfCheckDigit(baseDigits: string) {
+  const factor = baseDigits.length + 1;
+  const total = baseDigits.split("").reduce((sum, digit, index) => {
+    return sum + Number(digit) * (factor - index);
+  }, 0);
+  const remainder = (total * 10) % 11;
+
+  return remainder === 10 ? 0 : remainder;
+}
+
 function isValidCpf(rawCpf: string): boolean {
   const cpf = rawCpf.replace(/\D/g, "");
 
   if (cpf.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(cpf)) return false;
-  return true;
+
+  const baseDigits = cpf.slice(0, 9);
+  const firstCheckDigit = calculateCpfCheckDigit(baseDigits);
+  const secondCheckDigit = calculateCpfCheckDigit(
+    `${baseDigits}${firstCheckDigit}`,
+  );
+
+  return cpf === `${baseDigits}${firstCheckDigit}${secondCheckDigit}`;
 }
 
 function formatCpf(value: string) {
@@ -119,7 +136,7 @@ export default function AccountSettings() {
 
         setFullName(data.fullName ?? "");
         setUsername(data.username ?? "");
-        setCpf(data.cpf ?? "");
+        setCpf(formatCpf(data.cpf ?? ""));
         setAvatarUrl(resolvedAvatarUrl);
         setAvatarPreview(resolvedAvatarUrl);
         setEmail(data.email ?? authUser.email ?? "");
@@ -210,7 +227,7 @@ export default function AccountSettings() {
       } = {
         fullName: fullName.trim(),
         username: username.trim(),
-        cpf: cpf.trim(),
+        cpf: cpf.replace(/\D/g, ""),
         avatarUrl: avatarUrl.trim() || null,
       };
 

@@ -17,6 +17,8 @@ type UserProfile = {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const inputClass =
   "mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500/70";
+const disabledInputClass =
+  "mt-2 block w-full cursor-not-allowed rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-500";
 
 function isRenderableAvatar(value: string | null | undefined): boolean {
   if (!value) return false;
@@ -95,6 +97,10 @@ function getFriendlyUpdateError(error: unknown): string {
   );
 }
 
+function getAvatarValue(value: string | null | undefined) {
+  return isRenderableAvatar(value) ? String(value) : "";
+}
+
 export default function AccountSettings() {
   const navigate = useNavigate();
   const { syncUser, user: authUser } = useAuth();
@@ -111,28 +117,33 @@ export default function AccountSettings() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState(authUser?.email ?? "");
+  const profileLabel = fullName || authUser?.username || "Usuário Nexus";
+
+  const clearFeedback = () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setSuccessMessage("");
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
       if (!authUser?.id) {
-        setErrorMessage("Não foi possível identificar o usuário autenticado.");
+        showError("Não foi possível identificar o usuário autenticado.");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        setErrorMessage("");
+        clearFeedback();
 
         const { data } = await api.get<UserProfile>(`/users/${authUser.id}`);
-
-        const apiAvatar = isRenderableAvatar(data.avatarUrl)
-          ? String(data.avatarUrl)
-          : "";
-        const localAvatar = isRenderableAvatar(authUser.avatarUrl)
-          ? String(authUser.avatarUrl)
-          : "";
-        const resolvedAvatarUrl = apiAvatar || localAvatar;
+        const resolvedAvatarUrl =
+          getAvatarValue(data.avatarUrl) || getAvatarValue(authUser.avatarUrl);
 
         setFullName(data.fullName ?? "");
         setUsername(data.username ?? "");
@@ -141,7 +152,7 @@ export default function AccountSettings() {
         setAvatarPreview(resolvedAvatarUrl);
         setEmail(data.email ?? authUser.email ?? "");
       } catch {
-        setErrorMessage("Não foi possível carregar seus dados.");
+        showError("Não foi possível carregar seus dados.");
       } finally {
         setLoading(false);
       }
@@ -155,9 +166,7 @@ export default function AccountSettings() {
   ) => {
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -174,20 +183,17 @@ export default function AccountSettings() {
     const trimmedConfirmPassword = confirmPassword.trim();
 
     if (!fullName.trim() || !username.trim() || !cpf.trim()) {
-      setErrorMessage("Preencha os campos obrigatórios: nome, usuário e CPF.");
-      setSuccessMessage("");
+      showError("Preencha os campos obrigatórios: nome, usuário e CPF.");
       return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      setErrorMessage("O email exibido está inválido.");
-      setSuccessMessage("");
+      showError("O email exibido está inválido.");
       return;
     }
 
     if (!isValidCpf(cpf)) {
-      setErrorMessage("CPF inválido.");
-      setSuccessMessage("");
+      showError("CPF inválido.");
       return;
     }
 
@@ -195,28 +201,24 @@ export default function AccountSettings() {
       const passwordStrengthError = getPasswordStrengthError(trimmedPassword);
 
       if (passwordStrengthError) {
-        setErrorMessage(passwordStrengthError);
-        setSuccessMessage("");
+        showError(passwordStrengthError);
         return;
       }
 
       if (trimmedPassword !== trimmedConfirmPassword) {
-        setErrorMessage("As senhas não conferem.");
-        setSuccessMessage("");
+        showError("As senhas não conferem.");
         return;
       }
     }
 
     if (!authUser?.id) {
-      setErrorMessage("Não foi possível identificar o usuário autenticado.");
-      setSuccessMessage("");
+      showError("Não foi possível identificar o usuário autenticado.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setErrorMessage("");
-      setSuccessMessage("");
+      clearFeedback();
 
       const payload: {
         fullName: string;
@@ -229,11 +231,8 @@ export default function AccountSettings() {
         username: username.trim(),
         cpf: cpf.replace(/\D/g, ""),
         avatarUrl: avatarUrl.trim() || null,
+        ...(trimmedPassword ? { password: trimmedPassword } : {}),
       };
-
-      if (trimmedPassword) {
-        payload.password = trimmedPassword;
-      }
 
       const { data } = await api.put<UserProfile>(
         `/users/${authUser.id}`,
@@ -251,8 +250,7 @@ export default function AccountSettings() {
       setAvatarUrl(avatarUrl);
       void navigate(-1);
     } catch (error: unknown) {
-      setErrorMessage(getFriendlyUpdateError(error));
-      setSuccessMessage("");
+      showError(getFriendlyUpdateError(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -290,7 +288,7 @@ export default function AccountSettings() {
                 )}
 
                 <h2 className="mt-4 mb-4 text-xl font-semibold text-white">
-                  {fullName || authUser?.username || "Usuário Nexus"}
+                  {profileLabel}
                 </h2>
                 <div className="rounded-3xl border border-slate-800 bg-slate-950/75 p-5">
                   <label
@@ -309,11 +307,11 @@ export default function AccountSettings() {
                     />
                     <label
                       htmlFor="avatarFile"
-                      className="inline-flex justify-between mx-auto  cursor-pointer rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/60 hover:text-white"
+                      className="mx-auto inline-flex cursor-pointer justify-between rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/60 hover:text-white"
                     >
                       Escolher imagem
                     </label>
-                    <p className="text-xs  text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Atualize a imagem usada na navbar e no perfil.
                     </p>
                   </div>
@@ -373,7 +371,7 @@ export default function AccountSettings() {
                     value={email}
                     readOnly
                     disabled
-                    className="mt-2 block w-full cursor-not-allowed rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-500"
+                    className={disabledInputClass}
                   />
                   <p className="mt-2 text-xs text-slate-400">
                     O email fica bloqueado por regra de segurança.

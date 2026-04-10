@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 import { Heart } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/useAuth";
 import api from "../../../services/api";
@@ -34,10 +34,15 @@ export default function Favorites() {
   const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(
     null,
   );
+  const redirectToLogin = () => {
+    void navigate("/login", { state: { from: location.pathname } });
+  };
+  const isListingOutOfStock = (listing?: ListingItem | null) =>
+    Boolean(listing?.stock) && getListingAvailableStock(listing) <= 0;
 
   useEffect(() => {
     if (!isAuthenticated) {
-      void navigate("/login", { state: { from: location.pathname } });
+      redirectToLogin();
       return;
     }
 
@@ -106,7 +111,7 @@ export default function Favorites() {
 
   const handleRemoveFavorite = async (gameId: number) => {
     if (!isAuthenticated) {
-      void navigate("/login", { state: { from: location.pathname } });
+      redirectToLogin();
       return;
     }
 
@@ -129,15 +134,9 @@ export default function Favorites() {
     const listings = getListingsForGame(gameId);
     const selectedId = selectedListingByGame[gameId];
 
-    if (!selectedId) {
-      return listings[0] ?? null;
-    }
-
-    return (
-      listings.find((listing) => listing.id === selectedId) ??
-      listings[0] ??
-      null
-    );
+    return selectedId
+      ? listings.find((listing) => listing.id === selectedId) ?? listings[0] ?? null
+      : listings[0] ?? null;
   };
 
   const selectListing = (gameId: number, listingId: number) => {
@@ -149,7 +148,7 @@ export default function Favorites() {
 
   const addToCart = async (gameId: number, listingId: number) => {
     if (!isAuthenticated) {
-      void navigate("/login", { state: { from: location.pathname } });
+      redirectToLogin();
       return;
     }
 
@@ -192,8 +191,7 @@ export default function Favorites() {
 
   const handleAddToCartClick = (gameTitle: string, gameId: number) => {
     const selectedListing = getSelectedListingForGame(gameId);
-    const selectedListingIsOutOfStock =
-      Boolean(selectedListing?.stock) && getListingAvailableStock(selectedListing) <= 0;
+    const selectedListingIsOutOfStock = isListingOutOfStock(selectedListing);
 
     if (!selectedListing) {
       setInfoMessage("Escolha uma plataforma antes de adicionar ao carrinho.");
@@ -213,10 +211,7 @@ export default function Favorites() {
     void addToCart(gameId, selectedListing.id);
   };
 
-  const wishlistCountLabel = useMemo(
-    () => `${items.length} salvos`,
-    [items.length],
-  );
+  const wishlistCountLabel = `${items.length} salvos`;
 
   return (
     <section className="mx-auto min-h-screen w-full max-w-7xl px-6 pb-10 pt-28">
@@ -275,9 +270,7 @@ export default function Favorites() {
               const game = item.game;
               const listings = getListingsForGame(item.gameId);
               const selectedListing = getSelectedListingForGame(item.gameId);
-              const selectedListingIsOutOfStock =
-                Boolean(selectedListing?.stock) &&
-                getListingAvailableStock(selectedListing) <= 0;
+              const selectedListingIsOutOfStock = isListingOutOfStock(selectedListing);
               const inCart = selectedListing
                 ? cartListingIds.includes(selectedListing.id)
                 : false;
@@ -329,9 +322,7 @@ export default function Favorites() {
                         <div className="flex flex-wrap gap-2">
                           {listings.map((listing) => {
                             const selected = selectedListing?.id === listing.id;
-                            const listingIsOutOfStock =
-                              Boolean(listing.stock) &&
-                              getListingAvailableStock(listing) <= 0;
+                            const listingIsOutOfStock = isListingOutOfStock(listing);
 
                             return (
                               <button

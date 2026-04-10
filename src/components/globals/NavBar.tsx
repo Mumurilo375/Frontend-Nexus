@@ -61,6 +61,8 @@ const navLinks: NavLinkItem[] = [
 
 const iconButtonClass =
   "relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-950/75 text-slate-200 transition hover:border-slate-600 hover:text-white";
+const countBadgeClass =
+  "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white";
 const navLinkClass = "text-sm text-slate-300 transition hover:text-white";
 const mobileItemClass =
   "flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-900 hover:text-white";
@@ -93,6 +95,7 @@ function NavBar() {
     logout,
     user: authUser,
   } = useAuth();
+  const currentPath = `${location.pathname}${location.search}`;
   const avatarSrc = authUser?.avatarUrl?.trim() || "";
   const resolvedAvatarSrc = avatarSrc ? resolveAssetUrl(avatarSrc, "") : "";
   const profileLabel = authUser?.username || "Minha conta";
@@ -107,14 +110,12 @@ function NavBar() {
   const goToLogin = () => {
     setShowAuthModal(false);
     void navigate("/login", {
-      state: { from: `${location.pathname}${location.search}` },
+      state: { from: currentPath },
     });
   };
 
   useEffect(() => {
-    if (!searchOpen || games.length > 0) {
-      return;
-    }
+    if (!searchOpen || games.length) return;
 
     const carregarJogos = async () => {
       try {
@@ -150,12 +151,16 @@ function NavBar() {
 
   useEffect(() => {
     setMenuMobileAberto(false);
-  }, [location.pathname, location.search]);
+  }, [currentPath]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    const resetCounts = () => {
       setWishlistCount(0);
       setCartCount(0);
+    };
+
+    if (!isLoggedIn) {
+      resetCounts();
       return;
     }
 
@@ -171,8 +176,7 @@ function NavBar() {
           Number(cartData.meta?.totalItems ?? (cartData.items ?? []).length),
         );
       } catch {
-        setWishlistCount(0);
-        setCartCount(0);
+        resetCounts();
       }
     };
 
@@ -184,25 +188,30 @@ function NavBar() {
     window.addEventListener("nexus:counts-updated", onCountsUpdated);
     return () =>
       window.removeEventListener("nexus:counts-updated", onCountsUpdated);
-  }, [isLoggedIn, location.pathname, location.search]);
+  }, [currentPath, isLoggedIn]);
 
   const filteredSuggestions = useMemo(() => {
     const term = normalizeSearchText(searchTerm);
-
-    if (!term) {
-      return games.slice(0, 6);
-    }
-
-    return games
-      .filter((game) => normalizeSearchText(game.title).includes(term))
-      .slice(0, 6);
+    return (term
+      ? games.filter((game) => normalizeSearchText(game.title).includes(term))
+      : games
+    ).slice(0, 6);
   }, [games, searchTerm]);
+
+  const resetSearch = () => {
+    setSearchTerm("");
+    setSearchError("");
+  };
+
+  const openGame = (id: number) => {
+    resetSearch();
+    setSearchOpen(false);
+    void navigate(`/loja/${id}`);
+  };
 
   const openGameFromSearch = (term: string) => {
     const query = normalizeSearchText(term);
-    if (!query) {
-      return;
-    }
+    if (!query) return;
 
     const matchedGame =
       games.find((game) => normalizeSearchText(game.title) === query) ??
@@ -213,20 +222,12 @@ function NavBar() {
       return;
     }
 
-    setSearchError("");
-    setSearchTerm("");
-    setSearchOpen(false);
-    void navigate(`/loja/${matchedGame.id}`);
+    openGame(matchedGame.id);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     openGameFromSearch(searchTerm);
-  };
-
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setSearchError("");
   };
 
   const handleLogout = () => {
@@ -246,38 +247,42 @@ function NavBar() {
     void navigate("/favoritos");
   };
 
-  const accountActions: MenuAction[] = isLoggedIn
-    ? [
-        {
-          label: "Configurações",
-          to: "/configuracoes",
-          icon: Settings,
-        },
-        {
-          label: "Meus pedidos e keys",
-          to: "/meus-pedidos",
-          icon: ReceiptText,
-        },
-        {
-          label: "Sair",
-          icon: LogOut,
-          onSelect: handleLogout,
-          danger: true,
-        },
-      ]
-    : [];
+  const accountActions: MenuAction[] = [
+    {
+      label: "Configurações",
+      to: "/configuracoes",
+      icon: Settings,
+    },
+    {
+      label: "Meus pedidos e keys",
+      to: "/meus-pedidos",
+      icon: ReceiptText,
+    },
+    {
+      label: "Sair",
+      icon: LogOut,
+      onSelect: handleLogout,
+      danger: true,
+    },
+  ];
 
   const getActionClass = (baseClass: string, danger?: boolean) =>
-    danger
-      ? `${baseClass} text-rose-200 data-focus:bg-rose-500/10 data-focus:text-rose-100 hover:text-rose-100`
-      : baseClass;
+    `${baseClass}${
+      danger
+        ? " text-rose-200 data-focus:bg-rose-500/10 data-focus:text-rose-100 hover:text-rose-100"
+        : ""
+    }`;
+
+  const renderCountBadge = (count: number, colorClass: string) =>
+    isLoggedIn && count > 0 ? (
+      <span className={`${countBadgeClass} ${colorClass}`}>{count}</span>
+    ) : null;
 
   const renderAction = (action: MenuAction, className: string) => {
+    const Icon = action.icon;
     const content = (
       <>
-        <action.icon
-          className={action.danger ? "h-4 w-4 text-rose-300" : "h-4 w-4"}
-        />
+        <Icon className={action.danger ? "h-4 w-4 text-rose-300" : "h-4 w-4"} />
         {action.label}
       </>
     );
@@ -356,7 +361,7 @@ function NavBar() {
                       {searchTerm.trim().length > 0 && (
                         <button
                           type="button"
-                          onClick={handleClearSearch}
+                          onClick={resetSearch}
                           className="rounded-xl border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:text-white"
                           aria-label="Limpar busca"
                           title="Limpar busca"
@@ -385,12 +390,7 @@ function NavBar() {
                         <li key={game.id}>
                           <button
                             type="button"
-                            onClick={() => {
-                              setSearchError("");
-                              setSearchTerm("");
-                              setSearchOpen(false);
-                              void navigate(`/loja/${game.id}`);
-                            }}
+                            onClick={() => openGame(game.id)}
                             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-900"
                           >
                             <img
@@ -423,11 +423,7 @@ function NavBar() {
               aria-label="Ir para favoritos"
             >
               <Heart className="h-5 w-5" />
-              {isLoggedIn && wishlistCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">
-                  {wishlistCount}
-                </span>
-              )}
+              {renderCountBadge(wishlistCount, "bg-rose-600")}
             </button>
 
             <Link
@@ -436,11 +432,7 @@ function NavBar() {
               aria-label="Carrinho"
             >
               <ShoppingCart className="h-5 w-5" />
-              {isLoggedIn && cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
-                  {cartCount}
-                </span>
-              )}
+              {renderCountBadge(cartCount, "bg-blue-600")}
             </Link>
 
             {isLoggedIn ? (

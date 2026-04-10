@@ -29,9 +29,12 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   const [game, setGame] = useState<GamePlatformsResponse["game"] | null>(null);
   const [platforms, setPlatforms] = useState<PlatformMonitorItem[]>([]);
   const [platformBeingManaged, setPlatformBeingManaged] = useState<number | null>(null);
-  const [platformFormStateById, setPlatformFormStateById] = useState<Record<number, PlatformFormState>>({});
-  const [platformKeysStateById, setPlatformKeysStateById] = useState<Record<number, PlatformKeysState>>({});
-  const [pendingConfirmation, setPendingConfirmation] = useState<PlatformConfirmationState | null>(null);
+  const [platformFormStateById, setPlatformFormStateById] =
+    useState<Record<number, PlatformFormState>>({});
+  const [platformKeysStateById, setPlatformKeysStateById] =
+    useState<Record<number, PlatformKeysState>>({});
+  const [pendingConfirmation, setPendingConfirmation] =
+    useState<PlatformConfirmationState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -82,6 +85,18 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     }));
   };
 
+  const patchPlatformFormState = (platformId: number, changes: Partial<PlatformFormState>) =>
+    updatePlatformFormState(platformId, (currentState) => ({
+      ...currentState,
+      ...changes,
+    }));
+
+  const patchPlatformKeysState = (platformId: number, changes: Partial<PlatformKeysState>) =>
+    updatePlatformKeysState(platformId, (currentState) => ({
+      ...currentState,
+      ...changes,
+    }));
+
   const replacePlatformMonitorItem = (nextPlatform: PlatformMonitorItem) =>
     setPlatforms((currentPlatforms) =>
       currentPlatforms.map((platform) =>
@@ -111,33 +126,26 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     }
 
     try {
-      updatePlatformKeysState(platformId, (currentState) => ({
-        ...currentState,
-        isLoading: true,
-        error: "",
-        page,
-      }));
+      patchPlatformKeysState(platformId, { isLoading: true, error: "", page });
 
       const { data } = await api.get<PaginatedResponse<GameKey>>("/game-keys", {
         params: { listingId: platform.listingId, page, limit: keysPageSize },
       });
 
-      updatePlatformKeysState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformKeysState(platformId, {
         isLoading: false,
         items: data.items ?? [],
         meta: data.meta ?? emptyKeysMeta,
         page,
         selectedIds: [],
-      }));
+      });
     } catch (error) {
-      updatePlatformKeysState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformKeysState(platformId, {
         isLoading: false,
         items: [],
         meta: emptyKeysMeta,
         error: getApiErrorMessage(error, "Não foi possível carregar as keys."),
-      }));
+      });
     }
   };
 
@@ -186,10 +194,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     }));
 
     if (!platform.listingId) {
-      setPlatformKeysStateById((currentState) => ({
-        ...currentState,
-        [platformId]: createPlatformKeysState(),
-      }));
+      patchPlatformKeysState(platformId, createPlatformKeysState());
       return;
     }
 
@@ -209,31 +214,29 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
       return;
     }
 
-    const parsedPrice = formState.price.trim() ? parsePlatformPrice(formState.price) : null;
+    const hasPrice = Boolean(formState.price.trim());
+    const parsedPrice = hasPrice ? parsePlatformPrice(formState.price) : null;
 
-    if (formState.price.trim() && parsedPrice === null) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+    if (hasPrice && parsedPrice === null) {
+      patchPlatformFormState(platformId, {
         error: "Informe um preço válido usando vírgula ou ponto.",
-      }));
+      });
       return;
     }
 
     if (!platform.hasListing && parsedPrice === null) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         error: "Informe um preço para configurar a plataforma.",
-      }));
+      });
       return;
     }
 
     try {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         isSaving: true,
         error: "",
         success: "",
-      }));
+      });
 
       const payload: { price?: number; isActive: boolean } = { isActive: formState.isActive };
 
@@ -253,11 +256,10 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
         success: "Plataforma salva.",
       }));
     } catch (error) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         isSaving: false,
         error: getApiErrorMessage(error, "Não foi possível salvar a plataforma."),
-      }));
+      });
     }
   };
 
@@ -286,38 +288,34 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     }
 
     if (!platform.hasListing) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         error: "Salve o preço antes de adicionar keys.",
-      }));
+      });
       return;
     }
 
     const { keyValues, hasIncompleteKey } = getGameKeyValues(formState.newKeysText);
 
     if (!keyValues.length) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         error: "Cole pelo menos uma key.",
-      }));
+      });
       return;
     }
 
     if (hasIncompleteKey) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         error: "Complete todas as keys no formato XXXX-XXXX-XXXX.",
-      }));
+      });
       return;
     }
 
     try {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         isAddingKeys: true,
         error: "",
         success: "",
-      }));
+      });
 
       const { data } = await api.post<SaveKeysResponse>(
         `/games/${gameId}/platforms/${platformId}/keys`,
@@ -335,11 +333,10 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
       }));
       await fetchPlatformKeysPage(platformId, 1);
     } catch (error) {
-      updatePlatformFormState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformFormState(platformId, {
         isAddingKeys: false,
         error: getApiErrorMessage(error, "Não foi possível adicionar as keys."),
-      }));
+      });
     }
   };
 
@@ -361,11 +358,7 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     }
 
     try {
-      updatePlatformKeysState(platformId, (currentState) => ({
-        ...currentState,
-        isRemoving: true,
-        error: "",
-      }));
+      patchPlatformKeysState(platformId, { isRemoving: true, error: "" });
 
       const { data } = await api.post<DeleteKeysResponse>("/game-keys/bulk-delete", {
         listingId: platform.listingId,
@@ -384,11 +377,10 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
         selectedIds: [],
       }));
     } catch (error) {
-      updatePlatformKeysState(platformId, (currentState) => ({
-        ...currentState,
+      patchPlatformKeysState(platformId, {
         isRemoving: false,
         error: getApiErrorMessage(error, "Não foi possível remover as keys."),
-      }));
+      });
     }
   };
 
@@ -399,36 +391,33 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
   };
 
   const confirmPendingAction = () => {
-    if (!pendingConfirmation) {
-      return;
-    }
+    if (!pendingConfirmation) return;
 
     const { platformId, type } = pendingConfirmation;
     setPendingConfirmation(null);
-
-    if (type === "priceChange") {
-      void savePlatformSettings(platformId);
-      return;
-    }
-
-    void removeSelectedPlatformKeys(platformId);
+    void (type === "priceChange"
+      ? savePlatformSettings(platformId)
+      : removeSelectedPlatformKeys(platformId));
   };
 
-  const availableKeysCount = platforms.reduce((total, platform) => total + Number(platform.stock.available ?? 0), 0);
+  const availableKeysCount = platforms.reduce(
+    (total, platform) => total + Number(platform.stock.available ?? 0),
+    0,
+  );
   const managedPlatform = platformBeingManaged === null ? null : findPlatformMonitorItem(platformBeingManaged);
-  const managedPlatformFormState = platformBeingManaged === null ? null : platformFormStateById[platformBeingManaged] ?? null;
-  const managedPlatformKeysState = platformBeingManaged === null ? null : platformKeysStateById[platformBeingManaged] ?? null;
+  const managedPlatformFormState =
+    platformBeingManaged === null ? null : platformFormStateById[platformBeingManaged] ?? null;
+  const managedPlatformKeysState =
+    platformBeingManaged === null ? null : platformKeysStateById[platformBeingManaged] ?? null;
   const managedPlatformId = managedPlatform?.platform.id ?? null;
   const selectedKeysCount =
     pendingConfirmation?.type === "removeKeys"
       ? platformKeysStateById[pendingConfirmation.platformId]?.selectedIds.length ?? 0
       : 0;
   const patchManagedPlatformForm = (changes: Partial<PlatformFormState>) => {
-    if (managedPlatformId === null) {
-      return;
-    }
+    if (managedPlatformId === null) return;
 
-    updatePlatformFormState(managedPlatformId, (currentState) => ({ ...currentState, ...changes }));
+    patchPlatformFormState(managedPlatformId, changes);
   };
 
   return (

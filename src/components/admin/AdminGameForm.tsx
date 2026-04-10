@@ -42,17 +42,15 @@ export default function AdminGameForm({ id }: { id?: string }) {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const selectedCategories = useMemo(() => categories.filter((category) => values.categoryIds.includes(category.id)), [categories, values.categoryIds]);
+  const categorySummary = selectedCategories.length === 0 ? "Nenhuma categoria selecionada." : `${selectedCategories.length} categoria(s) selecionada(s).`;
+  const toggleCategoryPicker = () => setIsCategoryPickerOpen((currentState) => !currentState);
 
   useEffect(() => {
     galleryItemsRef.current = galleryItems;
   }, [galleryItems]);
 
-  useEffect(
-    () => () => {
-      galleryItemsRef.current.forEach(revokeGalleryItemPreview);
-    },
-    [],
-  );
+  useEffect(() => () => galleryItemsRef.current.forEach(revokeGalleryItemPreview), []);
 
   useEffect(() => {
     if (coverFile) {
@@ -65,10 +63,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   }, [coverFile, values.coverImageUrl]);
 
   const replaceGalleryItems = (nextItems: GalleryItem[]) => {
-    setGalleryItems((currentItems) => {
-      currentItems.forEach(revokeGalleryItemPreview);
-      return nextItems;
-    });
+    setGalleryItems((currentItems) => (currentItems.forEach(revokeGalleryItemPreview), nextItems));
   };
 
   useEffect(() => {
@@ -108,11 +103,6 @@ export default function AdminGameForm({ id }: { id?: string }) {
     void fetchFormData();
   }, [id]);
 
-  const selectedCategories = useMemo(
-    () => categories.filter((category) => values.categoryIds.includes(category.id)),
-    [categories, values.categoryIds],
-  );
-
   const setField = <Field extends keyof GameValues>(field: Field, value: GameValues[Field]) => {
     setValues((currentValues) => ({ ...currentValues, [field]: value }));
   };
@@ -127,9 +117,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   };
 
   const addGalleryFiles = (files: FileList | null) => {
-    if (!files?.length) {
-      return;
-    }
+    if (!files?.length) return;
 
     setGalleryItems((currentItems) => [
       ...currentItems,
@@ -140,9 +128,7 @@ export default function AdminGameForm({ id }: { id?: string }) {
   const addGalleryUrl = () => {
     const imageUrl = galleryUrlInput.trim();
 
-    if (!imageUrl) {
-      return;
-    }
+    if (!imageUrl) return;
 
     setGalleryItems((currentItems) => [...currentItems, createUrlGalleryItem(imageUrl)]);
     setGalleryUrlInput("");
@@ -201,15 +187,15 @@ export default function AdminGameForm({ id }: { id?: string }) {
       setErrorMessage("");
 
       const formData = buildGameFormData(values, coverFile, galleryItems);
+      const nextPath = isEditing
+        ? "/admin/games"
+        : `/admin/games/${(await api.post<GameResponse>("/games", formData)).data.id}/platforms`;
 
       if (isEditing) {
         await api.put(`/games/${id}`, formData);
-        void navigate("/admin/games");
-        return;
       }
 
-      const { data } = await api.post<GameResponse>("/games", formData);
-      void navigate(`/admin/games/${data.id}/platforms`);
+      void navigate(nextPath);
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error, "Não foi possível salvar o jogo."));
     } finally {
@@ -284,17 +270,13 @@ export default function AdminGameForm({ id }: { id?: string }) {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-white">Categorias</h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {selectedCategories.length === 0
-                        ? "Nenhuma categoria selecionada."
-                        : `${selectedCategories.length} categoria(s) selecionada(s).`}
-                    </p>
+                    <p className="mt-1 text-sm text-slate-400">{categorySummary}</p>
                   </div>
 
                   <AdminButton
                     type="button"
                     tone="secondary"
-                    onClick={() => setIsCategoryPickerOpen((currentState) => !currentState)}
+                    onClick={toggleCategoryPicker}
                   >
                     {isCategoryPickerOpen ? "Ocultar categorias" : "Escolher categorias"}
                   </AdminButton>

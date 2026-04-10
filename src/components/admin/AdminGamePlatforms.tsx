@@ -21,7 +21,7 @@ import {
   type StockSummary,
 } from "./AdminGamePlatforms.helpers";
 import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../services/assets";
-import { AdminButton, AdminPageState, AdminStatusBadge } from "./adminShared";
+import { AdminButton, AdminLinkButton, AdminPageState, AdminStatusBadge } from "./adminShared";
 import api from "../../services/api";
 import { getApiErrorMessage, type PaginatedResponse } from "../../services/http";
 
@@ -485,15 +485,25 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
                     </div>
                   </div>
 
-                  <AdminButton
-                    type="button"
-                    tone="secondary"
-                    onClick={() => {
-                      void openPlatformManagementModal(platform.platform.id);
-                    }}
-                  >
-                    Gerenciar
-                  </AdminButton>
+                  <div className="flex flex-wrap gap-2">
+                    {platform.listingId ? (
+                      <AdminLinkButton
+                        to={`/admin/price-history?listingId=${platform.listingId}`}
+                        tone="secondary"
+                      >
+                        Histórico
+                      </AdminLinkButton>
+                    ) : null}
+                    <AdminButton
+                      type="button"
+                      tone="secondary"
+                      onClick={() => {
+                        void openPlatformManagementModal(platform.platform.id);
+                      }}
+                    >
+                      Gerenciar
+                    </AdminButton>
+                  </div>
                 </div>
               </article>
             ))}

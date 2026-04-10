@@ -1,12 +1,6 @@
 import type { ChangeEvent } from "react";
 import MuiPagination from "@mui/material/Pagination";
-
-type PaginationProps = {
-  page: number;
-  totalPages: number;
-  scrollToTop?: boolean;
-  onPageChange: (page: number) => void;
-};
+import type { PaginationProps } from "./globals.types";
 
 export default function Pagination({
   page,

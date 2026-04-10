@@ -12,42 +12,15 @@ import { Link } from "react-router-dom";
 import BackButton from "../../login/BackButton";
 import api from "../../../services/api";
 import { getApiErrorMessage } from "../../../services/http";
-
-type CartItem = {
-  id: number;
-  quantity?: number;
-  isQuantityAvailable?: boolean;
-  stock?: { available?: number };
-  listing?: {
-    price: number | string;
-    game?: { title?: string };
-    platform?: { name?: string };
-  };
-};
-
-type CartResponse = { items: CartItem[] };
-
-type OrderResponse = {
-  id: number;
-  orderNumber: string;
-  totalAmount: number | string;
-  status: string;
-};
-
-type CheckoutCreateResponse = {
-  order: OrderResponse;
-};
-
-type PaymentMethod = "card" | "paypal" | "pix";
-type CardField = "number" | "name" | "expiry" | "cvv" | null;
-
-type PaymentOptionProps = {
-  icon: typeof CreditCard;
-  title: string;
-  description: string;
-  active: boolean;
-  onClick: () => void;
-};
+import type {
+  CardField,
+  CheckoutCartItem,
+  CheckoutCartResponse,
+  CheckoutCreateResponse,
+  CheckoutOrderResponse,
+  PaymentMethod,
+  PaymentOptionProps,
+} from "./checkout.types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -174,11 +147,11 @@ function createPixQrDataUrl(value: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function getQuantity(item: CartItem) {
+function getQuantity(item: CheckoutCartItem) {
   return Math.max(1, Number(item.quantity ?? 1));
 }
 
-function getAvailableStock(item: CartItem) {
+function getAvailableStock(item: CheckoutCartItem) {
   return Math.max(0, Number(item.stock?.available ?? 0));
 }
 
@@ -219,12 +192,12 @@ function PaymentOption({
 }
 
 export default function Checkout() {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CheckoutCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [order, setOrder] = useState<OrderResponse | null>(null);
+  const [order, setOrder] = useState<CheckoutOrderResponse | null>(null);
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -281,7 +254,7 @@ export default function Checkout() {
         setError("");
       }
 
-      const { data } = await api.get<CartResponse>("/cart");
+      const { data } = await api.get<CheckoutCartResponse>("/cart");
       setItems(data.items ?? []);
     } catch (requestError) {
       if (showLoading) {

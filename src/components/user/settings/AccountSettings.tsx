@@ -3,16 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/useAuth";
 import api from "../../../services/api";
 import { getApiErrorMessage } from "../../../services/http";
-
-type UserProfile = {
-  id: number;
-  email: string;
-  username: string;
-  fullName: string;
-  cpf: string;
-  avatarUrl?: string | null;
-  isAdmin?: boolean;
-};
+import type { UserProfile } from "./accountSettings.types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const inputClass =

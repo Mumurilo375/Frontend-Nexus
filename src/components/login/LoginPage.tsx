@@ -2,19 +2,14 @@ import { type FormEvent, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
-import { type AuthUser } from "../../services/auth";
 import { getApiErrorMessage } from "../../services/http";
 import BackButton from "./BackButton";
+import type { LoginResponse } from "./login.types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
 const inputClass =
   "mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500/70";
-
-type LoginResponse = {
-  token: string;
-  user: AuthUser;
-};
 
 function getFriendlyLoginError(error: unknown): string {
   return getApiErrorMessage(

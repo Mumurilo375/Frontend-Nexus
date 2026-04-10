@@ -9,7 +9,6 @@ import {
   ShoppingCart,
   UserRound,
   X,
-  type LucideIcon,
 } from "lucide-react";
 import {
   Menu as HeadlessMenu,
@@ -23,34 +22,13 @@ import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
 import { resolveAssetUrl } from "../../services/assets";
 import AuthRequiredModal from "./AuthRequiredModal";
-
-type GameSuggestion = {
-  id: number;
-  title: string;
-  coverImageUrl?: string;
-};
-
-type GamesResponse = {
-  items: GameSuggestion[];
-};
-type CartResponse = {
-  items?: Array<{ listingId?: number; quantity?: number }>;
-  meta?: { totalItems?: number };
-};
-
-type NavLinkItem = {
-  to: string;
-  label: string;
-  adminOnly?: boolean;
-};
-
-type MenuAction = {
-  label: string;
-  icon: LucideIcon;
-  to?: string;
-  onSelect?: () => void;
-  danger?: boolean;
-};
+import type {
+  GamesResponse,
+  GameSuggestion,
+  MenuAction,
+  NavbarCartResponse,
+  NavLinkItem,
+} from "./globals.types";
 
 const navLinks: NavLinkItem[] = [
   { to: "/loja", label: "Loja" },
@@ -168,7 +146,7 @@ function NavBar() {
       try {
         const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
           api.get<{ items?: unknown[] }>("/wishlists"),
-          api.get<CartResponse>("/cart"),
+          api.get<NavbarCartResponse>("/cart"),
         ]);
 
         setWishlistCount((wishlistData.items ?? []).length);

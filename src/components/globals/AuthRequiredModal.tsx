@@ -1,10 +1,4 @@
-type AuthRequiredModalProps = {
-  open: boolean;
-  title?: string;
-  message?: string;
-  onClose: () => void;
-  onConfirm: () => void;
-};
+import type { AuthRequiredModalProps } from "./globals.types";
 
 export default function AuthRequiredModal({
   open,

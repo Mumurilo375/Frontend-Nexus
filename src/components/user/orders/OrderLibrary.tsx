@@ -8,17 +8,7 @@ import {
   type PaginatedResponse,
   type PaginationMeta,
 } from "../../../services/http";
-
-type LibraryItem = {
-  id: number;
-  gameKey?: { keyValue?: string; soldAt?: string };
-  listing?: {
-    price?: number | string;
-    game?: { title?: string; coverImageUrl?: string };
-    platform?: { name?: string };
-  };
-  order?: { orderNumber?: string };
-};
+import type { LibraryItem } from "./orderLibrary.types";
 
 const PAGE_SIZE = 6;
 const emptyMeta: PaginationMeta = {

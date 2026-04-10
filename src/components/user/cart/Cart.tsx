@@ -4,24 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../../../services/api";
 import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../../services/assets";
 import { getApiErrorMessage } from "../../../services/http";
-
-type CartItem = {
-  id: number;
-  listingId: number;
-  quantity?: number;
-  isQuantityAvailable?: boolean;
-  stock?: { available?: number };
-  listing?: {
-    id: number;
-    price: number | string;
-    game?: { title?: string; coverImageUrl?: string };
-    platform?: { name?: string };
-  };
-};
-
-type CartResponse = {
-  items: CartItem[];
-};
+import type { CartItem, CartResponse } from "./cart.types";
 
 function toMoney(value: number) {
   return `R$ ${value.toFixed(2)}`;

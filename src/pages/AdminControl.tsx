@@ -73,7 +73,7 @@ export default function AdminControl() {
     return <AdminPriceHistory />;
   }
 
-  if (matchAdminPath(pathname, "/admin/offers")) {
+  if (matchAdminPath(pathname, "/admin/ofertas")) {
     return <AdminOffers />;
   }
 

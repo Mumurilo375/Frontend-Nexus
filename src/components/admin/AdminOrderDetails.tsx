@@ -5,6 +5,9 @@ import type { AdminOrderDetails as AdminOrderDetailsType } from "./adminOrders.t
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 import { resolveAssetUrl } from "../../services/assets";
+import Pagination from "../globals/Pagination";
+
+const ITEMS_PER_PAGE = 6;
 
 function formatDateTime(value?: string | null) {
   if (!value) {
@@ -15,6 +18,14 @@ function formatDateTime(value?: string | null) {
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("pt-BR");
 }
 
+function translateStatus(value?: string) {
+  if (value === "paid") return "Pago";
+  if (value === "pending") return "Pendente";
+  if (value === "cancelled") return "Cancelado";
+  if (value === "succeeded") return "Pagamento aprovado";
+  return value || "-";
+}
+
 type AdminOrderDetailsProps = {
   orderId?: string;
 };
@@ -23,6 +34,7 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
   const [order, setOrder] = useState<AdminOrderDetailsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [itemsPage, setItemsPage] = useState(1);
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -51,6 +63,14 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
     void loadOrder();
   }, [orderId]);
 
+  useEffect(() => {
+    setItemsPage(1);
+  }, [order?.id]);
+
+  const visibleItems = order
+    ? order.items.slice((itemsPage - 1) * ITEMS_PER_PAGE, itemsPage * ITEMS_PER_PAGE)
+    : [];
+
   return (
     <AdminLayout
       title={order ? `Pedido ${order.orderNumber}` : "Detalhes do pedido"}
@@ -72,12 +92,9 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
                 <div className="flex flex-wrap items-center gap-2">
                   <AdminStatusBadge
                     active={order.status === "paid"}
-                    activeLabel={`Pedido ${order.status}`}
-                    inactiveLabel={`Pedido ${order.status}`}
+                    activeLabel={`Status: ${translateStatus(order.status)}`}
+                    inactiveLabel={`Status: ${translateStatus(order.status)}`}
                   />
-                  <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300">
-                    Pagamento {order.paymentStatus}
-                  </span>
                 </div>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -130,13 +147,16 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-white">Itens do pedido</h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-white">Itens do pedido</h2>
+                <p className="text-sm text-slate-400">{order.items.length} item(ns) no pedido</p>
+              </div>
 
               {order.items.length === 0 && (
                 <AdminNotice>Este pedido não possui itens cadastrados.</AdminNotice>
               )}
 
-              {order.items.map((item) => (
+              {visibleItems.map((item) => (
                 <article
                   key={item.id}
                   className="flex flex-col gap-4 rounded-[24px] border border-slate-800 bg-slate-950/82 p-5 sm:flex-row"
@@ -144,7 +164,7 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
                   <img
                     src={resolveAssetUrl(item.listing?.game?.coverImageUrl)}
                     alt={item.listing?.game?.title || "Jogo"}
-                    className="h-28 w-full rounded-2xl border border-slate-800 object-cover sm:w-36"
+                    className="aspect-[18/7] w-full rounded-2xl border border-slate-800 object-cover sm:w-44"
                   />
 
                   <div className="min-w-0 flex-1">
@@ -167,6 +187,14 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
                   </div>
                 </article>
               ))}
+
+              {order.items.length > ITEMS_PER_PAGE && (
+                <Pagination
+                  page={itemsPage}
+                  totalPages={Math.ceil(order.items.length / ITEMS_PER_PAGE)}
+                  onPageChange={setItemsPage}
+                />
+              )}
             </section>
           </div>
         ) : null}

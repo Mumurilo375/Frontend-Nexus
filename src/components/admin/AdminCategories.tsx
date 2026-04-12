@@ -22,6 +22,37 @@ const actionBaseClass = "inline-flex min-h-9 items-center justify-center rounded
 const editActionClass = `${actionBaseClass} border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
 const deleteActionClass = `${actionBaseClass} border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20`;
 
+function CategoryDeleteModal({
+  categoryName,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  categoryName: string;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/75 px-4 py-6">
+      <div className="w-full max-w-md rounded-[28px] border border-slate-800 bg-slate-950 p-5 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
+        <h3 className="text-lg font-semibold text-white">Excluir categoria</h3>
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          Tem certeza que deseja excluir a categoria <span className="font-semibold text-white">{categoryName}</span>?
+        </p>
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <AdminButton type="button" tone="secondary" onClick={onCancel} disabled={isDeleting}>
+            Cancelar
+          </AdminButton>
+          <AdminButton type="button" tone="danger" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? "Excluindo..." : "Excluir"}
+          </AdminButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState(emptyPagination);
@@ -29,6 +60,7 @@ export default function AdminCategories() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
+  const [pendingDeleteCategory, setPendingDeleteCategory] = useState<Category | null>(null);
 
   const fetchCategoriesPage = useCallback(async (page = currentPage) => {
     try {
@@ -56,13 +88,16 @@ export default function AdminCategories() {
     void fetchCategoriesPage();
   }, [fetchCategoriesPage]);
 
-  const removeCategory = async (categoryId: number) => {
-    if (!window.confirm("Deseja excluir esta categoria?")) return;
+  const removeCategory = async () => {
+    if (!pendingDeleteCategory) return;
+
+    const categoryId = pendingDeleteCategory.id;
 
     try {
       setDeletingCategoryId(categoryId);
       setErrorMessage("");
       await api.delete(`/categories/${categoryId}`);
+      setPendingDeleteCategory(null);
 
       if (categories.length === 1 && currentPage > 1) {
         setCurrentPage((page) => page - 1);
@@ -116,23 +151,23 @@ export default function AdminCategories() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {categories.map(({ id, name }) => (
-                    <tr key={id}>
-                      <td className="px-4 py-4 text-gray-400">{id}</td>
-                      <td className="px-4 py-4 font-medium">{name}</td>
+                  {categories.map((category) => (
+                    <tr key={category.id}>
+                      <td className="px-4 py-4 text-gray-400">{category.id}</td>
+                      <td className="px-4 py-4 font-medium">{category.name}</td>
                       <td className="px-4 py-4">
                         <div className="flex justify-end">
                           <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800/90 bg-slate-900/45 p-1.5">
-                          <AdminLinkButton to={`/admin/categories/${id}/edit`} tone="secondary" className={editActionClass}>Editar</AdminLinkButton>
-                          <AdminButton
-                            type="button"
-                            tone="subtleDanger"
-                            className={deleteActionClass}
-                            disabled={deletingCategoryId === id}
-                            onClick={() => { void removeCategory(id); }}
-                          >
-                            {deletingCategoryId === id ? "Excluindo..." : "Excluir"}
-                          </AdminButton>
+                            <AdminLinkButton to={`/admin/categories/${category.id}/edit`} tone="secondary" className={editActionClass}>Editar</AdminLinkButton>
+                            <AdminButton
+                              type="button"
+                              tone="subtleDanger"
+                              className={deleteActionClass}
+                              disabled={deletingCategoryId === category.id}
+                              onClick={() => setPendingDeleteCategory(category)}
+                            >
+                              {deletingCategoryId === category.id ? "Excluindo..." : "Excluir"}
+                            </AdminButton>
                           </div>
                         </div>
                       </td>
@@ -148,6 +183,17 @@ export default function AdminCategories() {
             totalPages={pagination.totalPages}
             onPageChange={setCurrentPage}
           />
+
+          {pendingDeleteCategory && (
+            <CategoryDeleteModal
+              categoryName={pendingDeleteCategory.name}
+              isDeleting={deletingCategoryId === pendingDeleteCategory.id}
+              onCancel={() => setPendingDeleteCategory(null)}
+              onConfirm={() => {
+                void removeCategory();
+              }}
+            />
+          )}
         </>
       </AdminPageState>
     </AdminLayout>

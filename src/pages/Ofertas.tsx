@@ -12,7 +12,7 @@ function toMoney(value: number) {
 }
 
 function Ofertas() {
-  const [offers, setOffers] = useState<OfferItem[]>([]);
+  const [promotions, setPromotions] = useState<OfferItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -30,9 +30,9 @@ function Ofertas() {
           },
         });
 
-        setOffers((data.items ?? []).filter((offer) => Boolean(offer.listing)));
+        setPromotions((data.items ?? []).filter((offer) => offer.listings.length > 0));
       } catch (error) {
-        setOffers([]);
+        setPromotions([]);
         setErrorMessage(
           getApiErrorMessage(error, "Não foi possível carregar as ofertas."),
         );
@@ -43,6 +43,16 @@ function Ofertas() {
 
     void loadOffers();
   }, []);
+
+  const offers = promotions.flatMap((promotion) =>
+    promotion.listings.map((listing) => ({
+      id: `${promotion.id}-${listing.id}`,
+      name: promotion.name,
+      description: promotion.description,
+      discountPercentage: promotion.discountPercentage,
+      listing,
+    })),
+  );
 
   return (
     <div className="nexus-page-shell">
@@ -99,8 +109,8 @@ function Ofertas() {
                 className="overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950/88 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
               >
                 <img
-                  src={resolveAssetUrl(offer.listing?.game?.coverImageUrl)}
-                  alt={offer.listing?.game?.title || "Oferta"}
+                  src={resolveAssetUrl(offer.listing.game?.coverImageUrl)}
+                  alt={offer.listing.game?.title || "Oferta"}
                   className="aspect-[16/9] w-full object-cover"
                 />
 
@@ -108,10 +118,10 @@ function Ofertas() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200/80">
-                        {offer.listing?.platform?.name || "Plataforma"}
+                        {offer.listing.platform?.name || "Plataforma"}
                       </p>
                       <h2 className="mt-2 text-xl font-semibold text-white">
-                        {offer.listing?.game?.title || offer.name}
+                        {offer.listing.game?.title || offer.name}
                       </h2>
                     </div>
 
@@ -126,15 +136,15 @@ function Ofertas() {
 
                   <div className="mt-4">
                     <p className="text-sm text-slate-500 line-through">
-                      {toMoney(offer.listing?.pricing?.basePrice ?? 0)}
+                      {toMoney(offer.listing.pricing.basePrice)}
                     </p>
                     <p className="text-3xl font-black text-blue-100">
-                      {toMoney(offer.listing?.pricing?.finalPrice ?? 0)}
+                      {toMoney(offer.listing.pricing.finalPrice)}
                     </p>
                   </div>
 
                   <Link
-                    to={`/loja/${offer.listing?.game?.id ?? ""}`}
+                    to={`/loja/${offer.listing.game?.id ?? ""}`}
                     className="mt-5 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
                   >
                     Ver na loja

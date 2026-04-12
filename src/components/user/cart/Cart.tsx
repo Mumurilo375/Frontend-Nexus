@@ -22,6 +22,17 @@ function getItemTotal(item: CartItem) {
   return Number(item.listing?.price ?? 0) * getQuantity(item);
 }
 
+function getNextLowerQuantity(item: CartItem) {
+  const quantity = getQuantity(item);
+  const availableStock = getAvailableStock(item);
+
+  if (availableStock > 0 && availableStock < quantity) {
+    return availableStock;
+  }
+
+  return quantity - 1;
+}
+
 export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,10 +147,6 @@ export default function Cart() {
       <div className="nexus-panel p-7">
         <div className="flex flex-col gap-2 border-b border-slate-800 pb-5 md:flex-row md:items-end md:justify-between">
           <h1 className="text-3xl font-bold text-white">Carrinho</h1>
-          <div className="rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm text-slate-300">
-            {totalQuantity}{" "}
-            {totalQuantity === 1 ? "unidade no carrinho" : "unidades no carrinho"}
-          </div>
         </div>
 
         {loading && <p className="mt-6 text-gray-300">Carregando carrinho...</p>}
@@ -195,9 +202,6 @@ export default function Cart() {
                                 className="h-full w-full object-contain"
                               />
                             </div>
-                            <span className="rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1 text-xs text-slate-300">
-                              {item.listing?.platform?.name || "Plataforma"}
-                            </span>
                           </div>
 
                           <div className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -216,9 +220,14 @@ export default function Cart() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  void updateQuantity(item.listingId, quantity - 1);
+                                  void updateQuantity(item.listingId, getNextLowerQuantity(item));
                                 }}
-                                disabled={isBusy || quantity <= 1}
+                                disabled={
+                                  isBusy ||
+                                  quantity <= 1 ||
+                                  (item.isQuantityAvailable === false &&
+                                    availableStock === 0)
+                                }
                                 className="px-3 py-2 text-slate-200 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                 aria-label="Diminuir quantidade"
                               >
@@ -261,9 +270,18 @@ export default function Cart() {
 
                         {item.isQuantityAvailable === false && (
                           <p className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-                            Seu carrinho tem {quantity} unidades desse jogo, mas só existem{" "}
-                            {availableStock} disponíveis agora. Ajuste a quantidade
-                            para continuar.
+                            {availableStock === 0 ? (
+                              <>
+                                Seu carrinho tem {quantity} unidades desse jogo, mas ele ficou
+                                sem estoque agora. Remova o item para continuar.
+                              </>
+                            ) : (
+                              <>
+                                Seu carrinho tem {quantity} unidades desse jogo, mas só existem{" "}
+                                {availableStock} disponíveis agora. Ajuste a quantidade
+                                para continuar.
+                              </>
+                            )}
                           </p>
                         )}
                       </div>

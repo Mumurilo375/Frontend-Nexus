@@ -1,6 +1,7 @@
 export type AdminOfferListingOption = {
   id: number;
   price?: number | string;
+  isActive?: boolean;
   game?: {
     id?: number;
     title?: string;
@@ -8,6 +9,30 @@ export type AdminOfferListingOption = {
   platform?: {
     id?: number;
     name?: string;
+    slug?: string;
+  };
+};
+
+export type AdminOfferListing = {
+  id: number;
+  price: number;
+  isActive: boolean;
+  game: {
+    id: number;
+    title?: string | null;
+    coverImageUrl?: string | null;
+  } | null;
+  platform: {
+    id: number;
+    name?: string | null;
+    slug?: string | null;
+  } | null;
+  pricing: {
+    basePrice: number;
+    discountPercentage: number;
+    discountAmount: number;
+    finalPrice: number;
+    hasDiscount: boolean;
   };
 };
 
@@ -19,29 +44,8 @@ export type AdminOfferItem = {
   startDate?: string;
   endDate?: string;
   isActive: boolean;
-  listingId: number | null;
-  listing: {
-    id: number;
-    price: number;
-    isActive: boolean;
-    game: {
-      id: number;
-      title?: string | null;
-      coverImageUrl?: string | null;
-    } | null;
-    platform: {
-      id: number;
-      name?: string | null;
-      slug?: string | null;
-    } | null;
-    pricing: {
-      basePrice: number;
-      discountPercentage: number;
-      discountAmount: number;
-      finalPrice: number;
-      hasDiscount: boolean;
-    };
-  } | null;
+  listingIds: number[];
+  listings: AdminOfferListing[];
 };
 
 export type AdminOfferFormState = {
@@ -51,7 +55,7 @@ export type AdminOfferFormState = {
   startDate: string;
   endDate: string;
   isActive: boolean;
-  listingId: string;
+  platformId: string;
 };
 
 export function createEmptyOfferFormState(): AdminOfferFormState {
@@ -62,6 +66,6 @@ export function createEmptyOfferFormState(): AdminOfferFormState {
     startDate: "",
     endDate: "",
     isActive: true,
-    listingId: "",
+    platformId: "",
   };
 }

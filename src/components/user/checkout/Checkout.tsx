@@ -284,6 +284,12 @@ export default function Checkout() {
     return () => window.clearTimeout(timeoutId);
   }, [copyStatus]);
 
+  useEffect(() => {
+    if (!order) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, [order]);
+
   const selectPaymentMethod = (method: PaymentMethod) => {
     setPaymentMethod(method);
     setError("");

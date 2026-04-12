@@ -130,7 +130,7 @@ export default function OrderLibrary() {
                       <img
                         src={resolveAssetUrl(item.listing?.game?.coverImageUrl)}
                         alt={item.listing?.game?.title || "Jogo"}
-                        className="h-28 w-full rounded-xl object-cover sm:w-20"
+                        className="aspect-[18/7] w-full rounded-xl object-cover sm:w-40"
                       />
 
                       <div className="min-w-0 flex-1">
@@ -177,7 +177,7 @@ export default function OrderLibrary() {
                             ) : (
                               <>
                                 <Eye className="h-4 w-4" />
-                                Mostrar
+                                Mostrar Keys
                               </>
                             )}
                           </button>

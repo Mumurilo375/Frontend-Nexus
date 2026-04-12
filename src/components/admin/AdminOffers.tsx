@@ -13,7 +13,6 @@ import {
   AdminPageState,
   AdminToggleField,
   adminFieldClass,
-  formatMoney,
 } from "./adminShared";
 import {
   createEmptyOfferFormState,
@@ -35,12 +34,36 @@ function normalizeDateInput(value?: string) {
   return value ? String(value).slice(0, 10) : "";
 }
 
-function buildListingLabel(listing: AdminOfferListingOption) {
-  const gameTitle = listing.game?.title || "Jogo";
-  const platformName = listing.platform?.name || "Plataforma";
-  const price = Number(listing.price ?? 0);
+function normalizeDiscountInput(value: string) {
+  if (!value) return "";
+  return String(Math.min(100, Math.max(1, Number(value) || 0)));
+}
 
-  return `${gameTitle} · ${platformName} · ${formatMoney(price)}`;
+function buildListingLabel(listing: {
+  game?: { title?: string | null } | null;
+  platform?: { name?: string | null } | null;
+}) {
+  return `${listing.game?.title || "Jogo"} · ${listing.platform?.name || "Plataforma"}`;
+}
+
+function mergeListingIds(currentIds: number[], nextIds: number[]) {
+  return Array.from(new Set([...currentIds, ...nextIds]));
+}
+
+function buildPlatformOptions(listings: AdminOfferListingOption[]) {
+  const platformMap = new Map<number, { id: number; name: string }>();
+
+  listings.forEach((listing) => {
+    const platformId = Number(listing.platform?.id ?? 0);
+    if (!platformId || platformMap.has(platformId)) return;
+
+    platformMap.set(platformId, {
+      id: platformId,
+      name: listing.platform?.name || "Plataforma",
+    });
+  });
+
+  return Array.from(platformMap.values());
 }
 
 export default function AdminOffers() {
@@ -49,14 +72,16 @@ export default function AdminOffers() {
   const [promotionPage, setPromotionPage] = useState(1);
   const [listingOptions, setListingOptions] = useState<AdminOfferListingOption[]>([]);
   const [formState, setFormState] = useState<AdminOfferFormState>(createEmptyOfferFormState);
+  const [selectedListingIds, setSelectedListingIds] = useState<number[]>([]);
+  const [initialListingIds, setInitialListingIds] = useState<number[]>([]);
   const [editingPromotionId, setEditingPromotionId] = useState<number | null>(null);
-  const [editingListingId, setEditingListingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [deletingPromotionId, setDeletingPromotionId] = useState<number | null>(null);
+  const [isListingPickerOpen, setIsListingPickerOpen] = useState(false);
 
   const loadData = async (page = promotionPage) => {
     try {
@@ -91,10 +116,17 @@ export default function AdminOffers() {
     void loadData(promotionPage);
   }, [promotionPage]);
 
+  const platformOptions = buildPlatformOptions(listingOptions);
+  const selectedListings = listingOptions.filter((listing) =>
+    selectedListingIds.includes(listing.id),
+  );
+
   const resetForm = (clearFeedback = true) => {
     setFormState(createEmptyOfferFormState());
+    setSelectedListingIds([]);
+    setInitialListingIds([]);
     setEditingPromotionId(null);
-    setEditingListingId(null);
+    setIsListingPickerOpen(false);
     if (clearFeedback) {
       setSubmitError("");
       setSubmitMessage("");
@@ -103,9 +135,11 @@ export default function AdminOffers() {
 
   const handleEditPromotion = (promotion: AdminOfferItem) => {
     setEditingPromotionId(promotion.id);
-    setEditingListingId(promotion.listingId);
+    setInitialListingIds(promotion.listingIds);
+    setSelectedListingIds(promotion.listingIds);
     setSubmitError("");
     setSubmitMessage("");
+    setIsListingPickerOpen(false);
     setFormState({
       name: promotion.name || "",
       description: promotion.description || "",
@@ -113,9 +147,23 @@ export default function AdminOffers() {
       startDate: normalizeDateInput(promotion.startDate),
       endDate: normalizeDateInput(promotion.endDate),
       isActive: Boolean(promotion.isActive),
-      listingId: promotion.listingId ? String(promotion.listingId) : "",
+      platformId: "",
     });
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
+
+  const handleAddPlatformListings = () => {
+    const platformId = Number(formState.platformId);
+    if (!platformId) return;
+
+    const platformListingIds = listingOptions
+      .filter((listing) => Number(listing.platform?.id ?? 0) === platformId)
+      .map((listing) => listing.id);
+
+    setSelectedListingIds((currentIds) =>
+      mergeListingIds(currentIds, platformListingIds),
+    );
+    setFormState((currentState) => ({ ...currentState, platformId: "" }));
   };
 
   const handleDeletePromotion = async (promotionId: number) => {
@@ -141,8 +189,8 @@ export default function AdminOffers() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!formState.listingId) {
-      setSubmitError("Selecione um listing para a oferta.");
+    if (selectedListingIds.length === 0) {
+      setSubmitError("Selecione pelo menos um listing para a oferta.");
       return;
     }
 
@@ -154,40 +202,49 @@ export default function AdminOffers() {
       endDate: formState.endDate,
       isActive: formState.isActive,
     };
+    const nextListingIds = Array.from(new Set(selectedListingIds));
+    const currentEditingPromotionId = editingPromotionId;
 
     try {
       setIsSaving(true);
       setSubmitError("");
       setSubmitMessage("");
-      const currentEditingPromotionId = editingPromotionId;
-      const isEditing = currentEditingPromotionId !== null;
 
-      if (isEditing) {
+      if (currentEditingPromotionId !== null) {
         await api.put(`/promotions/${currentEditingPromotionId}`, payload);
 
-        const nextListingId = Number(formState.listingId);
-        if (editingListingId && editingListingId !== nextListingId) {
-          await api.delete(
-            `/promotions/${currentEditingPromotionId}/listings/${editingListingId}`,
-          );
-        }
+        const listingIdsToAdd = nextListingIds.filter(
+          (listingId) => !initialListingIds.includes(listingId),
+        );
+        const listingIdsToRemove = initialListingIds.filter(
+          (listingId) => !nextListingIds.includes(listingId),
+        );
 
-        if (!editingListingId || editingListingId !== nextListingId) {
-          await api.post(
-            `/promotions/${currentEditingPromotionId}/listings/${nextListingId}`,
-          );
-        }
+        await Promise.all([
+          ...listingIdsToAdd.map((listingId) =>
+            api.post(`/promotions/${currentEditingPromotionId}/listings/${listingId}`),
+          ),
+          ...listingIdsToRemove.map((listingId) =>
+            api.delete(`/promotions/${currentEditingPromotionId}/listings/${listingId}`),
+          ),
+        ]);
 
         setSubmitMessage("Oferta atualizada com sucesso.");
       } else {
         const { data } = await api.post<{ id: number }>("/promotions", payload);
-        await api.post(`/promotions/${data.id}/listings/${Number(formState.listingId)}`);
+
+        await Promise.all(
+          nextListingIds.map((listingId) =>
+            api.post(`/promotions/${data.id}/listings/${listingId}`),
+          ),
+        );
+
         setSubmitMessage("Oferta criada com sucesso.");
       }
 
       resetForm(false);
-      await loadData(isEditing ? promotionPage : 1);
-      if (!isEditing) {
+      await loadData(currentEditingPromotionId !== null ? promotionPage : 1);
+      if (currentEditingPromotionId === null) {
         setPromotionPage(1);
       }
     } catch (error) {
@@ -202,9 +259,9 @@ export default function AdminOffers() {
   return (
     <AdminLayout
       title="Ofertas"
-      description="Fluxo minimalista de promoções: uma oferta por listing, com cadastro e edição simples."
+      description="Cadastre promoções simples com vários listings e gerencie tudo em um só lugar."
       actions={
-        editingPromotionId ? (
+        editingPromotionId !== null ? (
           <AdminButton type="button" tone="secondary" onClick={() => resetForm()}>
             Nova oferta
           </AdminButton>
@@ -217,28 +274,6 @@ export default function AdminOffers() {
           className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-slate-200 md:col-span-2">
-              Listing
-              <select
-                value={formState.listingId}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    listingId: event.target.value,
-                  }))
-                }
-                className={adminFieldClass}
-                required
-              >
-                <option value="">Selecione um listing</option>
-                {listingOptions.map((listing) => (
-                  <option key={listing.id} value={listing.id}>
-                    {buildListingLabel(listing)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
             <label className="text-sm text-slate-200 md:col-span-2">
               Nome da oferta
               <input
@@ -278,10 +313,10 @@ export default function AdminOffers() {
                 onChange={(event) =>
                   setFormState((currentState) => ({
                     ...currentState,
-                    discountPercentage: event.target.value,
+                    discountPercentage: normalizeDiscountInput(event.target.value),
                   }))
                 }
-                className={adminFieldClass}
+                className={`${adminFieldClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 required
               />
             </label>
@@ -327,6 +362,117 @@ export default function AdminOffers() {
                 required
               />
             </label>
+
+            <label className="text-sm text-slate-200">
+              Plataforma
+              <select
+                value={formState.platformId}
+                onChange={(event) =>
+                  setFormState((currentState) => ({
+                    ...currentState,
+                    platformId: event.target.value,
+                  }))
+                }
+                className={adminFieldClass}
+              >
+                <option value="">Selecione uma plataforma</option>
+                {platformOptions.map((platform) => (
+                  <option key={platform.id} value={platform.id}>
+                    {platform.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="self-end">
+              <AdminButton
+                type="button"
+                tone="secondary"
+                onClick={handleAddPlatformListings}
+              >
+                Adicionar plataforma
+              </AdminButton>
+            </div>
+
+            <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Listings da oferta</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {selectedListingIds.length === 0
+                      ? "Nenhum listing selecionado."
+                      : `${selectedListingIds.length} listing(s) selecionado(s).`}
+                  </p>
+                </div>
+
+                <AdminButton
+                  type="button"
+                  tone="secondary"
+                  onClick={() => setIsListingPickerOpen((currentState) => !currentState)}
+                >
+                  {isListingPickerOpen ? "Ocultar listings" : "Escolher listings"}
+                </AdminButton>
+              </div>
+
+              {isListingPickerOpen && (
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {listingOptions.map((listing) => {
+                    const selected = selectedListingIds.includes(listing.id);
+
+                    return (
+                      <button
+                        key={listing.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedListingIds((currentIds) =>
+                            currentIds.includes(listing.id)
+                              ? currentIds.filter((listingId) => listingId !== listing.id)
+                              : [...currentIds, listing.id],
+                          )
+                        }
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                          selected
+                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100"
+                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white"
+                        }`}
+                      >
+                        {buildListingLabel(listing)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium text-white">Listings selecionados</p>
+                <p className="text-sm text-slate-400">{selectedListingIds.length}</p>
+              </div>
+
+              {selectedListings.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-400">
+                  Nenhum listing selecionado.
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedListings.map((listing) => (
+                    <button
+                      key={listing.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedListingIds((currentIds) =>
+                          currentIds.filter((listingId) => listingId !== listing.id),
+                        )
+                      }
+                      className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-200 transition hover:border-rose-500/40 hover:text-white"
+                    >
+                      {buildListingLabel(listing)} · Remover
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {submitError && <AdminNotice>{submitError}</AdminNotice>}
@@ -336,7 +482,7 @@ export default function AdminOffers() {
             <AdminButton type="submit" disabled={isSaving}>
               {isSaving
                 ? "Salvando..."
-                : editingPromotionId
+                : editingPromotionId !== null
                   ? "Salvar alterações"
                   : "Criar oferta"}
             </AdminButton>
@@ -349,9 +495,8 @@ export default function AdminOffers() {
         <div className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6">
           <h2 className="text-xl font-semibold text-white">Resumo rápido</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Cada promoção desta interface trabalha com apenas um listing. Isso
-            mantém o fluxo fácil de entender e reduz o código necessário para o
-            projeto.
+            Cada promoção pode ter vários listings. Você pode selecionar jogos
+            manualmente ou adicionar todos os listings atuais de uma plataforma.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -369,6 +514,14 @@ export default function AdminOffers() {
               </p>
               <p className="mt-2 text-2xl font-semibold text-white">
                 {listingOptions.length}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                Listings selecionados
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {selectedListingIds.length}
               </p>
             </div>
           </div>
@@ -389,7 +542,7 @@ export default function AdminOffers() {
               className="rounded-[24px] border border-slate-800 bg-slate-950/82 p-5"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-semibold text-white">{promotion.name}</h2>
                     <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
@@ -404,22 +557,33 @@ export default function AdminOffers() {
                     {promotion.description || "Sem descrição."}
                   </p>
 
-                  <p className="text-sm text-slate-400">
-                    {promotion.listing?.game?.title || "Sem jogo"} ·{" "}
-                    {promotion.listing?.platform?.name || "Sem plataforma"}
-                  </p>
-
                   <div className="flex flex-wrap gap-3 text-sm text-slate-400">
                     <span>De {normalizeDateInput(promotion.startDate)}</span>
                     <span>até {normalizeDateInput(promotion.endDate)}</span>
-                    <span>
-                      {promotion.listing?.pricing?.hasDiscount
-                        ? `${formatMoney(
-                            promotion.listing.pricing.basePrice,
-                          )} -> ${formatMoney(promotion.listing.pricing.finalPrice)}`
-                        : "Sem preço calculado"}
-                    </span>
+                    <span>{promotion.listings.length} listing(s) vinculados</span>
                   </div>
+
+                  {promotion.listings.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {promotion.listings.slice(0, 5).map((listing) => (
+                        <span
+                          key={listing.id}
+                          className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300"
+                        >
+                          {buildListingLabel(listing)}
+                        </span>
+                      ))}
+                      {promotion.listings.length > 5 && (
+                        <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300">
+                          +{promotion.listings.length - 5} listing(s)
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400">
+                      Nenhum listing vinculado.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">

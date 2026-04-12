@@ -6,7 +6,7 @@ const sections = [
   { title: "Categorias", label: "Organização", description: "Mantenha a classificação usada na loja e no admin.", to: "/admin/categories", cta: "Gerenciar categorias" },
   { title: "Pedidos", label: "Operação", description: "Consulte todos os pedidos da loja com filtros e detalhe completo.", to: "/admin/orders", cta: "Ver pedidos" },
   { title: "Auditoria", label: "Preço", description: "Acompanhe o histórico do preço base de cada listing e quem alterou.", to: "/admin/price-history", cta: "Ver histórico" },
-  { title: "Ofertas", label: "Promoções", description: "Cadastre promoções simples e publique a página real de ofertas.", to: "/admin/offers", cta: "Gerenciar ofertas" },
+  { title: "Ofertas", label: "Promoções", description: "Cadastre promoções em grupo e acompanhe os jogos vinculados.", to: "/admin/ofertas", cta: "Gerenciar ofertas" },
 ];
 
 export default function AdminDashboard() {

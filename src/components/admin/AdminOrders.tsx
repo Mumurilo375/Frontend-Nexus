@@ -15,7 +15,7 @@ import {
   adminFieldClass,
   formatMoney,
 } from "./adminShared";
-import type { AdminOrderSummary } from "./adminOrders.types";
+import type { AdminOrderSummary } from "./admin.types";
 
 const PAGE_SIZE = 10;
 const emptyMeta: PaginationMeta = {

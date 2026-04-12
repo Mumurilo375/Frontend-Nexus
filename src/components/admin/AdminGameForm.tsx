@@ -11,11 +11,8 @@ import {
   mapGameToValues,
   moveItem,
   revokeGalleryItemPreview,
-  type Category,
-  type GalleryItem,
-  type GameResponse,
-  type GameValues,
 } from "./AdminGameForm.helpers";
+import type { Category, GalleryItem, GameResponse, GameValues } from "./admin.types";
 import {
   AdminButton,
   AdminFormActions,

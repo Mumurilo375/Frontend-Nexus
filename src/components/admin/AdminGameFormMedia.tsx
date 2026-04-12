@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, ImagePlus, Link2, Trash2, Upload } from "lucide-react";
 import { AdminButton, AdminTextField } from "./adminShared";
-import type { GalleryItem, GameValues, SetGameField } from "./AdminGameForm.helpers";
+import type { GalleryItem, GameValues, SetGameField } from "./admin.types";
 
 type AdminGameFormMediaProps = {
   values: GameValues;

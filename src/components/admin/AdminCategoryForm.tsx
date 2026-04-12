@@ -10,8 +10,7 @@ import {
 } from "./adminShared";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
-
-type CategoryResponse = { name: string };
+import type { CategoryResponse } from "./admin.types";
 
 export default function AdminCategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();

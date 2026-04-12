@@ -1,51 +1,5 @@
 import { resolveAssetUrl } from "../../services/assets";
-
-export type Category = {
-  id: number;
-  name: string;
-};
-
-export type GameImage = {
-  id: number;
-  imageUrl?: string;
-  sortOrder?: number;
-};
-
-export type GameResponse = {
-  id: number;
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive?: boolean;
-  categories?: Category[];
-  images?: GameImage[];
-};
-
-export type GameValues = {
-  title: string;
-  description: string;
-  longDescription: string;
-  releaseDate: string;
-  coverImageUrl: string;
-  isActive: boolean;
-  categoryIds: number[];
-};
-
-export type GalleryItem = {
-  key: string;
-  kind: "existing" | "file" | "url";
-  imageUrl: string;
-  previewUrl: string;
-  id?: number;
-  file?: File;
-};
-
-export type SetGameField = <Field extends keyof GameValues>(
-  field: Field,
-  value: GameValues[Field],
-) => void;
+import type { GameImage, GameResponse, GameValues, GalleryItem } from "./admin.types";
 
 export const emptyGame: GameValues = {
   title: "",

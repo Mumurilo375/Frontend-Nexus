@@ -14,7 +14,7 @@ import {
   adminFieldClass,
   formatMoney,
 } from "./adminShared";
-import type { AdminPriceHistoryItem } from "./adminPriceHistory.types";
+import type { AdminPriceHistoryItem } from "./admin.types";
 
 const PAGE_SIZE = 12;
 const emptyMeta: PaginationMeta = {

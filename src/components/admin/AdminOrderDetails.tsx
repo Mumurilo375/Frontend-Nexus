@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { AdminNotice, AdminPageState, AdminStatusBadge, formatMoney } from "./adminShared";
-import type { AdminOrderDetails as AdminOrderDetailsType } from "./adminOrders.types";
+import type { AdminOrderDetails as AdminOrderDetailsType } from "./admin.types";
 import api from "../../services/api";
 import { getApiErrorMessage } from "../../services/http";
 import { resolveAssetUrl } from "../../services/assets";

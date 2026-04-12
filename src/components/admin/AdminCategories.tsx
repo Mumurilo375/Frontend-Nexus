@@ -12,8 +12,7 @@ import {
   getApiErrorMessage,
   type PaginatedResponse,
 } from "../../services/http";
-
-type Category = { id: number; name: string };
+import type { Category } from "./admin.types";
 
 const PAGE_SIZE = 8;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);

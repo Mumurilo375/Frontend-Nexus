@@ -1,78 +1,9 @@
-import type { PaginationMeta } from "../../services/http";
 import { createEmptyMeta } from "./adminShared";
-
-export type StockSummary = {
-  available: number;
-  reserved: number;
-  sold: number;
-  total: number;
-};
-
-export type PlatformMonitorItem = {
-  platform: {
-    id: number;
-    name: string;
-    slug: string;
-    iconUrl?: string | null;
-    isActive?: boolean;
-  };
-  hasListing: boolean;
-  listingId: number | null;
-  price: number | null;
-  isActive: boolean;
-  stock: StockSummary;
-};
-
-export type GamePlatformsResponse = {
-  game: {
-    id: number;
-    title?: string;
-    coverImageUrl?: string;
-  };
-  platforms: PlatformMonitorItem[];
-};
-
-export type GameKey = {
-  id: number;
-  keyValue: string;
-  status: string;
-};
-
-export type SaveKeysResponse = {
-  listingId: number;
-  createdCount: number;
-  skippedCount: number;
-  stock: StockSummary;
-};
-
-export type DeleteKeysResponse = {
-  stock: StockSummary;
-};
-
-export type PlatformFormState = {
-  price: string;
-  originalPrice: string;
-  isActive: boolean;
-  newKeysText: string;
-  error: string;
-  success: string;
-  isSaving: boolean;
-  isAddingKeys: boolean;
-};
-
-export type PlatformKeysState = {
-  isLoading: boolean;
-  isRemoving: boolean;
-  error: string;
-  items: GameKey[];
-  meta: PaginationMeta;
-  page: number;
-  selectedIds: number[];
-};
-
-export type PlatformConfirmationState =
-  | { type: "priceChange"; platformId: number }
-  | { type: "removeKeys"; platformId: number };
+import type {
+  PlatformFormState,
+  PlatformKeysState,
+  PlatformMonitorItem,
+} from "./admin.types";
 
 export const keysPageSize = 8;
 export const keyColumnSize = 6;

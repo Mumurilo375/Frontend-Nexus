@@ -11,10 +11,6 @@ import {
   pasteGameKeyLineText,
   sanitizePlatformPrice,
   updateGameKeyLineText,
-  type PlatformConfirmationState,
-  type PlatformFormState,
-  type PlatformKeysState,
-  type PlatformMonitorItem,
 } from "./AdminGamePlatforms.helpers";
 import {
   AdminButton,
@@ -23,6 +19,12 @@ import {
   AdminToggleField,
   getKeyStatusBadgeClass,
 } from "./adminShared";
+import type {
+  PlatformConfirmationState,
+  PlatformFormState,
+  PlatformKeysState,
+  PlatformMonitorItem,
+} from "./admin.types";
 
 type AdminGamePlatformsModalProps = {
   platform: PlatformMonitorItem;

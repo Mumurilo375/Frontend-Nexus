@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import Pagination from "../globals/Pagination";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import {
   getApiErrorMessage,
@@ -7,19 +6,22 @@ import {
   type PaginationMeta,
 } from "../../services/http";
 import AdminLayout from "./AdminLayout";
+import AdminOffersForm from "./AdminOffersForm";
+import AdminOffersList from "./AdminOffersList";
+import AdminOffersListingPicker from "./AdminOffersListingPicker";
+import { AdminButton, AdminPageState } from "./adminShared";
 import {
-  AdminButton,
-  AdminNotice,
-  AdminPageState,
-  AdminToggleField,
-  adminFieldClass,
-} from "./adminShared";
-import {
+  buildPlatformOptions,
   createEmptyOfferFormState,
+  matchesListingSearch,
+  mergeListingIds,
+  normalizeDateInput,
+} from "./adminOffers.helpers";
+import {
   type AdminOfferFormState,
   type AdminOfferItem,
   type AdminOfferListingOption,
-} from "./adminOffers.types";
+} from "./admin.types";
 
 const PROMOTIONS_PAGE_SIZE = 12;
 const LISTINGS_PAGE_SIZE = 100;
@@ -29,42 +31,6 @@ const emptyMeta: PaginationMeta = {
   total: 0,
   totalPages: 1,
 };
-
-function normalizeDateInput(value?: string) {
-  return value ? String(value).slice(0, 10) : "";
-}
-
-function normalizeDiscountInput(value: string) {
-  if (!value) return "";
-  return String(Math.min(100, Math.max(1, Number(value) || 0)));
-}
-
-function buildListingLabel(listing: {
-  game?: { title?: string | null } | null;
-  platform?: { name?: string | null } | null;
-}) {
-  return `${listing.game?.title || "Jogo"} · ${listing.platform?.name || "Plataforma"}`;
-}
-
-function mergeListingIds(currentIds: number[], nextIds: number[]) {
-  return Array.from(new Set([...currentIds, ...nextIds]));
-}
-
-function buildPlatformOptions(listings: AdminOfferListingOption[]) {
-  const platformMap = new Map<number, { id: number; name: string }>();
-
-  listings.forEach((listing) => {
-    const platformId = Number(listing.platform?.id ?? 0);
-    if (!platformId || platformMap.has(platformId)) return;
-
-    platformMap.set(platformId, {
-      id: platformId,
-      name: listing.platform?.name || "Plataforma",
-    });
-  });
-
-  return Array.from(platformMap.values());
-}
 
 export default function AdminOffers() {
   const [promotions, setPromotions] = useState<AdminOfferItem[]>([]);
@@ -82,6 +48,7 @@ export default function AdminOffers() {
   const [isSaving, setIsSaving] = useState(false);
   const [deletingPromotionId, setDeletingPromotionId] = useState<number | null>(null);
   const [isListingPickerOpen, setIsListingPickerOpen] = useState(false);
+  const [listingSearchText, setListingSearchText] = useState("");
 
   const loadData = async (page = promotionPage) => {
     try {
@@ -104,9 +71,7 @@ export default function AdminOffers() {
       setPromotions([]);
       setPromotionsMeta(emptyMeta);
       setListingOptions([]);
-      setErrorMessage(
-        getApiErrorMessage(error, "Não foi possível carregar as ofertas."),
-      );
+      setErrorMessage(getApiErrorMessage(error, "Não foi possível carregar as ofertas."));
     } finally {
       setIsLoading(false);
     }
@@ -116,17 +81,31 @@ export default function AdminOffers() {
     void loadData(promotionPage);
   }, [promotionPage]);
 
-  const platformOptions = buildPlatformOptions(listingOptions);
-  const selectedListings = listingOptions.filter((listing) =>
-    selectedListingIds.includes(listing.id),
+  const platformOptions = useMemo(() => buildPlatformOptions(listingOptions), [listingOptions]);
+  const filteredListingOptions = useMemo(
+    () => listingOptions.filter((listing) => matchesListingSearch(listing, listingSearchText)),
+    [listingOptions, listingSearchText],
   );
+  const selectedListings = useMemo(
+    () => listingOptions.filter((listing) => selectedListingIds.includes(listing.id)),
+    [listingOptions, selectedListingIds],
+  );
+
+  const setFormField = (field: keyof AdminOfferFormState, value: string | boolean) => {
+    setFormState((currentState) => ({ ...currentState, [field]: value }));
+  };
+
+  const closeListingPicker = () => {
+    setIsListingPickerOpen(false);
+    setListingSearchText("");
+  };
 
   const resetForm = (clearFeedback = true) => {
     setFormState(createEmptyOfferFormState());
     setSelectedListingIds([]);
     setInitialListingIds([]);
     setEditingPromotionId(null);
-    setIsListingPickerOpen(false);
+    closeListingPicker();
     if (clearFeedback) {
       setSubmitError("");
       setSubmitMessage("");
@@ -139,7 +118,7 @@ export default function AdminOffers() {
     setSelectedListingIds(promotion.listingIds);
     setSubmitError("");
     setSubmitMessage("");
-    setIsListingPickerOpen(false);
+    closeListingPicker();
     setFormState({
       name: promotion.name || "",
       description: promotion.description || "",
@@ -160,10 +139,8 @@ export default function AdminOffers() {
       .filter((listing) => Number(listing.platform?.id ?? 0) === platformId)
       .map((listing) => listing.id);
 
-    setSelectedListingIds((currentIds) =>
-      mergeListingIds(currentIds, platformListingIds),
-    );
-    setFormState((currentState) => ({ ...currentState, platformId: "" }));
+    setSelectedListingIds((currentIds) => mergeListingIds(currentIds, platformListingIds));
+    setFormField("platformId", "");
   };
 
   const handleDeletePromotion = async (promotionId: number) => {
@@ -178,9 +155,7 @@ export default function AdminOffers() {
       setSubmitMessage("Oferta removida com sucesso.");
       await loadData(promotionPage);
     } catch (error) {
-      setSubmitError(
-        getApiErrorMessage(error, "Não foi possível remover a oferta."),
-      );
+      setSubmitError(getApiErrorMessage(error, "Não foi possível remover a oferta."));
     } finally {
       setDeletingPromotionId(null);
     }
@@ -248,9 +223,7 @@ export default function AdminOffers() {
         setPromotionPage(1);
       }
     } catch (error) {
-      setSubmitError(
-        getApiErrorMessage(error, "Não foi possível salvar a oferta."),
-      );
+      setSubmitError(getApiErrorMessage(error, "Não foi possível salvar a oferta."));
     } finally {
       setIsSaving(false);
     }
@@ -269,228 +242,26 @@ export default function AdminOffers() {
       }
     >
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <form
+        <AdminOffersForm
+          formState={formState}
+          platformOptions={platformOptions}
+          selectedListingIds={selectedListingIds}
+          selectedListings={selectedListings}
+          editingPromotionId={editingPromotionId}
+          submitError={submitError}
+          submitMessage={submitMessage}
+          isSaving={isSaving}
           onSubmit={handleSubmit}
-          className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-slate-200 md:col-span-2">
-              Nome da oferta
-              <input
-                value={formState.name}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    name: event.target.value,
-                  }))
-                }
-                className={adminFieldClass}
-                required
-              />
-            </label>
-
-            <label className="text-sm text-slate-200 md:col-span-2">
-              Descrição
-              <textarea
-                value={formState.description}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    description: event.target.value,
-                  }))
-                }
-                className={`${adminFieldClass} min-h-28`}
-              />
-            </label>
-
-            <label className="text-sm text-slate-200">
-              Desconto (%)
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={formState.discountPercentage}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    discountPercentage: normalizeDiscountInput(event.target.value),
-                  }))
-                }
-                className={`${adminFieldClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                required
-              />
-            </label>
-
-            <div className="self-end">
-              <AdminToggleField
-                label="Oferta ativa"
-                checked={formState.isActive}
-                onChange={(isActive) =>
-                  setFormState((currentState) => ({ ...currentState, isActive }))
-                }
-              />
-            </div>
-
-            <label className="text-sm text-slate-200">
-              Data inicial
-              <input
-                type="date"
-                value={formState.startDate}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    startDate: event.target.value,
-                  }))
-                }
-                className={adminFieldClass}
-                required
-              />
-            </label>
-
-            <label className="text-sm text-slate-200">
-              Data final
-              <input
-                type="date"
-                value={formState.endDate}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    endDate: event.target.value,
-                  }))
-                }
-                className={adminFieldClass}
-                required
-              />
-            </label>
-
-            <label className="text-sm text-slate-200">
-              Plataforma
-              <select
-                value={formState.platformId}
-                onChange={(event) =>
-                  setFormState((currentState) => ({
-                    ...currentState,
-                    platformId: event.target.value,
-                  }))
-                }
-                className={adminFieldClass}
-              >
-                <option value="">Selecione uma plataforma</option>
-                {platformOptions.map((platform) => (
-                  <option key={platform.id} value={platform.id}>
-                    {platform.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="self-end">
-              <AdminButton
-                type="button"
-                tone="secondary"
-                onClick={handleAddPlatformListings}
-              >
-                Adicionar plataforma
-              </AdminButton>
-            </div>
-
-            <section className="rounded-[28px] border border-slate-800 bg-slate-950/82 p-5 md:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Listings da oferta</h2>
-                  <p className="mt-1 text-sm text-slate-400">
-                    {selectedListingIds.length === 0
-                      ? "Nenhum listing selecionado."
-                      : `${selectedListingIds.length} listing(s) selecionado(s).`}
-                  </p>
-                </div>
-
-                <AdminButton
-                  type="button"
-                  tone="secondary"
-                  onClick={() => setIsListingPickerOpen((currentState) => !currentState)}
-                >
-                  {isListingPickerOpen ? "Ocultar listings" : "Escolher listings"}
-                </AdminButton>
-              </div>
-
-              {isListingPickerOpen && (
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {listingOptions.map((listing) => {
-                    const selected = selectedListingIds.includes(listing.id);
-
-                    return (
-                      <button
-                        key={listing.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedListingIds((currentIds) =>
-                            currentIds.includes(listing.id)
-                              ? currentIds.filter((listingId) => listingId !== listing.id)
-                              : [...currentIds, listing.id],
-                          )
-                        }
-                        className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                          selected
-                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white"
-                        }`}
-                      >
-                        {buildListingLabel(listing)}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 md:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-medium text-white">Listings selecionados</p>
-                <p className="text-sm text-slate-400">{selectedListingIds.length}</p>
-              </div>
-
-              {selectedListings.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-400">
-                  Nenhum listing selecionado.
-                </p>
-              ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedListings.map((listing) => (
-                    <button
-                      key={listing.id}
-                      type="button"
-                      onClick={() =>
-                        setSelectedListingIds((currentIds) =>
-                          currentIds.filter((listingId) => listingId !== listing.id),
-                        )
-                      }
-                      className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-200 transition hover:border-rose-500/40 hover:text-white"
-                    >
-                      {buildListingLabel(listing)} · Remover
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {submitError && <AdminNotice>{submitError}</AdminNotice>}
-          {submitMessage && <AdminNotice tone="success">{submitMessage}</AdminNotice>}
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <AdminButton type="submit" disabled={isSaving}>
-              {isSaving
-                ? "Salvando..."
-                : editingPromotionId !== null
-                  ? "Salvar alterações"
-                  : "Criar oferta"}
-            </AdminButton>
-            <AdminButton type="button" tone="secondary" onClick={() => resetForm()}>
-              Limpar formulário
-            </AdminButton>
-          </div>
-        </form>
+          onFieldChange={setFormField}
+          onAddPlatformListings={handleAddPlatformListings}
+          onOpenListingPicker={() => setIsListingPickerOpen(true)}
+          onRemoveListing={(listingId) =>
+            setSelectedListingIds((currentIds) =>
+              currentIds.filter((currentId) => currentId !== listingId),
+            )
+          }
+          onReset={() => resetForm()}
+        />
 
         <div className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6">
           <h2 className="text-xl font-semibold text-white">Resumo rápido</h2>
@@ -535,87 +306,33 @@ export default function AdminOffers() {
         loadingText="Carregando ofertas..."
         emptyText="Nenhuma oferta cadastrada."
       >
-        <section className="space-y-4">
-          {promotions.map((promotion) => (
-            <article
-              key={promotion.id}
-              className="rounded-[24px] border border-slate-800 bg-slate-950/82 p-5"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold text-white">{promotion.name}</h2>
-                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                      -{promotion.discountPercentage}%
-                    </span>
-                    <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-300">
-                      {promotion.isActive ? "Ativa" : "Inativa"}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-slate-300">
-                    {promotion.description || "Sem descrição."}
-                  </p>
-
-                  <div className="flex flex-wrap gap-3 text-sm text-slate-400">
-                    <span>De {normalizeDateInput(promotion.startDate)}</span>
-                    <span>até {normalizeDateInput(promotion.endDate)}</span>
-                    <span>{promotion.listings.length} listing(s) vinculados</span>
-                  </div>
-
-                  {promotion.listings.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {promotion.listings.slice(0, 5).map((listing) => (
-                        <span
-                          key={listing.id}
-                          className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300"
-                        >
-                          {buildListingLabel(listing)}
-                        </span>
-                      ))}
-                      {promotion.listings.length > 5 && (
-                        <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300">
-                          +{promotion.listings.length - 5} listing(s)
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400">
-                      Nenhum listing vinculado.
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <AdminButton
-                    type="button"
-                    tone="secondary"
-                    onClick={() => handleEditPromotion(promotion)}
-                  >
-                    Editar
-                  </AdminButton>
-                  <AdminButton
-                    type="button"
-                    tone="subtleDanger"
-                    disabled={deletingPromotionId === promotion.id}
-                    onClick={() => {
-                      void handleDeletePromotion(promotion.id);
-                    }}
-                  >
-                    {deletingPromotionId === promotion.id ? "Removendo..." : "Excluir"}
-                  </AdminButton>
-                </div>
-              </div>
-            </article>
-          ))}
-
-          <Pagination
-            page={promotionsMeta.page}
-            totalPages={promotionsMeta.totalPages}
-            onPageChange={setPromotionPage}
-          />
-        </section>
+        <AdminOffersList
+          promotions={promotions}
+          promotionsMeta={promotionsMeta}
+          deletingPromotionId={deletingPromotionId}
+          onEdit={handleEditPromotion}
+          onDelete={(promotionId) => {
+            void handleDeletePromotion(promotionId);
+          }}
+          onPageChange={setPromotionPage}
+        />
       </AdminPageState>
+
+      <AdminOffersListingPicker
+        open={isListingPickerOpen}
+        listingSearchText={listingSearchText}
+        filteredListingOptions={filteredListingOptions}
+        selectedListingIds={selectedListingIds}
+        onClose={closeListingPicker}
+        onSearchChange={setListingSearchText}
+        onToggleListing={(listingId) =>
+          setSelectedListingIds((currentIds) =>
+            currentIds.includes(listingId)
+              ? currentIds.filter((currentId) => currentId !== listingId)
+              : [...currentIds, listingId],
+          )
+        }
+      />
     </AdminLayout>
   );
 }

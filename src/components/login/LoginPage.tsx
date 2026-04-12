@@ -9,7 +9,7 @@ import type { LoginResponse } from "./login.types";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
 const inputClass =
-  "mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500/70";
+  "mt-2 block w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-400 focus:border-blue-400/80 focus:ring-2 focus:ring-blue-500/20";
 
 function getFriendlyLoginError(error: unknown): string {
   return getApiErrorMessage(
@@ -73,66 +73,73 @@ export default function LoginPage() {
 
   return (
     <div className="nexus-page-shell min-h-full px-6 py-12 lg:px-8">
-      <div className="mx-auto w-full max-w-md">
-        <div className="nexus-panel p-7 sm:p-8">
-          <div className="mx-auto w-full max-w-sm">
+      <div className="mx-auto w-full max-w-lg">
+        <div className="nexus-panel p-6 sm:p-8">
+          <div className="mx-auto w-full max-w-md">
             <img
               alt="Logo Nexus"
               src="/utils/logo.png"
               className="mx-auto h-10 w-auto"
             />
-            <h2 className="mt-8 text-center text-3xl font-bold tracking-tight text-white">
+            <h2 className="mt-7 text-center text-3xl font-bold tracking-tight text-white">
               Entrar
             </h2>
-            <p className="mt-2 text-center text-sm text-slate-400">
+            <p className="mt-2 text-center text-sm text-slate-300">
               Entre com seu email e senha.
             </p>
           </div>
 
-          <div className="mx-auto mt-8 w-full max-w-sm">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-slate-100"
-                >
-                  Email
-                </label>
-                <input
-                  ref={emailRef}
-                  placeholder="email@gmail.com"
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  onChange={() => setErrorMessage("")}
-                  className={inputClass}
-                />
-              </div>
+          <div className="mx-auto mt-8 w-full max-w-md">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="nexus-card rounded-[28px] border-slate-800/90 bg-slate-900/55 p-5 sm:p-6">
+                <div className="space-y-5">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-slate-100"
+                    >
+                      Email
+                    </label>
+                    <input
+                      ref={emailRef}
+                      placeholder="email@gmail.com"
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      onChange={() => setErrorMessage("")}
+                      className={inputClass}
+                    />
+                  </div>
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-100"
-                >
-                  Senha
-                </label>
-                <input
-                  placeholder="*****"
-                  ref={passwordRef}
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  onChange={() => setErrorMessage("")}
-                  className={inputClass}
-                />
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-slate-100"
+                    >
+                      Senha
+                    </label>
+                    <input
+                      placeholder="*****"
+                      ref={passwordRef}
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      onChange={() => setErrorMessage("")}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
 
               {errorMessage && (
-                <p className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                <p
+                  aria-live="polite"
+                  className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+                >
                   {errorMessage}
                 </p>
               )}
@@ -140,7 +147,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full justify-center rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex w-full justify-center rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? "Entrando..." : "Entrar"}
               </button>

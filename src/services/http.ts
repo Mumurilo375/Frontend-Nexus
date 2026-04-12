@@ -99,9 +99,7 @@ function getCodeErrorMessage(code: string, status?: number): string | null {
     case "INVALID_CREDENTIALS":
       return "Email ou senha incorretos.";
     case "VALIDATION_ERROR":
-      return status === 400
-        ? "Confira os dados informados e tente novamente."
-        : "Alguns dados precisam ser corrigidos para continuar.";
+      return null;
     case "PAYLOAD_TOO_LARGE":
       return "O arquivo enviado é maior do que o permitido. Escolha um arquivo menor.";
     default:
@@ -299,15 +297,15 @@ export function translateErrorMessage(
   code?: string,
 ): string {
   const normalizedMessage = normalizeErrorText(message);
-  const codeMessage = code ? getCodeErrorMessage(code, status) : null;
   const knownMessage = getKnownMessageTranslation(normalizedMessage, status);
-
-  if (codeMessage) {
-    return codeMessage;
-  }
+  const codeMessage = code ? getCodeErrorMessage(code, status) : null;
 
   if (knownMessage) {
     return knownMessage;
+  }
+
+  if (codeMessage) {
+    return codeMessage;
   }
 
   if (!normalizedMessage) {

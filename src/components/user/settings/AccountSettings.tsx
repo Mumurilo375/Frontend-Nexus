@@ -39,7 +39,7 @@ const emptyAccountForm: AccountFormValues = {
   avatarFile: null,
 };
 
-function getFriendlyUpdateError(error: unknown) {
+function getFriendlyUpdateError<TError>(error: TError) {
   return getApiErrorMessage(
     error,
     "Não foi possível atualizar seus dados agora. Tente novamente.",
@@ -210,7 +210,7 @@ export default function AccountSettings() {
       }));
       setAvatarPreview(getAvatarPreviewUrl(savedAvatarUrl));
       void navigate(-1);
-    } catch (error: unknown) {
+    } catch (error) {
       setErrorMessage(getFriendlyUpdateError(error));
     } finally {
       setIsSubmitting(false);
@@ -333,9 +333,6 @@ export default function AccountSettings() {
                     disabled
                     className={disabledInputClass}
                   />
-                  <p className="mt-2 text-xs text-slate-400">
-                    O email fica bloqueado por regra de segurança.
-                  </p>
                 </label>
               </div>
 
@@ -360,7 +357,7 @@ export default function AccountSettings() {
                     value={formValues.confirmPassword}
                     onChange={updateFormValue("confirmPassword")}
                     className={inputClass}
-                    placeholder="Repita a senha (opcional)"
+                    placeholder="Repita a senha"
                   />
                 </label>
               </div>

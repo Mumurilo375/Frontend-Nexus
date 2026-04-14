@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
+import type { ApiErrorPayload } from "../../services/http";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import Pagination from "../globals/Pagination";
 import ProductCard from "./ProductCard";
@@ -256,7 +257,7 @@ export default function ProductCatalog() {
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } catch (cartError) {
       if (
-        isAxiosError(cartError) &&
+        isAxiosError<ApiErrorPayload>(cartError) &&
         cartError.response?.data?.code === "OUT_OF_STOCK"
       ) {
         markListingAsOutOfStock(gameId, listingId);

@@ -15,7 +15,7 @@ export function useNavbarCounts(isLoggedIn: boolean, currentPath: string) {
     const loadCounts = async () => {
       try {
         const [{ data: wishlistData }, { data: cartData }] = await Promise.all([
-          api.get<{ items?: unknown[] }>("/wishlists"),
+          api.get<{ items?: Array<{ id?: number }> }>("/wishlists"),
           api.get<NavbarCartResponse>("/cart"),
         ]);
 

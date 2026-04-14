@@ -83,7 +83,10 @@ export default function Cart() {
     window.dispatchEvent(new Event("nexus:counts-updated"));
   };
 
-  const reloadCartWithError = async (requestError: unknown, fallbackMessage: string) => {
+  const reloadCartWithError = async <TError,>(
+    requestError: TError,
+    fallbackMessage: string,
+  ) => {
     const message = getApiErrorMessage(requestError, fallbackMessage);
     await readCart();
     setError(message);

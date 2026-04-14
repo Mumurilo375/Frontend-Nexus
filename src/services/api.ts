@@ -1,5 +1,6 @@
 import axios, { AxiosHeaders, isAxiosError } from "axios";
 import { clearAuth, getToken } from "./auth";
+import type { HttpErrorInput } from "./http";
 
 const baseURL = (import.meta.env.VITE_API_BASE_URL ?? "/api").trim() || "/api";
 const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
@@ -22,7 +23,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
+  (error: HttpErrorInput) => {
     if (isAxiosError(error) && error.response?.status === 401) {
       clearAuth();
 

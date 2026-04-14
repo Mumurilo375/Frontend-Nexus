@@ -11,12 +11,16 @@ const POST_LOGIN_REDIRECT_KEY = "nexus:post-login-redirect";
 const inputClass =
   "mt-2 block w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-400 focus:border-blue-400/80 focus:ring-2 focus:ring-blue-500/20";
 
-function getFriendlyLoginError(error: unknown): string {
+function getFriendlyLoginError<TError>(error: TError): string {
   return getApiErrorMessage(
     error,
     "Não foi possível fazer login agora. Tente novamente.",
   );
 }
+
+type LoginLocationState = {
+  from?: string | null;
+};
 
 function isSafeRedirectPath(value: string): boolean {
   return value.startsWith("/") && !value.startsWith("//") && value !== "/login";
@@ -52,9 +56,9 @@ export default function LoginPage() {
       });
 
       login(data.token, data.user);
-      const fromState = (location.state as { from?: unknown } | null)?.from;
+      const fromState = (location.state as LoginLocationState | null)?.from;
       const fromSession = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
-      const from = typeof fromState === "string" ? fromState : fromSession;
+      const from = fromState ?? fromSession;
 
       sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
 
@@ -64,7 +68,7 @@ export default function LoginPage() {
       }
 
       void navigate("/", { replace: true });
-    } catch (error: unknown) {
+    } catch (error) {
       setErrorMessage(getFriendlyLoginError(error));
     } finally {
       setIsSubmitting(false);

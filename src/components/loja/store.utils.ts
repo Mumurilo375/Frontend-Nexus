@@ -135,7 +135,11 @@ export function collectFilterOptions(
   };
 }
 
-export function getRequestErrorMessage(error: unknown, fallbackMessage: string, offlineMessage = OFFLINE_API_MESSAGE) {
+export function getRequestErrorMessage<TError>(
+  error: TError,
+  fallbackMessage: string,
+  offlineMessage = OFFLINE_API_MESSAGE,
+) {
   return isAxiosError(error) && !error.response
     ? offlineMessage
     : getApiErrorMessage(error, fallbackMessage);

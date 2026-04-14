@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/useAuth";
 import api from "../../../services/api";
 import { resolveAssetUrl, resolvePlatformLogoUrl } from "../../../services/assets";
+import type { ApiErrorPayload } from "../../../services/http";
 import { getListingAvailableStock, getRequestErrorMessage } from "../../loja/store.utils";
 import type {
   CartResponse,
@@ -160,7 +161,7 @@ export default function Favorites() {
       );
       window.dispatchEvent(new Event("nexus:counts-updated"));
     } catch (error) {
-      if (isAxiosError(error) && error.response?.data?.code === "OUT_OF_STOCK") {
+      if (isAxiosError<ApiErrorPayload>(error) && error.response?.data?.code === "OUT_OF_STOCK") {
         setListingByGame((current) => {
           const listings = current.get(gameId);
           if (!listings) return current;

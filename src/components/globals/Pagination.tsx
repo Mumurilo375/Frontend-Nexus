@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import type { PaginationProps as MuiPaginationProps } from "@mui/material/Pagination";
 import MuiPagination from "@mui/material/Pagination";
 import type { PaginationProps } from "./globals.types";
 
@@ -12,7 +12,7 @@ export default function Pagination({
     return null;
   }
 
-  const handleChange = (_event: ChangeEvent<unknown>, value: number) => {
+  const handleChange: NonNullable<MuiPaginationProps["onChange"]> = (_event, value) => {
     onPageChange(value);
     if (scrollToTop) {
       window.scrollTo({ top: 0, left: 0, behavior: "smooth" });

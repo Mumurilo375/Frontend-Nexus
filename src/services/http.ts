@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 
-type ApiErrorPayload = {
+export type ApiErrorPayload = {
   code?: string;
   message?: string;
 };
@@ -11,6 +11,18 @@ export type PaginationMeta = {
   total: number;
   totalPages: number;
 };
+
+export type HttpErrorInput =
+  | Error
+  | {
+      message?: string;
+      response?: {
+        data?: ApiErrorPayload | string;
+        status?: number;
+      };
+    }
+  | null
+  | undefined;
 
 export type PaginatedResponse<T> = {
   items: T[];
@@ -60,7 +72,7 @@ function getStatusErrorMessage(status: number): string {
   }
 }
 
-function getCodeErrorMessage(code: string, status?: number): string | null {
+function getCodeErrorMessage(code: string): string | null {
   const normalizedCode = normalizeErrorText(code).toUpperCase();
 
   if (!normalizedCode) {
@@ -79,12 +91,28 @@ function getCodeErrorMessage(code: string, status?: number): string | null {
     return "Uma ou mais keys informadas já estão cadastradas.";
   }
 
+  if (normalizedCode === "GAME_HAS_ORDER_HISTORY") {
+    return "Este jogo já possui vendas registradas e não pode ser excluído. Desative-o em vez de excluir.";
+  }
+
   if (normalizedCode === "REVIEW_ALREADY_EXISTS") {
     return "Você já avaliou este jogo.";
   }
 
   if (normalizedCode === "OUT_OF_STOCK") {
     return "Este item está indisponível no momento.";
+  }
+
+  if (normalizedCode === "EMAIL_ALREADY_EXISTS") {
+    return "Este email já está em uso.";
+  }
+
+  if (normalizedCode === "USERNAME_ALREADY_EXISTS") {
+    return "Este nome de usuário já está em uso.";
+  }
+
+  if (normalizedCode === "CPF_ALREADY_EXISTS") {
+    return "Este CPF já está cadastrado.";
   }
 
   if (normalizedCode.endsWith("_ALREADY_EXISTS")) {
@@ -298,7 +326,7 @@ export function translateErrorMessage(
 ): string {
   const normalizedMessage = normalizeErrorText(message);
   const knownMessage = getKnownMessageTranslation(normalizedMessage, status);
-  const codeMessage = code ? getCodeErrorMessage(code, status) : null;
+  const codeMessage = code ? getCodeErrorMessage(code) : null;
 
   if (knownMessage) {
     return knownMessage;
@@ -315,7 +343,7 @@ export function translateErrorMessage(
   return normalizedMessage;
 }
 
-export function getApiErrorMessage(error: unknown, fallback: string): string {
+export function getApiErrorMessage<TError>(error: TError, fallback: string): string {
   if (isAxiosError<ApiErrorPayload | string>(error)) {
     const responseData = error.response?.data;
     const payload: ApiErrorPayload =

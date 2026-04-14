@@ -1,4 +1,4 @@
-import type { AdminOfferFormState, AdminOfferListingOption } from "./admin.types";
+import type { AdminOfferFormState, AdminOfferListingOption } from "../shared/admin.types";
 
 export function createEmptyOfferFormState(): AdminOfferFormState {
   return {
@@ -76,3 +76,4 @@ export function buildPlatformOptions(listings: AdminOfferListingOption[]) {
 
   return Array.from(platformMap.values());
 }
+

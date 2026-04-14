@@ -1,14 +1,14 @@
 import { matchPath, useLocation } from "react-router-dom";
-import AdminCategories from "../components/admin/AdminCategories";
-import AdminCategoryForm from "../components/admin/AdminCategoryForm";
-import AdminDashboard from "../components/admin/AdminDashboard";
-import AdminGameForm from "../components/admin/AdminGameForm";
-import AdminGamePlatforms from "../components/admin/AdminGamePlatforms";
-import AdminGames from "../components/admin/AdminGames";
-import AdminOffers from "../components/admin/AdminOffers";
-import AdminOrderDetails from "../components/admin/AdminOrderDetails";
-import AdminOrders from "../components/admin/AdminOrders";
-import AdminPriceHistory from "../components/admin/AdminPriceHistory";
+import AdminCategories from "../components/admin/categories/AdminCategories";
+import AdminCategoryForm from "../components/admin/categories/AdminCategoryForm";
+import AdminDashboard from "../components/admin/dashboard/AdminDashboard";
+import AdminGameForm from "../components/admin/games/AdminGameForm";
+import AdminGamePlatforms from "../components/admin/games/platforms/AdminGamePlatforms";
+import AdminGames from "../components/admin/games/AdminGames";
+import AdminOffers from "../components/admin/offers/AdminOffers";
+import AdminOrderDetails from "../components/admin/orders/AdminOrderDetails";
+import AdminOrders from "../components/admin/orders/AdminOrders";
+import AdminPriceHistory from "../components/admin/price-history/AdminPriceHistory";
 
 function matchAdminPath(pathname: string, path: string) {
   return Boolean(matchPath({ path, end: true }, pathname));
@@ -79,3 +79,4 @@ export default function AdminControl() {
 
   return <AdminDashboard />;
 }
+

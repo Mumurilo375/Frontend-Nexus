@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "../../shared/AdminLayout";
 import AdminGamePlatformCard from "./AdminGamePlatformCard";
 import AdminGamePlatformsHeader from "./AdminGamePlatformsHeader";
 import AdminGamePlatformsModal from "./AdminGamePlatformsModal";
@@ -13,9 +13,9 @@ import {
   shouldWarnAboutGlobalPriceChange,
   emptyKeysMeta,
 } from "./AdminGamePlatforms.helpers";
-import { AdminPageState } from "./adminShared";
-import api from "../../services/api";
-import { getApiErrorMessage, type PaginatedResponse } from "../../services/http";
+import { AdminPageState } from "../../shared/adminShared";
+import api from "../../../../services/api";
+import { getApiErrorMessage, type PaginatedResponse } from "../../../../services/http";
 import type {
   DeleteKeysResponse,
   GameKey,
@@ -26,7 +26,7 @@ import type {
   PlatformMonitorItem,
   SaveKeysResponse,
   StockSummary,
-} from "./admin.types";
+} from "../../shared/admin.types";
 
 function createFormFallback(platformId: number) {
   return createPlatformFormState(createFallbackPlatformMonitorItem(platformId));
@@ -459,3 +459,6 @@ export default function AdminGamePlatforms({ gameId }: { gameId?: string }) {
     </AdminLayout>
   );
 }
+
+
+

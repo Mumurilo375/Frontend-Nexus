@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import api from "../../services/api";
+import api from "../../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
   type PaginationMeta,
-} from "../../services/http";
-import AdminLayout from "./AdminLayout";
+} from "../../../services/http";
+import AdminLayout from "../shared/AdminLayout";
 import AdminOffersForm from "./AdminOffersForm";
 import AdminOffersList from "./AdminOffersList";
 import AdminOffersListingPicker from "./AdminOffersListingPicker";
-import { AdminButton, AdminPageState } from "./adminShared";
+import { AdminButton, AdminPageState } from "../shared/adminShared";
 import {
   buildPlatformOptions,
   createEmptyOfferFormState,
@@ -21,7 +21,7 @@ import {
   type AdminOfferFormState,
   type AdminOfferItem,
   type AdminOfferListingOption,
-} from "./admin.types";
+} from "../shared/admin.types";
 
 const PROMOTIONS_PAGE_SIZE = 12;
 const LISTINGS_PAGE_SIZE = 100;
@@ -336,3 +336,4 @@ export default function AdminOffers() {
     </AdminLayout>
   );
 }
+

@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "../shared/AdminLayout";
+import AdminConfirmModal from "../shared/AdminConfirmModal";
 import {
   AdminButton,
   AdminLinkButton,
   AdminPageState,
   createEmptyMeta,
-} from "./adminShared";
-import Pagination from "../../components/globals/Pagination";
-import api from "../../services/api";
+} from "../shared/adminShared";
+import Pagination from "../../globals/Pagination";
+import api from "../../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
-} from "../../services/http";
-import type { Category } from "./admin.types";
+} from "../../../services/http";
+import type { Category } from "../shared/admin.types";
 
 const PAGE_SIZE = 8;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);
@@ -20,37 +21,6 @@ const backToPanelClass = "border-slate-600 bg-slate-900/90 px-4 py-1.5 font-medi
 const actionBaseClass = "inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
 const editActionClass = `${actionBaseClass} border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
 const deleteActionClass = `${actionBaseClass} border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20`;
-
-function CategoryDeleteModal({
-  categoryName,
-  isDeleting,
-  onCancel,
-  onConfirm,
-}: {
-  categoryName: string;
-  isDeleting: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/75 px-4 py-6">
-      <div className="w-full max-w-md rounded-[28px] border border-slate-800 bg-slate-950 p-5 shadow-[0_30px_80px_rgba(2,6,23,0.6)]">
-        <h3 className="text-lg font-semibold text-white">Excluir categoria</h3>
-        <p className="mt-3 text-sm leading-6 text-slate-300">
-          Tem certeza que deseja excluir a categoria <span className="font-semibold text-white">{categoryName}</span>?
-        </p>
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
-          <AdminButton type="button" tone="secondary" onClick={onCancel} disabled={isDeleting}>
-            Cancelar
-          </AdminButton>
-          <AdminButton type="button" tone="danger" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? "Excluindo..." : "Excluir"}
-          </AdminButton>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -105,6 +75,7 @@ export default function AdminCategories() {
 
       await fetchCategoriesPage();
     } catch (error) {
+      setPendingDeleteCategory(null);
       setErrorMessage(
         getApiErrorMessage(error, "Não foi possível excluir a categoria."),
       );
@@ -184,13 +155,25 @@ export default function AdminCategories() {
           />
 
           {pendingDeleteCategory && (
-            <CategoryDeleteModal
-              categoryName={pendingDeleteCategory.name}
-              isDeleting={deletingCategoryId === pendingDeleteCategory.id}
+            <AdminConfirmModal
+              title="Excluir categoria"
+              message={
+                <>
+                  Tem certeza que deseja excluir a categoria{" "}
+                  <span className="font-semibold text-white">
+                    {pendingDeleteCategory.name}
+                  </span>
+                  ?
+                </>
+              }
+              isProcessing={deletingCategoryId === pendingDeleteCategory.id}
               onCancel={() => setPendingDeleteCategory(null)}
               onConfirm={() => {
                 void removeCategory();
               }}
+              tone="danger"
+              confirmLabel="Excluir"
+              processingLabel="Excluindo..."
             />
           )}
         </>
@@ -198,3 +181,4 @@ export default function AdminCategories() {
     </AdminLayout>
   );
 }
+

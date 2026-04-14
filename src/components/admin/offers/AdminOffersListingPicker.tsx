@@ -1,6 +1,6 @@
-import { AdminButton } from "./adminShared";
+import { AdminButton } from "../shared/adminShared";
 import { buildListingLabel } from "./adminOffers.helpers";
-import type { AdminOfferListingOption } from "./admin.types";
+import type { AdminOfferListingOption } from "../shared/admin.types";
 
 export default function AdminOffersListingPicker({
   open,
@@ -81,3 +81,4 @@ export default function AdminOffersListingPicker({
     </div>
   );
 }
+

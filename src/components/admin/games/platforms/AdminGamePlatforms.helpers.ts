@@ -1,9 +1,9 @@
-import { createEmptyMeta } from "./adminShared";
+import { createEmptyMeta } from "../../shared/adminShared";
 import type {
   PlatformFormState,
   PlatformKeysState,
   PlatformMonitorItem,
-} from "./admin.types";
+} from "../../shared/admin.types";
 
 export const keysPageSize = 8;
 export const keyColumnSize = 6;
@@ -190,3 +190,6 @@ export function createFallbackPlatformMonitorItem(platformId: number): PlatformM
     stock: { available: 0, reserved: 0, sold: 0, total: 0 },
   };
 }
+
+
+

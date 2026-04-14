@@ -1,7 +1,7 @@
-import { resolvePlatformLogoUrl } from "../../services/assets";
-import type { PlatformMonitorItem } from "./admin.types";
+import { resolvePlatformLogoUrl } from "../../../../services/assets";
+import type { PlatformMonitorItem } from "../../shared/admin.types";
 import { getPlatformPriceLabel } from "./AdminGamePlatforms.helpers";
-import { AdminButton, AdminLinkButton, AdminStatusBadge } from "./adminShared";
+import { AdminButton, AdminLinkButton, AdminStatusBadge } from "../../shared/adminShared";
 
 export default function AdminGamePlatformCard({
   platform,
@@ -54,3 +54,6 @@ export default function AdminGamePlatformCard({
     </article>
   );
 }
+
+
+

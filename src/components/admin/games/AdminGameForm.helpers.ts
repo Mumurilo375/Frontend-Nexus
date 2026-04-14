@@ -1,5 +1,5 @@
-import { resolveAssetUrl } from "../../services/assets";
-import type { GameImage, GameResponse, GameValues, GalleryItem } from "./admin.types";
+import { resolveAssetUrl } from "../../../services/assets";
+import type { GameImage, GameResponse, GameValues, GalleryItem } from "../shared/admin.types";
 
 export const emptyGame: GameValues = {
   title: "",
@@ -115,3 +115,4 @@ export function buildGameFormData(
   galleryFiles.forEach((file) => formData.append("galleryFiles", file));
   return formData;
 }
+

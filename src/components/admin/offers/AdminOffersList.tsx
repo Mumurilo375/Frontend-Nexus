@@ -1,8 +1,8 @@
-import Pagination from "../globals/Pagination";
-import { AdminButton } from "./adminShared";
+import Pagination from "../../globals/Pagination";
+import { AdminButton } from "../shared/adminShared";
 import { buildListingLabel, formatDateToPtBr } from "./adminOffers.helpers";
-import type { AdminOfferItem } from "./admin.types";
-import type { PaginationMeta } from "../../services/http";
+import type { AdminOfferItem } from "../shared/admin.types";
+import type { PaginationMeta } from "../../../services/http";
 
 export default function AdminOffersList({
   promotions,
@@ -94,3 +94,4 @@ export default function AdminOffersList({
     </section>
   );
 }
+

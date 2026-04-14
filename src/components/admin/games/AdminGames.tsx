@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "../shared/AdminLayout";
+import AdminConfirmModal from "../shared/AdminConfirmModal";
 import {
   AdminButton,
   AdminLinkButton,
@@ -8,14 +9,14 @@ import {
   AdminStatusBadge,
   createEmptyMeta,
   formatReleaseDate,
-} from "./adminShared";
-import Pagination from "../../components/globals/Pagination";
-import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
+} from "../shared/adminShared";
+import Pagination from "../../globals/Pagination";
+import api from "../../../services/api";
+import { resolveAssetUrl } from "../../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
-} from "../../services/http";
+} from "../../../services/http";
 
 type Game = {
   id: number;
@@ -44,6 +45,7 @@ export default function AdminGames() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingGameId, setDeletingGameId] = useState<number | null>(null);
+  const [pendingDeleteGame, setPendingDeleteGame] = useState<Game | null>(null);
 
   const fetchGamesPage = useCallback(
     async (page = currentPage) => {
@@ -78,13 +80,15 @@ export default function AdminGames() {
     void fetchGamesPage();
   }, [fetchGamesPage]);
 
-  const removeGame = async (gameId: number) => {
-    if (!window.confirm("Deseja excluir este jogo?")) return;
+  const removeGame = async () => {
+    if (!pendingDeleteGame) return;
+    const gameId = pendingDeleteGame.id;
 
     try {
       setDeletingGameId(gameId);
       setErrorMessage("");
       await api.delete(`/games/${gameId}`);
+      setPendingDeleteGame(null);
 
       if (games.length === 1 && currentPage > 1) {
         setCurrentPage((page) => page - 1);
@@ -93,6 +97,7 @@ export default function AdminGames() {
 
       await fetchGamesPage();
     } catch (error) {
+      setPendingDeleteGame(null);
       setErrorMessage(
         getApiErrorMessage(error, "Não foi possível excluir o jogo."),
       );
@@ -194,9 +199,7 @@ export default function AdminGames() {
                     tone="subtleDanger"
                     className={deleteActionClass}
                     disabled={deletingGameId === game.id}
-                    onClick={() => {
-                      void removeGame(game.id);
-                    }}
+                    onClick={() => setPendingDeleteGame(game)}
                   >
                     {deletingGameId === game.id ? "Excluindo..." : "Excluir"}
                   </AdminButton>
@@ -210,8 +213,32 @@ export default function AdminGames() {
             totalPages={pagination.totalPages}
             onPageChange={setCurrentPage}
           />
+
+          {pendingDeleteGame && (
+            <AdminConfirmModal
+              title="Excluir jogo"
+              message={
+                <>
+                  Tem certeza que deseja excluir o jogo{" "}
+                  <span className="font-semibold text-white">
+                    {pendingDeleteGame.title}
+                  </span>
+                  ?
+                </>
+              }
+              isProcessing={deletingGameId === pendingDeleteGame.id}
+              onCancel={() => setPendingDeleteGame(null)}
+              onConfirm={() => {
+                void removeGame();
+              }}
+              tone="danger"
+              confirmLabel="Excluir"
+              processingLabel="Excluindo..."
+            />
+          )}
         </>
       </AdminPageState>
     </AdminLayout>
   );
 }
+

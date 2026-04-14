@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import Pagination from "../globals/Pagination";
-import api from "../../services/api";
+import Pagination from "../../globals/Pagination";
+import api from "../../../services/api";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
   type PaginationMeta,
-} from "../../services/http";
-import AdminLayout from "./AdminLayout";
+} from "../../../services/http";
+import AdminLayout from "../shared/AdminLayout";
 import {
   AdminButton,
   AdminPageState,
   adminFieldClass,
   formatMoney,
-} from "./adminShared";
-import type { AdminPriceHistoryItem } from "./admin.types";
+} from "../shared/adminShared";
+import type { AdminPriceHistoryItem } from "../shared/admin.types";
 
 const PAGE_SIZE = 12;
 const emptyMeta: PaginationMeta = {
@@ -208,3 +208,4 @@ export default function AdminPriceHistory() {
     </AdminLayout>
   );
 }
+

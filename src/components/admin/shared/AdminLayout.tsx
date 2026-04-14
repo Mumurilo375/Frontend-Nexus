@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import Footer from "../globals/Footer";
-import NavBar from "../globals/NavBar";
+import Footer from "../../globals/Footer";
+import NavBar from "../../globals/NavBar";
 
 type AdminLayoutProps = {
   title: string;
@@ -56,3 +56,4 @@ export default function AdminLayout({
     </div>
   );
 }
+

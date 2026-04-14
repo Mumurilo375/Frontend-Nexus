@@ -1,4 +1,4 @@
-import type { PaginationMeta } from "../../services/http";
+import type { PaginationMeta } from "../../../services/http";
 
 export type Category = {
   id: number;
@@ -262,3 +262,4 @@ export type PlatformKeysState = {
 export type PlatformConfirmationState =
   | { type: "priceChange"; platformId: number }
   | { type: "removeKeys"; platformId: number };
+

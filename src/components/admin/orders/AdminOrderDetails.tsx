@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
-import { AdminNotice, AdminPageState, AdminStatusBadge, formatMoney } from "./adminShared";
-import type { AdminOrderDetails as AdminOrderDetailsType } from "./admin.types";
-import api from "../../services/api";
-import { getApiErrorMessage } from "../../services/http";
-import { resolveAssetUrl } from "../../services/assets";
-import Pagination from "../globals/Pagination";
+import AdminLayout from "../shared/AdminLayout";
+import { AdminNotice, AdminPageState, AdminStatusBadge, formatMoney } from "../shared/adminShared";
+import type { AdminOrderDetails as AdminOrderDetailsType } from "../shared/admin.types";
+import api from "../../../services/api";
+import { getApiErrorMessage } from "../../../services/http";
+import { resolveAssetUrl } from "../../../services/assets";
+import Pagination from "../../globals/Pagination";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -202,3 +202,4 @@ export default function AdminOrderDetails({ orderId }: AdminOrderDetailsProps) {
     </AdminLayout>
   );
 }
+

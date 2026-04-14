@@ -1,4 +1,4 @@
-import { resolveAssetUrl } from "../../services/assets";
+import { resolveAssetUrl } from "../../../../services/assets";
 
 export default function AdminGamePlatformsHeader({
   gameTitle,
@@ -32,3 +32,6 @@ export default function AdminGamePlatformsHeader({
     </section>
   );
 }
+
+
+

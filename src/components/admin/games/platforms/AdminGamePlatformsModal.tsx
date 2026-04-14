@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
-import Pagination from "../globals/Pagination";
-import { resolvePlatformLogoUrl } from "../../services/assets";
+import Pagination from "../../../globals/Pagination";
+import { resolvePlatformLogoUrl } from "../../../../services/assets";
 import {
   formatGameKeyValue,
   getGameKeyLineSections,
@@ -18,13 +18,13 @@ import {
   AdminTextField,
   AdminToggleField,
   getKeyStatusBadgeClass,
-} from "./adminShared";
+} from "../../shared/adminShared";
 import type {
   PlatformConfirmationState,
   PlatformFormState,
   PlatformKeysState,
   PlatformMonitorItem,
-} from "./admin.types";
+} from "../../shared/admin.types";
 
 type AdminGamePlatformsModalProps = {
   platform: PlatformMonitorItem;
@@ -385,3 +385,6 @@ export default function AdminGamePlatformsModal({
     </>
   );
 }
+
+
+

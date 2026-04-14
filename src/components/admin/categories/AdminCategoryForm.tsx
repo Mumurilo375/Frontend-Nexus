@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "../shared/AdminLayout";
 import {
   AdminFormActions,
   AdminNotice,
   AdminSideCard,
   AdminTextField,
   adminFormClass,
-} from "./adminShared";
-import api from "../../services/api";
-import { getApiErrorMessage } from "../../services/http";
-import type { CategoryResponse } from "./admin.types";
+} from "../shared/adminShared";
+import api from "../../../services/api";
+import { getApiErrorMessage } from "../../../services/http";
+import type { CategoryResponse } from "../shared/admin.types";
 
 export default function AdminCategoryForm({ id }: { id?: string }) {
   const navigate = useNavigate();
@@ -111,3 +111,4 @@ export default function AdminCategoryForm({ id }: { id?: string }) {
     </AdminLayout>
   );
 }
+

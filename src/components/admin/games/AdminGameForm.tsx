@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminLayout from "./AdminLayout";
+import AdminLayout from "../shared/AdminLayout";
 import AdminGameFormMedia from "./AdminGameFormMedia";
 import {
   buildGameFormData,
@@ -12,7 +12,7 @@ import {
   moveItem,
   revokeGalleryItemPreview,
 } from "./AdminGameForm.helpers";
-import type { Category, GalleryItem, GameResponse, GameValues } from "./admin.types";
+import type { Category, GalleryItem, GameResponse, GameValues } from "../shared/admin.types";
 import {
   AdminButton,
   AdminFormActions,
@@ -20,10 +20,10 @@ import {
   AdminTextareaField,
   AdminTextField,
   AdminToggleField,
-} from "./adminShared";
-import api from "../../services/api";
-import { resolveAssetUrl } from "../../services/assets";
-import { getApiErrorMessage, type PaginatedResponse } from "../../services/http";
+} from "../shared/adminShared";
+import api from "../../../services/api";
+import { resolveAssetUrl } from "../../../services/assets";
+import { getApiErrorMessage, type PaginatedResponse } from "../../../services/http";
 
 export default function AdminGameForm({ id }: { id?: string }) {
   const navigate = useNavigate();
@@ -391,3 +391,4 @@ export default function AdminGameForm({ id }: { id?: string }) {
     </AdminLayout>
   );
 }
+

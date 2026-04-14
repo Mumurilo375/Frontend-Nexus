@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { ComponentProps, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router-dom";
-import type { PaginationMeta } from "../../services/http";
+import type { PaginationMeta } from "../../../services/http";
 
 const buttonClass = {
   primary:
@@ -89,3 +89,4 @@ export const getKeyStatusBadgeClass = (status: string) => `inline-flex rounded-f
       ? "border border-amber-500/30 bg-amber-500/10 text-amber-200"
       : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
 }`;
+

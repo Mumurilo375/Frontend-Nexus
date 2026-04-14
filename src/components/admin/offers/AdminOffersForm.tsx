@@ -5,7 +5,7 @@ import {
   AdminTextareaField,
   AdminTextField,
   AdminToggleField,
-} from "./adminShared";
+} from "../shared/adminShared";
 import {
   getListingPlatformName,
   getListingTitle,
@@ -14,7 +14,7 @@ import {
 import type {
   AdminOfferFormState,
   AdminOfferListingOption,
-} from "./admin.types";
+} from "../shared/admin.types";
 
 export default function AdminOffersForm({
   formState,
@@ -197,3 +197,4 @@ export default function AdminOffersForm({
     </form>
   );
 }
+

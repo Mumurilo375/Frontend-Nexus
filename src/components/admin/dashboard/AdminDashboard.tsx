@@ -1,5 +1,5 @@
-import AdminLayout from "./AdminLayout";
-import { AdminLinkButton } from "./adminShared";
+import AdminLayout from "../shared/AdminLayout";
+import { AdminLinkButton } from "../shared/adminShared";
 
 const sections = [
   { title: "Jogos", label: "Catálogo", description: "Cadastre, edite, exclua e abra os listings de cada jogo.", to: "/admin/games", cta: "Gerenciar jogos" },
@@ -29,3 +29,4 @@ export default function AdminDashboard() {
     </AdminLayout>
   );
 }
+

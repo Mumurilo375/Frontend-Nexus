@@ -220,7 +220,7 @@ export default function RegisterPage() {
                     <input
                       value={formValues.email}
                       onChange={updateFormValue("email")}
-                      placeholder="email@gmail.com"
+                      placeholder="Email@gmail.com"
                       id="email"
                       name="email"
                       type="email"

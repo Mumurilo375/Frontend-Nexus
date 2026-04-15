@@ -7,6 +7,9 @@ import type { ApiErrorPayload } from "../../services/http";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import Pagination from "../globals/Pagination";
 import ProductCard from "./ProductCard";
+import TopGamesCarousel, {
+  type TopGamesCarouselItem,
+} from "./TopGamesCarousel";
 import type {
   CartFeedback,
   GamesResponse,
@@ -19,6 +22,7 @@ import {
   PAGE_SIZE,
   buildCatalogState,
   filterGames,
+  getListingDisplayPrice,
   getRequestErrorMessage,
   getSelectedListing,
   normalizeText,
@@ -50,11 +54,19 @@ export default function ProductCatalog() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const selectedPlatforms = useMemo(
-    () => searchParams.getAll("platform").map((value) => value.trim()).filter(Boolean),
+    () =>
+      searchParams
+        .getAll("platform")
+        .map((value) => value.trim())
+        .filter(Boolean),
     [searchParams],
   );
   const selectedCategories = useMemo(
-    () => searchParams.getAll("category").map((value) => value.trim()).filter(Boolean),
+    () =>
+      searchParams
+        .getAll("category")
+        .map((value) => value.trim())
+        .filter(Boolean),
     [searchParams],
   );
   const selectedPlatformSet = useMemo(
@@ -72,6 +84,60 @@ export default function ProductCatalog() {
     () => filteredGames.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [filteredGames, page],
   );
+  const featuredCarousel = useMemo(() => {
+    const rankedItems = filteredGames.map((game) => {
+      const listings = listingByGame.get(game.id) ?? [];
+      const soldCount = listings.reduce(
+        (sum, listing) => sum + Math.max(0, Number(listing.stock?.sold ?? 0)),
+        0,
+      );
+      const lowestPrice = listings.reduce<number | null>((lowest, listing) => {
+        const price = getListingDisplayPrice(listing);
+        if (!Number.isFinite(price) || price <= 0) {
+          return lowest;
+        }
+
+        return lowest === null || price < lowest ? price : lowest;
+      }, null);
+      const relevanceScore =
+        soldCount * 100 +
+        listings.length * 8 +
+        (game.categories?.length ?? 0) * 3 +
+        (game.description ? 1 : 0);
+
+      const item: TopGamesCarouselItem & { relevanceScore: number } = {
+        id: game.id,
+        title: game.title,
+        coverImageUrl: game.coverImageUrl,
+        soldCount,
+        lowestPrice,
+        categories: (game.categories ?? []).map((category) => category.name),
+        relevanceScore,
+      };
+
+      return item;
+    });
+
+    const hasSales = rankedItems.some((item) => item.soldCount > 0);
+    const sorted = [...rankedItems].sort((firstItem, secondItem) => {
+      if (hasSales && secondItem.soldCount !== firstItem.soldCount) {
+        return secondItem.soldCount - firstItem.soldCount;
+      }
+
+      if (secondItem.relevanceScore !== firstItem.relevanceScore) {
+        return secondItem.relevanceScore - firstItem.relevanceScore;
+      }
+
+      return firstItem.id - secondItem.id;
+    });
+
+    return {
+      hasSales,
+      items: sorted
+        .slice(0, 8)
+        .map(({ relevanceScore: _score, ...item }) => item),
+    };
+  }, [filteredGames, listingByGame]);
 
   useEffect(() => {
     setPage(1);
@@ -97,16 +163,22 @@ export default function ProductCatalog() {
         setLoading(true);
         setError("");
 
-        const [{ data: gamesData }, { data: listingsData }] = await Promise.all([
-          api.get<GamesResponse>("/games", { params: { page: 1, limit: 30 } }),
-          api.get<ListingsResponse>("/listings", {
-            params: { page: 1, limit: 100, includeStock: true },
-          }),
-        ]);
+        const [{ data: gamesData }, { data: listingsData }] = await Promise.all(
+          [
+            api.get<GamesResponse>("/games", {
+              params: { page: 1, limit: 30 },
+            }),
+            api.get<ListingsResponse>("/listings", {
+              params: { page: 1, limit: 100, includeStock: true },
+            }),
+          ],
+        );
 
         const catalog = buildCatalogState(
           gamesData.items ?? [],
-          (listingsData.items ?? []).filter((listing) => listing.isActive !== false),
+          (listingsData.items ?? []).filter(
+            (listing) => listing.isActive !== false,
+          ),
         );
 
         setGames(catalog.games);
@@ -179,7 +251,9 @@ export default function ProductCatalog() {
     return selectedPlatformSet.size === 0
       ? listings
       : listings.filter((listing) =>
-          selectedPlatformSet.has(normalizeText(String(listing.platform?.name ?? ""))),
+          selectedPlatformSet.has(
+            normalizeText(String(listing.platform?.name ?? "")),
+          ),
         );
   };
 
@@ -277,7 +351,11 @@ export default function ProductCatalog() {
   };
 
   if (loading) {
-    return <p className="nexus-card px-6 py-5 text-gray-300">Carregando produtos...</p>;
+    return (
+      <p className="nexus-card px-6 py-5 text-gray-300">
+        Carregando produtos...
+      </p>
+    );
   }
 
   if (error) {
@@ -299,7 +377,9 @@ export default function ProductCatalog() {
       />
 
       {games.length === 0 && (
-        <p className="nexus-card p-6 text-gray-300">Nenhum produto encontrado.</p>
+        <p className="nexus-card p-6 text-gray-300">
+          Nenhum produto encontrado.
+        </p>
       )}
 
       {games.length > 0 && filteredGames.length === 0 && (
@@ -310,6 +390,12 @@ export default function ProductCatalog() {
 
       {filteredGames.length > 0 && (
         <>
+          <TopGamesCarousel
+            items={featuredCarousel.items}
+            hasSales={featuredCarousel.hasSales}
+            onOpen={openGameDetails}
+          />
+
           <div className=" grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedGames.map((game) => {
               const listings = getListingsForGame(game.id);
@@ -325,12 +411,15 @@ export default function ProductCatalog() {
                   listings={listings}
                   selectedListing={selectedListing}
                   inCart={Boolean(
-                    selectedListing && cartListingIds.includes(selectedListing.id),
+                    selectedListing &&
+                    cartListingIds.includes(selectedListing.id),
                   )}
                   isFavorite={favoriteIds.includes(game.id)}
                   pendingFavorite={pendingFavoriteId === game.id}
                   pendingCart={pendingCartGameId === game.id}
-                  feedback={cartFeedback?.gameId === game.id ? cartFeedback : null}
+                  feedback={
+                    cartFeedback?.gameId === game.id ? cartFeedback : null
+                  }
                   onOpen={openGameDetails}
                   onToggleFavorite={(gameId) => {
                     void handleToggleFavorite(gameId);

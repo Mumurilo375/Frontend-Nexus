@@ -21,6 +21,7 @@ import Login from "./pages/Login";
 import Loja from "./pages/Loja";
 import Ofertas from "./pages/Ofertas";
 import UserConfig from "./pages/UserConfig";
+import ErrorPage from "./pages/ErrorPage";
 
 function CheckoutPage() {
   return (
@@ -101,6 +102,7 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: "*", element: <ErrorPage /> },
     ],
   },
 ]);

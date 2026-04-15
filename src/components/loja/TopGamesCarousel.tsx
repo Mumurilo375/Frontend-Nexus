@@ -69,8 +69,9 @@ export default function TopGamesCarousel({
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
             Destaques Nexus
           </p>
-          <h2 className="mt-1 text-2xl font-black text-white sm:text-3xl">{title}</h2>
-          
+          <h2 className="mt-1 text-2xl font-black text-white sm:text-3xl">
+            {title}
+          </h2>
         </div>
 
         <div className="hidden gap-2 sm:flex">
@@ -116,7 +117,9 @@ export default function TopGamesCarousel({
 
         <div className="flex min-h-full flex-col justify-between">
           <div>
-            <h3 className="text-2xl font-extrabold text-white sm:text-3xl">{activeItem.title}</h3>
+            <h3 className="text-2xl font-extrabold text-white sm:text-3xl">
+              {activeItem.title}
+            </h3>
 
             <div className="mt-3 flex flex-wrap gap-2">
               {activeItem.categories.slice(0, 3).map((category) => (
@@ -136,7 +139,6 @@ export default function TopGamesCarousel({
                   ? `${activeItem.soldCount} vendidos`
                   : "Em destaque"}
               </span>
-             
             </div>
           </div>
 

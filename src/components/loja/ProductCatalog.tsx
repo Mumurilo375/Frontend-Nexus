@@ -494,6 +494,12 @@ export default function ProductCatalog() {
                 onOpen={openGameDetails}
               />
 
+              <div className="mb-4 px-1">
+                <h2 className="text-xl font-black text-white sm:text-2xl">
+                  Todos os jogos
+                </h2>
+              </div>
+
               {offersLoadFailed && (
                 <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
                   Nao foi possivel carregar as ofertas agora. Tente atualizar em instantes.

@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    test: {
+      environment: "jsdom",
+    },
     server: {
       proxy: {
         "/api": {

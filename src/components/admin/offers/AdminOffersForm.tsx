@@ -6,6 +6,7 @@ import {
   AdminTextField,
   AdminToggleField,
 } from "../shared/adminShared";
+import { resolveAssetUrl } from "../../../services/assets";
 import {
   getListingPlatformName,
   getListingTitle,
@@ -30,6 +31,10 @@ export default function AdminOffersForm({
   onAddPlatformListings,
   onOpenListingPicker,
   onRemoveListing,
+  coverFile,
+  coverPreviewUrl,
+  onCoverFileChange,
+  onClearCoverFile,
   onReset,
 }: {
   formState: AdminOfferFormState;
@@ -45,6 +50,10 @@ export default function AdminOffersForm({
   onAddPlatformListings: () => void;
   onOpenListingPicker: () => void;
   onRemoveListing: (listingId: number) => void;
+  coverFile: File | null;
+  coverPreviewUrl: string;
+  onCoverFileChange: (file: File | null) => void;
+  onClearCoverFile: () => void;
   onReset: () => void;
 }) {
   return (
@@ -53,20 +62,66 @@ export default function AdminOffersForm({
       className="rounded-[28px] border border-slate-800 bg-slate-950/78 p-6"
     >
       <div className="grid gap-4 md:grid-cols-2">
-        <AdminTextField
-          label="Nome da oferta"
-          value={formState.name}
-          onChange={(event) => onFieldChange("name", event.target.value)}
-          className="md:col-span-2"
-          required
-        />
+        <div className="md:col-span-2">
+          <AdminTextField
+            label="Nome da oferta"
+            value={formState.name}
+            onChange={(event) => onFieldChange("name", event.target.value)}
+            required
+          />
+        </div>
 
-        <AdminTextareaField
-          label="Descrição"
-          value={formState.description}
-          onChange={(event) => onFieldChange("description", event.target.value)}
-          className="min-h-28 md:col-span-2"
-        />
+        <div className="md:col-span-2">
+          <AdminTextareaField
+            label="Descrição"
+            value={formState.description}
+            onChange={(event) => onFieldChange("description", event.target.value)}
+            className="min-h-28"
+          />
+        </div>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-4 md:col-span-2">
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+            <img
+              src={resolveAssetUrl(coverPreviewUrl)}
+              alt="Preview da capa da oferta"
+              className="h-36 w-full rounded-2xl border border-slate-800 object-cover"
+            />
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-white">Capa principal da oferta</p>
+              <p className="text-xs text-slate-400">
+                Enviar imagem ou usar URL. O arquivo enviado tem prioridade.
+              </p>
+
+              <label className="inline-flex cursor-pointer rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">
+                Enviar imagem
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={({ target }) => onCoverFileChange(target.files?.[0] ?? null)}
+                />
+              </label>
+
+              {coverFile && (
+                <div>
+                  <AdminButton type="button" tone="secondary" onClick={onClearCoverFile}>
+                    Remover arquivo enviado
+                  </AdminButton>
+                </div>
+              )}
+
+              <AdminTextField
+                label="URL da capa"
+                type="text"
+                value={formState.coverImageUrl}
+                onChange={(event) => onFieldChange("coverImageUrl", event.target.value)}
+                note="Use URL quando não quiser enviar arquivo agora."
+              />
+            </div>
+          </div>
+        </section>
 
         <AdminTextField
           label="Desconto (%)"

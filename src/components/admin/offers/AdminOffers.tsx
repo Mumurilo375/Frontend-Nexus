@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
+import { resolveAssetUrl } from "../../../services/assets";
 import {
   getApiErrorMessage,
   type PaginatedResponse,
@@ -41,6 +42,8 @@ export default function AdminOffers() {
   const [selectedListingIds, setSelectedListingIds] = useState<number[]>([]);
   const [initialListingIds, setInitialListingIds] = useState<number[]>([]);
   const [editingPromotionId, setEditingPromotionId] = useState<number | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitMessage, setSubmitMessage] = useState("");
@@ -81,6 +84,16 @@ export default function AdminOffers() {
     void loadData(promotionPage);
   }, [promotionPage]);
 
+  useEffect(() => {
+    if (coverFile) {
+      const objectUrl = URL.createObjectURL(coverFile);
+      setCoverPreviewUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+
+    setCoverPreviewUrl(resolveAssetUrl(formState.coverImageUrl));
+  }, [coverFile, formState.coverImageUrl]);
+
   const platformOptions = useMemo(() => buildPlatformOptions(listingOptions), [listingOptions]);
   const filteredListingOptions = useMemo(
     () => listingOptions.filter((listing) => matchesListingSearch(listing, listingSearchText)),
@@ -102,6 +115,7 @@ export default function AdminOffers() {
 
   const resetForm = (clearFeedback = true) => {
     setFormState(createEmptyOfferFormState());
+    setCoverFile(null);
     setSelectedListingIds([]);
     setInitialListingIds([]);
     setEditingPromotionId(null);
@@ -116,12 +130,14 @@ export default function AdminOffers() {
     setEditingPromotionId(promotion.id);
     setInitialListingIds(promotion.listingIds);
     setSelectedListingIds(promotion.listingIds);
+    setCoverFile(null);
     setSubmitError("");
     setSubmitMessage("");
     closeListingPicker();
     setFormState({
       name: promotion.name || "",
       description: promotion.description || "",
+      coverImageUrl: promotion.coverImageUrl || "",
       discountPercentage: String(promotion.discountPercentage ?? ""),
       startDate: normalizeDateInput(promotion.startDate),
       endDate: normalizeDateInput(promotion.endDate),
@@ -169,14 +185,18 @@ export default function AdminOffers() {
       return;
     }
 
-    const payload = {
-      name: formState.name.trim(),
-      description: formState.description.trim() || null,
-      discountPercentage: Number(formState.discountPercentage),
-      startDate: formState.startDate,
-      endDate: formState.endDate,
-      isActive: formState.isActive,
-    };
+    const payload = new FormData();
+    payload.append("name", formState.name.trim());
+    payload.append("description", formState.description.trim());
+    payload.append("coverImageUrl", formState.coverImageUrl.trim());
+    payload.append("discountPercentage", String(Number(formState.discountPercentage)));
+    payload.append("startDate", formState.startDate);
+    payload.append("endDate", formState.endDate);
+    payload.append("isActive", String(formState.isActive));
+
+    if (coverFile) {
+      payload.append("coverFile", coverFile);
+    }
     const nextListingIds = Array.from(new Set(selectedListingIds));
     const currentEditingPromotionId = editingPromotionId;
 
@@ -260,6 +280,10 @@ export default function AdminOffers() {
               currentIds.filter((currentId) => currentId !== listingId),
             )
           }
+          coverFile={coverFile}
+          coverPreviewUrl={coverPreviewUrl}
+          onCoverFileChange={setCoverFile}
+          onClearCoverFile={() => setCoverFile(null)}
           onReset={() => resetForm()}
         />
 

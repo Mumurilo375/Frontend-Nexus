@@ -3,6 +3,7 @@ import { AdminButton } from "../shared/adminShared";
 import { buildListingLabel, formatDateToPtBr } from "./adminOffers.helpers";
 import type { AdminOfferItem } from "../shared/admin.types";
 import type { PaginationMeta } from "../../../services/http";
+import { resolveAssetUrl } from "../../../services/assets";
 
 export default function AdminOffersList({
   promotions,
@@ -24,9 +25,15 @@ export default function AdminOffersList({
       {promotions.map((promotion) => (
         <article
           key={promotion.id}
-          className="rounded-[24px] border border-slate-800 bg-slate-950/82 p-5"
+          className="rounded-3xl border border-slate-800 bg-slate-950/82 p-5"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <img
+              src={resolveAssetUrl(promotion.coverImageUrl)}
+              alt={promotion.name}
+              className="h-28 w-full rounded-2xl border border-slate-800 object-cover lg:w-48"
+            />
+
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold text-white">{promotion.name}</h2>

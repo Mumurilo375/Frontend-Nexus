@@ -4,6 +4,7 @@ export function createEmptyOfferFormState(): AdminOfferFormState {
   return {
     name: "",
     description: "",
+    coverImageUrl: "",
     discountPercentage: "",
     startDate: "",
     endDate: "",

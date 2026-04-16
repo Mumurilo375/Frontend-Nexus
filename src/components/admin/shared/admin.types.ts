@@ -93,6 +93,7 @@ export type AdminOfferItem = {
   id: number;
   name: string;
   description?: string | null;
+  coverImageUrl?: string | null;
   discountPercentage: number;
   startDate?: string;
   endDate?: string;
@@ -104,6 +105,7 @@ export type AdminOfferItem = {
 export type AdminOfferFormState = {
   name: string;
   description: string;
+  coverImageUrl: string;
   discountPercentage: string;
   startDate: string;
   endDate: string;

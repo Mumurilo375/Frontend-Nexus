@@ -20,6 +20,7 @@ import GameDetails from "./pages/GameDetails";
 import Login from "./pages/Login";
 import Loja from "./pages/Loja";
 import Ofertas from "./pages/Ofertas";
+import OfertaDetalhe from "./pages/OfertaDetalhe";
 import UserConfig from "./pages/UserConfig";
 import ErrorPage from "./pages/ErrorPage";
 
@@ -50,6 +51,7 @@ const router = createBrowserRouter([
       { path: "/", element: <App /> },
       { path: "/loja", element: <Loja /> },
       { path: "/ofertas", element: <Ofertas /> },
+      { path: "/ofertas/:offerId", element: <OfertaDetalhe /> },
       { path: "/comofunciona", element: <ComoFunciona /> },
       { path: "/login", element: <Login /> },
       { path: "/cadastro", element: <Cadastro /> },

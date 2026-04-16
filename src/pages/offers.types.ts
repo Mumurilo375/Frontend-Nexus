@@ -1,6 +1,7 @@
 export type OfferListing = {
   id: number;
   price?: number;
+  isActive?: boolean;
   game: {
     id: number;
     title?: string | null;
@@ -14,12 +15,17 @@ export type OfferListing = {
     basePrice: number;
     finalPrice: number;
   };
+  stock?: {
+    sold?: number;
+  };
 };
 
 export type OfferItem = {
   id: number;
   name: string;
   description?: string | null;
+  coverImageUrl?: string | null;
   discountPercentage: number;
+  isActive: boolean;
   listings: OfferListing[];
 };

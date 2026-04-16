@@ -35,6 +35,10 @@ export default function AdminOffersForm({
   coverPreviewUrl,
   onCoverFileChange,
   onClearCoverFile,
+  bannerFile,
+  bannerPreviewUrl,
+  onBannerFileChange,
+  onClearBannerFile,
   onReset,
 }: {
   formState: AdminOfferFormState;
@@ -54,6 +58,10 @@ export default function AdminOffersForm({
   coverPreviewUrl: string;
   onCoverFileChange: (file: File | null) => void;
   onClearCoverFile: () => void;
+  bannerFile: File | null;
+  bannerPreviewUrl: string;
+  onBannerFileChange: (file: File | null) => void;
+  onClearBannerFile: () => void;
   onReset: () => void;
 }) {
   return (
@@ -117,6 +125,49 @@ export default function AdminOffersForm({
                 type="text"
                 value={formState.coverImageUrl}
                 onChange={(event) => onFieldChange("coverImageUrl", event.target.value)}
+                note="Use URL quando não quiser enviar arquivo agora."
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-4 md:col-span-2">
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+            <img
+              src={resolveAssetUrl(bannerPreviewUrl)}
+              alt="Preview do banner da oferta"
+              className="h-36 w-full rounded-2xl border border-slate-800 object-cover"
+            />
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-white">Banner da página da oferta</p>
+              <p className="text-xs text-slate-400">
+                Esta imagem será usada na página /ofertas/ID.
+              </p>
+
+              <label className="inline-flex cursor-pointer rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">
+                Enviar banner
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={({ target }) => onBannerFileChange(target.files?.[0] ?? null)}
+                />
+              </label>
+
+              {bannerFile && (
+                <div>
+                  <AdminButton type="button" tone="secondary" onClick={onClearBannerFile}>
+                    Remover banner enviado
+                  </AdminButton>
+                </div>
+              )}
+
+              <AdminTextField
+                label="URL do banner"
+                type="text"
+                value={formState.bannerImageUrl}
+                onChange={(event) => onFieldChange("bannerImageUrl", event.target.value)}
                 note="Use URL quando não quiser enviar arquivo agora."
               />
             </div>

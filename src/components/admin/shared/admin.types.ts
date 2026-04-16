@@ -94,6 +94,7 @@ export type AdminOfferItem = {
   name: string;
   description?: string | null;
   coverImageUrl?: string | null;
+  bannerImageUrl?: string | null;
   discountPercentage: number;
   startDate?: string;
   endDate?: string;
@@ -106,6 +107,7 @@ export type AdminOfferFormState = {
   name: string;
   description: string;
   coverImageUrl: string;
+  bannerImageUrl: string;
   discountPercentage: string;
   startDate: string;
   endDate: string;

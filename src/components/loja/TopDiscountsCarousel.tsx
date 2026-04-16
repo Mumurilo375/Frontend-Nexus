@@ -91,7 +91,7 @@ export default function TopDiscountsCarousel({
 
       <div className="relative z-10 mb-4 px-12 text-center">
         <h2 className="text-2xl font-black text-white sm:text-3xl">
-          Em descontos
+          Em Oferta
         </h2>
       </div>
 

@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AuthRequiredModal from "../components/globals/AuthRequiredModal";
 import Footer from "../components/globals/Footer";
 import NavBar from "../components/globals/NavBar";
+import Pagination from "../components/globals/Pagination";
 import ProductCard from "../components/loja/ProductCard";
 import { useAuth } from "../contexts/useAuth";
 import type { CartFeedback, GameSummary, ListingItem } from "../components/loja/store.types";
@@ -13,6 +14,8 @@ import api from "../services/api";
 import { getApiErrorMessage } from "../services/http";
 import { resolveAssetUrl } from "../services/assets";
 import type { OfferItem } from "./offers.types";
+
+const OFFER_PAGE_SIZE = 12;
 
 function buildOfferGames(offer: OfferItem): Array<{ game: GameSummary; listings: ListingItem[] }> {
   const byGame = new Map<number, { game: GameSummary; listings: ListingItem[] }>();
@@ -81,8 +84,14 @@ export default function OfertaDetalhe() {
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
   const [pendingCartGameId, setPendingCartGameId] = useState<number | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [page, setPage] = useState(1);
 
   const offerGames = useMemo(() => (offer ? buildOfferGames(offer) : []), [offer]);
+  const totalPages = Math.max(1, Math.ceil(offerGames.length / OFFER_PAGE_SIZE));
+  const paginatedOfferGames = useMemo(
+    () => offerGames.slice((page - 1) * OFFER_PAGE_SIZE, page * OFFER_PAGE_SIZE),
+    [offerGames, page],
+  );
 
   useEffect(() => {
     const loadOffer = async () => {
@@ -148,6 +157,10 @@ export default function OfertaDetalhe() {
 
     return () => window.clearTimeout(timeoutId);
   }, [cartFeedback]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [offerId]);
 
   const askLogin = () => setShowAuthModal(true);
   const closeAuthModal = () => setShowAuthModal(false);
@@ -288,9 +301,9 @@ export default function OfertaDetalhe() {
             </span>
           </div>
 
-          {offer?.coverImageUrl && (
+          {(offer?.bannerImageUrl || offer?.coverImageUrl) && (
             <img
-              src={resolveAssetUrl(offer.coverImageUrl)}
+              src={resolveAssetUrl(offer?.bannerImageUrl || offer?.coverImageUrl)}
               alt={offer.name || "Oferta"}
               className="mt-5 h-48 w-full rounded-3xl border border-slate-800 object-cover"
             />
@@ -312,8 +325,9 @@ export default function OfertaDetalhe() {
         )}
 
         {!isLoading && !errorMessage && offerGames.length > 0 && (
-          <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {offerGames.map(({ game, listings }) => {
+          <>
+            <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {paginatedOfferGames.map(({ game, listings }) => {
               const selectedListing = getSelectedListing(
                 listings,
                 selectedListingByGame[game.id],
@@ -325,6 +339,7 @@ export default function OfertaDetalhe() {
                   game={game}
                   listings={listings}
                   selectedListing={selectedListing}
+                  showOfferPricing
                   inCart={Boolean(
                     selectedListing && cartListingIds.includes(selectedListing.id),
                   )}
@@ -342,8 +357,15 @@ export default function OfertaDetalhe() {
                   }}
                 />
               );
-            })}
-          </section>
+              })}
+            </section>
+
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </>
         )}
       </main>
       <Footer />

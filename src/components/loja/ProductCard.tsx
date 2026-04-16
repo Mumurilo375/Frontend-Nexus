@@ -8,6 +8,7 @@ type ProductCardProps = {
   game: GameSummary;
   listings: ListingItem[];
   selectedListing: ListingItem | null;
+  showOfferPricing?: boolean;
   inCart: boolean;
   isFavorite: boolean;
   pendingFavorite: boolean;
@@ -23,6 +24,7 @@ export default function ProductCard({
   game,
   listings,
   selectedListing,
+  showOfferPricing = false,
   inCart,
   isFavorite,
   pendingFavorite,
@@ -33,10 +35,22 @@ export default function ProductCard({
   onSelectListing,
   onAddToCart,
 }: ProductCardProps) {
+  const formatMoney = (value: number) => `R$ ${value.toFixed(2)}`;
   const selectedListingHasStockInfo = Boolean(selectedListing?.stock);
   const selectedListingAvailableStock = getListingAvailableStock(selectedListing);
   const selectedListingIsOutOfStock =
     selectedListingHasStockInfo && selectedListingAvailableStock <= 0;
+  const selectedListingDiscountPercentage = Number(
+    selectedListing?.pricing?.discountPercentage ?? 0,
+  );
+  const selectedListingBasePrice = Number(
+    selectedListing?.pricing?.basePrice ?? selectedListing?.price ?? 0,
+  );
+  const selectedListingFinalPrice = Number(
+    selectedListing?.pricing?.finalPrice ?? selectedListing?.price ?? 0,
+  );
+  const selectedListingHasOfferDiscount =
+    showOfferPricing && selectedListingDiscountPercentage > 0;
 
   const stopCardNavigation = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -140,9 +154,23 @@ export default function ProductCard({
             {game.categories?.slice(0, 2).map((category) => category.name).join(" • ") ||
               "Sem categoria"}
           </p>
-          <p className="text-sm font-semibold text-white">
-            {selectedListing?.price ? `R$ ${Number(selectedListing.price).toFixed(2)}` : ""}
-          </p>
+          {selectedListingHasOfferDiscount ? (
+            <div className="text-right">
+              <p className="text-xs font-semibold text-emerald-200">
+                -{selectedListingDiscountPercentage}%
+              </p>
+              <p className="text-xs text-slate-500 line-through">
+                {formatMoney(selectedListingBasePrice)}
+              </p>
+              <p className="text-sm font-semibold text-white">
+                {formatMoney(selectedListingFinalPrice)}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-white">
+              {selectedListing?.price ? formatMoney(Number(selectedListing.price)) : ""}
+            </p>
+          )}
         </div>
 
         <button

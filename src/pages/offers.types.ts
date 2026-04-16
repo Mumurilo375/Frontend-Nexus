@@ -25,6 +25,7 @@ export type OfferItem = {
   name: string;
   description?: string | null;
   coverImageUrl?: string | null;
+  bannerImageUrl?: string | null;
   discountPercentage: number;
   isActive: boolean;
   listings: OfferListing[];

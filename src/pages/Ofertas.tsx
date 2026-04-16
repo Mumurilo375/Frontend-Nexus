@@ -99,7 +99,7 @@ function Ofertas() {
               return (
               <article
                 key={offer.id}
-                className="overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950/88 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
+                className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950/88 shadow-[0_18px_45px_rgba(2,6,23,0.28)]"
               >
                 <img
                   src={resolveAssetUrl(coverImageUrl)}
@@ -107,7 +107,7 @@ function Ofertas() {
                   className="aspect-video w-full object-cover"
                 />
 
-                <div className="p-5">
+                <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200/80">
@@ -123,13 +123,13 @@ function Ofertas() {
                     </span>
                   </div>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 min-h-18 text-sm leading-6 text-slate-300">
                     {offer.description || "Oferta especial com jogos selecionados para esta campanha."}
                   </p>
 
                   <Link
                     to={`/ofertas/${offer.id}`}
-                    className="mt-5 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                    className="mt-auto inline-flex w-fit self-start rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
                   >
                     Ver jogos desta oferta
                   </Link>

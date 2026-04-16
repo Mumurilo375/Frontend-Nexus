@@ -49,6 +49,10 @@ export default function AdminOffersList({
                 {promotion.description || "Sem descrição."}
               </p>
 
+              <p className="text-xs text-slate-400">
+                Banner: {promotion.bannerImageUrl ? "configurado" : "não configurado"}
+              </p>
+
               <div className="flex flex-wrap gap-3 text-sm text-slate-400">
                 <span>De {formatDateToPtBr(promotion.startDate)}</span>
                 <span>até {formatDateToPtBr(promotion.endDate)}</span>

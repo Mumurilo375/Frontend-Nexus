@@ -4,12 +4,15 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import api from "../../services/api";
 import type { ApiErrorPayload } from "../../services/http";
+import type { PaginatedResponse } from "../../services/http";
 import AuthRequiredModal from "../globals/AuthRequiredModal";
 import Pagination from "../globals/Pagination";
 import ProductCard from "./ProductCard";
 import TopGamesCarousel, {
   type TopGamesCarouselItem,
 } from "./TopGamesCarousel";
+import TopDiscountsCarousel from "./TopDiscountsCarousel";
+import type { OfferItem } from "../../pages/offers.types";
 import type {
   CartFeedback,
   GamesResponse,
@@ -38,6 +41,8 @@ export default function ProductCatalog() {
   const [listingByGame, setListingByGame] = useState<ListingMap>(new Map());
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [cartListingIds, setCartListingIds] = useState<number[]>([]);
+  const [offerPromotions, setOfferPromotions] = useState<OfferItem[]>([]);
+  const [offersLoadFailed, setOffersLoadFailed] = useState(false);
   const [selectedListingByGame, setSelectedListingByGame] = useState<
     Record<number, number>
   >({});
@@ -74,6 +79,7 @@ export default function ProductCatalog() {
     [selectedPlatforms],
   );
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const isFirstPage = page === 1;
 
   const filteredGames = useMemo(
     () => filterGames(games, selectedCategories, selectedPlatforms, query),
@@ -85,7 +91,7 @@ export default function ProductCatalog() {
     [filteredGames, page],
   );
   const featuredCarousel = useMemo(() => {
-    const rankedItems = filteredGames.map((game) => {
+    const rankedItems = filteredGames.map<TopGamesCarouselItem>((game) => {
       const listings = listingByGame.get(game.id) ?? [];
       const soldCount = listings.reduce(
         (sum, listing) => sum + Math.max(0, Number(listing.stock?.sold ?? 0)),
@@ -99,45 +105,110 @@ export default function ProductCatalog() {
 
         return lowest === null || price < lowest ? price : lowest;
       }, null);
-      const relevanceScore =
-        soldCount * 100 +
-        listings.length * 8 +
-        (game.categories?.length ?? 0) * 3 +
-        (game.description ? 1 : 0);
-
-      const item: TopGamesCarouselItem & { relevanceScore: number } = {
+      return {
         id: game.id,
         title: game.title,
         coverImageUrl: game.coverImageUrl,
         soldCount,
         lowestPrice,
         categories: (game.categories ?? []).map((category) => category.name),
-        relevanceScore,
       };
-
-      return item;
     });
 
-    const hasSales = rankedItems.some((item) => item.soldCount > 0);
-    const sorted = [...rankedItems].sort((firstItem, secondItem) => {
-      if (hasSales && secondItem.soldCount !== firstItem.soldCount) {
+    const sorted = rankedItems.sort((firstItem, secondItem) => {
+      if (secondItem.soldCount !== firstItem.soldCount) {
         return secondItem.soldCount - firstItem.soldCount;
-      }
-
-      if (secondItem.relevanceScore !== firstItem.relevanceScore) {
-        return secondItem.relevanceScore - firstItem.relevanceScore;
       }
 
       return firstItem.id - secondItem.id;
     });
 
     return {
-      hasSales,
-      items: sorted
-        .slice(0, 8)
-        .map(({ relevanceScore: _score, ...item }) => item),
+      items: sorted.slice(0, 12),
+      hasSales: sorted.some((item) => item.soldCount > 0),
     };
   }, [filteredGames, listingByGame]);
+
+  const discountedCarousel = useMemo(() => {
+    const bestByGame = new Map<
+      number,
+      {
+        id: number;
+        title: string;
+        coverImageUrl?: string;
+        soldCount: number;
+        discountPercentage: number;
+        finalPrice: number;
+      }
+    >();
+
+    for (const promotion of offerPromotions) {
+      for (const listing of promotion.listings) {
+        const gameId = listing.game?.id;
+        if (!gameId) {
+          continue;
+        }
+
+        const finalPrice = Number(listing.pricing?.finalPrice ?? listing.price ?? 0);
+        const discountPercentage = Number(promotion.discountPercentage ?? 0);
+        const stock = listing.stock as { sold?: number } | undefined;
+
+        if (!Number.isFinite(finalPrice) || finalPrice <= 0 || discountPercentage <= 0) {
+          continue;
+        }
+
+        const nextItem = {
+          id: gameId,
+          title: listing.game?.title || promotion.name || "Jogo promocional",
+          coverImageUrl: listing.game?.coverImageUrl ?? undefined,
+          soldCount: Number(stock?.sold ?? 0),
+          discountPercentage,
+          finalPrice,
+        };
+
+        const currentItem = bestByGame.get(gameId);
+        if (!currentItem) {
+          bestByGame.set(gameId, nextItem);
+          continue;
+        }
+
+        const isBetterDiscount = nextItem.discountPercentage > currentItem.discountPercentage;
+        const sameDiscountWithMoreSales =
+          nextItem.discountPercentage === currentItem.discountPercentage &&
+          nextItem.soldCount > currentItem.soldCount;
+        const sameDiscountAndSalesWithBetterPrice =
+          nextItem.discountPercentage === currentItem.discountPercentage &&
+          nextItem.soldCount === currentItem.soldCount &&
+          nextItem.finalPrice < currentItem.finalPrice;
+
+        if (isBetterDiscount || sameDiscountWithMoreSales || sameDiscountAndSalesWithBetterPrice) {
+          bestByGame.set(gameId, nextItem);
+        }
+      }
+    }
+
+    const sorted = Array.from(bestByGame.values()).sort((firstItem, secondItem) => {
+      if (secondItem.discountPercentage !== firstItem.discountPercentage) {
+        return secondItem.discountPercentage - firstItem.discountPercentage;
+      }
+
+      if (secondItem.soldCount !== firstItem.soldCount) {
+        return secondItem.soldCount - firstItem.soldCount;
+      }
+
+      return firstItem.id - secondItem.id;
+    });
+
+    return {
+      items: sorted.slice(0, 12).map((item) => ({
+        id: item.id,
+        title: item.title,
+        coverImageUrl: item.coverImageUrl,
+        discountPercentage: item.discountPercentage,
+        finalPrice: item.finalPrice,
+      })),
+    };
+  }, [offerPromotions]);
 
   useEffect(() => {
     setPage(1);
@@ -190,7 +261,7 @@ export default function ProductCatalog() {
         setError(
           getRequestErrorMessage(
             loadError,
-            "Não foi possível carregar os produtos no momento.",
+            "N├úo foi poss├¡vel carregar os produtos no momento.",
           ),
         );
       } finally {
@@ -199,6 +270,26 @@ export default function ProductCatalog() {
     };
 
     void loadCatalog();
+  }, []);
+
+  useEffect(() => {
+    const loadOffers = async () => {
+      try {
+        setOffersLoadFailed(false);
+        const { data } = await api.get<PaginatedResponse<OfferItem>>("/promotions", {
+          params: { page: 1, limit: 100 },
+        });
+
+        setOfferPromotions(
+          (data.items ?? []).filter((offer) => offer.isActive && offer.listings.length > 0),
+        );
+      } catch {
+        setOffersLoadFailed(true);
+        setOfferPromotions([]);
+      }
+    };
+
+    void loadOffers();
   }, []);
 
   useEffect(() => {
@@ -342,7 +433,7 @@ export default function ProductCatalog() {
         tone: "error",
         message: getRequestErrorMessage(
           cartError,
-          "Não foi possível adicionar o item ao carrinho.",
+          "N├úo foi poss├¡vel adicionar o item ao carrinho.",
         ),
       });
     } finally {
@@ -371,7 +462,7 @@ export default function ProductCatalog() {
       <AuthRequiredModal
         open={showAuthModal}
         title="Entre para continuar"
-        message="Para adicionar aos favoritos ou ao carrinho, faça login na sua conta."
+        message="Para adicionar aos favoritos ou ao carrinho, fa├ºa login na sua conta."
         onClose={closeAuthModal}
         onConfirm={goToLogin}
       />
@@ -390,11 +481,26 @@ export default function ProductCatalog() {
 
       {filteredGames.length > 0 && (
         <>
-          <TopGamesCarousel
-            items={featuredCarousel.items}
-            hasSales={featuredCarousel.hasSales}
-            onOpen={openGameDetails}
-          />
+          {isFirstPage && (
+            <>
+              <TopGamesCarousel
+                items={featuredCarousel.items}
+                hasSales={featuredCarousel.hasSales}
+                onOpen={openGameDetails}
+              />
+
+              <TopDiscountsCarousel
+                items={discountedCarousel.items}
+                onOpen={openGameDetails}
+              />
+
+              {offersLoadFailed && (
+                <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                  Nao foi possivel carregar as ofertas agora. Tente atualizar em instantes.
+                </p>
+              )}
+            </>
+          )}
 
           <div className=" grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedGames.map((game) => {

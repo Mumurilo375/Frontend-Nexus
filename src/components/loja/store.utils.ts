@@ -14,6 +14,25 @@ export const getListingAvailableStock = (listing: ListingItem | null | undefined
   Math.max(0, Number(listing?.stock?.available ?? 0));
 export const getListingDisplayPrice = (listing: ListingItem | null | undefined) =>
   Number(listing?.pricing?.finalPrice ?? listing?.price ?? 0);
+export const getListingDiscountPercentage = (listing: ListingItem | null | undefined) => {
+  const explicitDiscount = Number(listing?.pricing?.discountPercentage ?? 0);
+  if (Number.isFinite(explicitDiscount) && explicitDiscount > 0) {
+    return explicitDiscount;
+  }
+
+  const basePrice = Number(listing?.pricing?.basePrice ?? listing?.price ?? 0);
+  const finalPrice = Number(listing?.pricing?.finalPrice ?? basePrice);
+
+  if (!Number.isFinite(basePrice) || !Number.isFinite(finalPrice)) {
+    return 0;
+  }
+
+  if (basePrice <= 0 || finalPrice <= 0 || finalPrice >= basePrice) {
+    return 0;
+  }
+
+  return Math.round((1 - finalPrice / basePrice) * 100);
+};
 
 export function formatDate(value?: string) {
   if (!value) return "-";

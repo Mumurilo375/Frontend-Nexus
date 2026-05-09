@@ -34,9 +34,9 @@ function TopDiscountsCarouselCard({
           onOpen(item.id);
         }
       }}
-      className="group relative min-w-[68%] cursor-pointer snap-start overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/60 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-slate-950/85 hover:shadow-[0_18px_45px_rgba(16,185,129,0.14)] sm:min-w-[40%] lg:min-w-[28%] xl:min-w-[22%]"
+      className="group relative min-w-[68%] max-h-[360px] cursor-pointer snap-start overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/60 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-slate-950/85 hover:shadow-[0_18px_45px_rgba(16,185,129,0.14)] sm:min-w-[40%] lg:min-w-[28%] xl:min-w-[22%]"
     >
-      <div className="relative aspect-4/3 overflow-hidden bg-black/40">
+      <div className="relative aspect-4/3 max-h-[220px] overflow-hidden bg-black/40 sm:max-h-[240px] lg:max-h-[260px]">
         <img
           src={resolveAssetUrl(item.coverImageUrl)}
           alt={item.title}
@@ -53,8 +53,7 @@ function TopDiscountsCarouselCard({
 
       <div className="flex items-center justify-between gap-3 px-3 py-3">
         <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-100 transition duration-300 group-hover:border-emerald-400/60 group-hover:bg-emerald-500/15 group-hover:shadow-[0_0_0_1px_rgba(74,222,128,0.14)]">
-          <BadgePercent className="h-4 w-4" />
-          -{item.discountPercentage}%
+          <BadgePercent className="h-4 w-4" />-{item.discountPercentage}%
         </span>
         <span className="text-sm font-semibold text-slate-100 transition duration-300 group-hover:text-white">
           {toMoney(item.finalPrice)}
@@ -122,7 +121,11 @@ export default function TopDiscountsCarousel({
         >
           {hasItems ? (
             items.map((item) => (
-              <TopDiscountsCarouselCard key={item.id} item={item} onOpen={onOpen} />
+              <TopDiscountsCarouselCard
+                key={item.id}
+                item={item}
+                onOpen={onOpen}
+              />
             ))
           ) : (
             <div className="w-full rounded-2xl border border-slate-700/80 bg-slate-950/60 px-5 py-8 text-center text-sm text-slate-300">

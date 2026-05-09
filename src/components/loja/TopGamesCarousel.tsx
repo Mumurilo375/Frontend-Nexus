@@ -41,9 +41,9 @@ function TopGamesCarouselCard({ item, onOpen }: TopGamesCarouselCardProps) {
           onOpen(item.id);
         }
       }}
-      className="group relative min-w-[68%] cursor-pointer snap-start overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/60 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-slate-950/85 hover:shadow-[0_18px_45px_rgba(8,145,178,0.16)] sm:min-w-[40%] lg:min-w-[28%] xl:min-w-[22%]"
+      className="group relative min-w-[68%] max-h-[360px] cursor-pointer snap-start overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/60 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-slate-950/85 hover:shadow-[0_18px_45px_rgba(8,145,178,0.16)] sm:min-w-[40%] lg:min-w-[28%] xl:min-w-[22%]"
     >
-      <div className="relative aspect-4/3 overflow-hidden bg-black/40">
+      <div className="relative aspect-4/3 max-h-[220px] overflow-hidden bg-black/40 sm:max-h-[240px] lg:max-h-[260px]">
         <img
           src={resolveAssetUrl(item.coverImageUrl)}
           alt={item.title}
@@ -103,7 +103,7 @@ export default function TopGamesCarousel({
       <div className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
 
       <div className="relative z-10 mb-4 px-12 text-center">
-        <h2 className="text-2xl font-black text-white sm:text-3xl">
+        <h2 className="text-2 xl font-black text-white sm:text-3xl">
           {title}
         </h2>
       </div>

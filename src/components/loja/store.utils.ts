@@ -2,6 +2,11 @@ import { isAxiosError } from "axios";
 import { getApiErrorMessage } from "../../services/http";
 import type { GameImage, GameSummary, ListingItem, ListingMap, ReviewItem } from "./store.types";
 
+export type FilterOption = {
+  label: string;
+  count: number;
+};
+
 export const PAGE_SIZE = 12;
 export const REVIEW_COMMENT_MAX_LENGTH = 500;
 export const OFFLINE_API_MESSAGE = "Não foi possível se conectar agora. Confira sua internet e tente novamente.";
@@ -135,22 +140,45 @@ export function buildCatalogState(games: GameSummary[], listings: ListingItem[])
   };
 }
 
-const getUniqueSortedStrings = (values: string[]) =>
-  Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+const getSortedFilterOptions = (optionMap: Map<string, Set<number | string>>) =>
+  Array.from(optionMap.entries())
+    .map(([label, values]) => ({ label, count: values.size }))
+    .sort((firstOption, secondOption) => firstOption.label.localeCompare(secondOption.label));
 
 export function collectFilterOptions(
   games: Array<{ categories?: Array<{ name: string }> }>,
   listings: ListingItem[],
 ) {
+  const categoriesByGame = new Map<string, Set<number | string>>();
+  const platformsByGame = new Map<string, Set<number | string>>();
+
+  games.forEach((game, gameIndex) => {
+    const gameKey = "id" in game && typeof game.id === "number" ? game.id : `game-${gameIndex}`;
+
+    (game.categories ?? []).forEach((category) => {
+      const categoryName = category.name.trim();
+      if (!categoryName) return;
+
+      const categoryGames = categoriesByGame.get(categoryName) ?? new Set<number | string>();
+      categoryGames.add(gameKey);
+      categoriesByGame.set(categoryName, categoryGames);
+    });
+  });
+
+  listings
+    .filter((listing) => listing.isActive !== false)
+    .forEach((listing, listingIndex) => {
+      const platformName = String(listing.platform?.name ?? "").trim();
+      if (!platformName) return;
+
+      const platformGames = platformsByGame.get(platformName) ?? new Set<number | string>();
+      platformGames.add(listing.gameId ?? listing.game?.id ?? `listing-${listingIndex}`);
+      platformsByGame.set(platformName, platformGames);
+    });
+
   return {
-    categories: getUniqueSortedStrings(
-      games.flatMap((game) => game.categories ?? []).map((category) => category.name),
-    ),
-    platforms: getUniqueSortedStrings(
-      listings
-        .filter((listing) => listing.isActive !== false)
-        .map((listing) => String(listing.platform?.name ?? "").trim()),
-    ),
+    categories: getSortedFilterOptions(categoriesByGame),
+    platforms: getSortedFilterOptions(platformsByGame),
   };
 }
 

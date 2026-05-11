@@ -5,6 +5,7 @@ import {
   AdminButton,
   AdminLinkButton,
   AdminPageState,
+  adminBackToPanelClass,
   createEmptyMeta,
 } from "../shared/adminShared";
 import Pagination from "../../globals/Pagination";
@@ -17,8 +18,8 @@ import type { Category } from "../shared/admin.types";
 
 const PAGE_SIZE = 8;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);
-const backToPanelClass = "border-slate-600 bg-slate-900/90 px-4 py-1.5 font-medium text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-blue-400/50 hover:bg-slate-800";
-const actionBaseClass = "inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
+const actionBaseClass =
+  "inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
 const editActionClass = `${actionBaseClass} border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
 const deleteActionClass = `${actionBaseClass} border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20`;
 
@@ -28,30 +29,39 @@ export default function AdminCategories() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
-  const [pendingDeleteCategory, setPendingDeleteCategory] = useState<Category | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(
+    null,
+  );
+  const [pendingDeleteCategory, setPendingDeleteCategory] =
+    useState<Category | null>(null);
 
-  const fetchCategoriesPage = useCallback(async (page = currentPage) => {
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
+  const fetchCategoriesPage = useCallback(
+    async (page = currentPage) => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-      const { data } = await api.get<PaginatedResponse<Category>>("/categories", {
-        params: { page, limit: PAGE_SIZE },
-      });
+        const { data } = await api.get<PaginatedResponse<Category>>(
+          "/categories",
+          {
+            params: { page, limit: PAGE_SIZE },
+          },
+        );
 
-      setCategories(data.items ?? []);
-      setPagination(data.meta ?? emptyPagination);
-    } catch (error) {
-      setCategories([]);
-      setPagination(emptyPagination);
-      setErrorMessage(
-        getApiErrorMessage(error, "Não foi possível carregar as categorias."),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage]);
+        setCategories(data.items ?? []);
+        setPagination(data.meta ?? emptyPagination);
+      } catch (error) {
+        setCategories([]);
+        setPagination(emptyPagination);
+        setErrorMessage(
+          getApiErrorMessage(error, "Não foi possível carregar as categorias."),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentPage],
+  );
 
   useEffect(() => {
     void fetchCategoriesPage();
@@ -94,7 +104,7 @@ export default function AdminCategories() {
       description=""
       backTo="/admin"
       backLabel="Voltar ao painel"
-      backClassName={backToPanelClass}
+      backClassName={adminBackToPanelClass}
       actions={
         <AdminLinkButton to="/admin/categories/new" tone="primary">
           Nova categoria
@@ -128,7 +138,13 @@ export default function AdminCategories() {
                       <td className="px-4 py-4">
                         <div className="flex justify-end">
                           <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800/90 bg-slate-900/45 p-1.5">
-                            <AdminLinkButton to={`/admin/categories/${category.id}/edit`} tone="secondary" className={editActionClass}>Editar</AdminLinkButton>
+                            <AdminLinkButton
+                              to={`/admin/categories/${category.id}/edit`}
+                              tone="secondary"
+                              className={editActionClass}
+                            >
+                              Editar
+                            </AdminLinkButton>
                             <AdminButton
                               type="button"
                               tone="subtleDanger"
@@ -136,7 +152,9 @@ export default function AdminCategories() {
                               disabled={deletingCategoryId === category.id}
                               onClick={() => setPendingDeleteCategory(category)}
                             >
-                              {deletingCategoryId === category.id ? "Excluindo..." : "Excluir"}
+                              {deletingCategoryId === category.id
+                                ? "Excluindo..."
+                                : "Excluir"}
                             </AdminButton>
                           </div>
                         </div>
@@ -181,4 +199,3 @@ export default function AdminCategories() {
     </AdminLayout>
   );
 }
-

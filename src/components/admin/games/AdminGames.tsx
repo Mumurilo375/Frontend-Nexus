@@ -7,6 +7,7 @@ import {
   AdminLinkButton,
   AdminPageState,
   AdminStatusBadge,
+  adminBackToPanelClass,
   createEmptyMeta,
   formatReleaseDate,
 } from "../shared/adminShared";
@@ -29,8 +30,6 @@ type Game = {
 
 const PAGE_SIZE = 9;
 const emptyPagination = createEmptyMeta(PAGE_SIZE);
-const backToPanelClass =
-  "border-slate-600 bg-slate-900/90 px-4 py-1.5 font-medium text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-blue-400/50 hover:bg-slate-800";
 const actionBaseClass =
   "inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70";
 const editActionClass = `${actionBaseClass} flex-1 border-slate-700 bg-slate-950 text-slate-100 hover:border-blue-500/45 hover:bg-slate-900`;
@@ -116,7 +115,7 @@ export default function AdminGames() {
       description="Cadastre jogos, ajuste o editorial e abra o monitor por plataforma para controlar preço, status e estoque."
       backTo="/admin"
       backLabel="Voltar ao painel"
-      backClassName={backToPanelClass}
+      backClassName={adminBackToPanelClass}
       actions={
         <AdminLinkButton to="/admin/games/new" tone="primary">
           Novo jogo
@@ -241,4 +240,3 @@ export default function AdminGames() {
     </AdminLayout>
   );
 }
-

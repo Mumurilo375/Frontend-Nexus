@@ -12,6 +12,7 @@ import {
   AdminButton,
   AdminPageState,
   adminFieldClass,
+  adminBackToPanelClass,
   formatMoney,
 } from "../shared/adminShared";
 import type { AdminPriceHistoryItem } from "../shared/admin.types";
@@ -39,7 +40,9 @@ export default function AdminPriceHistory() {
   const [meta, setMeta] = useState<PaginationMeta>(emptyMeta);
   const [page, setPage] = useState(1);
   const [searchText, setSearchText] = useState("");
-  const [listingIdText, setListingIdText] = useState(searchParams.get("listingId") ?? "");
+  const [listingIdText, setListingIdText] = useState(
+    searchParams.get("listingId") ?? "",
+  );
   const [appliedSearchText, setAppliedSearchText] = useState("");
   const [appliedListingIdText, setAppliedListingIdText] = useState(
     searchParams.get("listingId") ?? "",
@@ -60,17 +63,16 @@ export default function AdminPriceHistory() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const { data } = await api.get<PaginatedResponse<AdminPriceHistoryItem>>(
-          "/admin/price-history",
-          {
-            params: {
-              page,
-              limit: PAGE_SIZE,
-              q: appliedSearchText || undefined,
-              listingId: appliedListingIdText || undefined,
-            },
+        const { data } = await api.get<
+          PaginatedResponse<AdminPriceHistoryItem>
+        >("/admin/price-history", {
+          params: {
+            page,
+            limit: PAGE_SIZE,
+            q: appliedSearchText || undefined,
+            listingId: appliedListingIdText || undefined,
           },
-        );
+        });
 
         setItems(data.items ?? []);
         setMeta(data.meta ?? emptyMeta);
@@ -78,7 +80,10 @@ export default function AdminPriceHistory() {
         setItems([]);
         setMeta(emptyMeta);
         setErrorMessage(
-          getApiErrorMessage(error, "Não foi possível carregar o histórico de preço."),
+          getApiErrorMessage(
+            error,
+            "Não foi possível carregar o histórico de preço.",
+          ),
         );
       } finally {
         setIsLoading(false);
@@ -111,6 +116,9 @@ export default function AdminPriceHistory() {
     <AdminLayout
       title="Auditoria de preço"
       description="Histórico do preço base por jogo e plataforma, com responsável e data da alteração."
+      backTo="/admin"
+      backLabel="Voltar ao painel"
+      backClassName={adminBackToPanelClass}
     >
       <form
         onSubmit={handleFilterSubmit}
@@ -130,7 +138,9 @@ export default function AdminPriceHistory() {
           Listing ID
           <input
             value={listingIdText}
-            onChange={(event) => setListingIdText(event.target.value.replace(/[^\d]/g, ""))}
+            onChange={(event) =>
+              setListingIdText(event.target.value.replace(/[^\d]/g, ""))
+            }
             className={adminFieldClass}
             placeholder="Ex.: 14"
           />
@@ -138,7 +148,11 @@ export default function AdminPriceHistory() {
 
         <div className="flex flex-wrap gap-3 md:col-span-3">
           <AdminButton type="submit">Aplicar filtros</AdminButton>
-          <AdminButton type="button" tone="secondary" onClick={handleFilterReset}>
+          <AdminButton
+            type="button"
+            tone="secondary"
+            onClick={handleFilterReset}
+          >
             Limpar
           </AdminButton>
         </div>
@@ -164,10 +178,12 @@ export default function AdminPriceHistory() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-white">
-                    {item.game?.title || "Jogo"} · {item.platform?.name || "Plataforma"}
+                    {item.game?.title || "Jogo"} ·{" "}
+                    {item.platform?.name || "Plataforma"}
                   </h2>
                   <p className="text-sm text-slate-400">
-                    Listing #{item.listingId} · Alterado em {formatDateTime(item.createdAt)}
+                    Listing #{item.listingId} · Alterado em{" "}
+                    {formatDateTime(item.createdAt)}
                   </p>
                   <p className="text-sm text-slate-300">
                     Responsável:{" "}
@@ -202,10 +218,13 @@ export default function AdminPriceHistory() {
             </article>
           ))}
 
-          <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+          <Pagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+          />
         </section>
       </AdminPageState>
     </AdminLayout>
   );
 }
-

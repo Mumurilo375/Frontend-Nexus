@@ -13,6 +13,7 @@ import {
   AdminPageState,
   AdminStatusBadge,
   adminFieldClass,
+  adminBackToPanelClass,
   formatMoney,
 } from "../shared/adminShared";
 import type { AdminOrderSummary } from "../shared/admin.types";
@@ -43,7 +44,8 @@ export default function AdminOrders() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
   const [appliedSearchText, setAppliedSearchText] = useState("");
   const [appliedStatusFilter, setAppliedStatusFilter] = useState("");
-  const [appliedPaymentStatusFilter, setAppliedPaymentStatusFilter] = useState("");
+  const [appliedPaymentStatusFilter, setAppliedPaymentStatusFilter] =
+    useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -80,7 +82,12 @@ export default function AdminOrders() {
     };
 
     void loadOrders();
-  }, [appliedPaymentStatusFilter, appliedSearchText, appliedStatusFilter, page]);
+  }, [
+    appliedPaymentStatusFilter,
+    appliedSearchText,
+    appliedStatusFilter,
+    page,
+  ]);
 
   const handleFilterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -104,6 +111,9 @@ export default function AdminOrders() {
     <AdminLayout
       title="Pedidos"
       description="Consulta completa dos pedidos realizados na loja, com filtros e visualização detalhada."
+      backTo="/admin"
+      backLabel="Voltar ao painel"
+      backClassName={adminBackToPanelClass}
     >
       <form
         onSubmit={handleFilterSubmit}
@@ -149,7 +159,11 @@ export default function AdminOrders() {
 
         <div className="flex flex-wrap gap-3 md:col-span-4">
           <AdminButton type="submit">Aplicar filtros</AdminButton>
-          <AdminButton type="button" tone="secondary" onClick={handleFilterReset}>
+          <AdminButton
+            type="button"
+            tone="secondary"
+            onClick={handleFilterReset}
+          >
             Limpar
           </AdminButton>
         </div>
@@ -175,7 +189,9 @@ export default function AdminOrders() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold text-white">{order.orderNumber}</h2>
+                    <h2 className="text-xl font-semibold text-white">
+                      {order.orderNumber}
+                    </h2>
                     <AdminStatusBadge
                       active={order.status === "paid"}
                       activeLabel={`Pedido ${order.status}`}
@@ -187,11 +203,12 @@ export default function AdminOrders() {
                   </div>
 
                   <p className="text-sm text-slate-300">
-                    {order.user?.fullName || order.user?.username || "Usuário"} ·{" "}
-                    {order.user?.email || "Sem email"}
+                    {order.user?.fullName || order.user?.username || "Usuário"}{" "}
+                    · {order.user?.email || "Sem email"}
                   </p>
                   <p className="text-sm text-slate-400">
-                    {order.itemCount} item(ns) · Criado em {formatDateTime(order.createdAt)}
+                    {order.itemCount} item(ns) · Criado em{" "}
+                    {formatDateTime(order.createdAt)}
                   </p>
                 </div>
 
@@ -210,10 +227,13 @@ export default function AdminOrders() {
             </article>
           ))}
 
-          <Pagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+          <Pagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+          />
         </section>
       </AdminPageState>
     </AdminLayout>
   );
 }
-

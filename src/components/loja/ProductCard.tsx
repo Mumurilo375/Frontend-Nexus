@@ -51,6 +51,19 @@ export default function ProductCard({
   );
   const selectedListingHasOfferDiscount =
     showOfferPricing && selectedListingDiscountPercentage > 0;
+  const selectedListingPriceIsValid =
+    Boolean(selectedListing) &&
+    Number.isFinite(selectedListingFinalPrice) &&
+    selectedListingFinalPrice > 0;
+  const selectedListingPlatformName = selectedListing?.platform?.name || "Plataforma";
+  const priceLabel = selectedListing
+    ? selectedListingPriceIsValid
+      ? formatMoney(selectedListingFinalPrice)
+      : "Preço indisponível"
+    : "Escolha a plataforma";
+  const categoryLabel =
+    game.categories?.slice(0, 2).map((category) => category.name).join(" • ") ||
+    "Sem categoria";
 
   const stopCardNavigation = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -68,7 +81,7 @@ export default function ProductCard({
       tabIndex={0}
       onClick={() => onOpen(game.id)}
       onKeyDown={handleCardKeyDown}
-      className="nexus-card relative my-1 flex cursor-pointer flex-col items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
+      className="nexus-card relative my-1 flex cursor-pointer flex-col items-start gap-4 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-600"
     >
       <button
         type="button"
@@ -84,7 +97,7 @@ export default function ProductCard({
         <Heart className={isFavorite ? "fill-red-500 text-red-500" : "text-slate-100"} />
       </button>
 
-      <div className="flex h-44 w-full items-center justify-center rounded-[20px] border border-slate-800 bg-black/15 p-3">
+      <div className="flex h-56 w-full items-center justify-center rounded-[22px] border border-slate-800 bg-black/20 p-3 sm:h-60">
         <img
           src={resolveAssetUrl(game.coverImageUrl)}
           alt={game.title}
@@ -92,52 +105,39 @@ export default function ProductCard({
         />
       </div>
 
-      <h2 className="mb-1 text-left text-xl font-bold">{game.title}</h2>
-      <p className="text-sm text-gray-300" style={clampTextStyle}>
-        {game.description}
-      </p>
+      <div className="min-w-0">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-200/80">
+          {categoryLabel}
+        </p>
+        <h2 className="text-left text-xl font-bold leading-tight text-white line-clamp-2">
+          {game.title}
+        </h2>
+      </div>
 
-      <div className="w-full">
-        <p className="mb-2 text-sm text-gray-300">Escolha a plataforma:</p>
-        <div className="flex flex-wrap gap-2">
-          {listings.map((listing) => {
-            const selected = selectedListing?.id === listing.id;
-            const listingIsOutOfStock =
-              Boolean(listing.stock) && getListingAvailableStock(listing) <= 0;
+      <div className="w-full rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              {selectedListing ? selectedListingPlatformName : "Selecione uma plataforma"}
+            </p>
+            {selectedListingHasOfferDiscount && (
+              <p className="mt-2 text-xs text-slate-500 line-through">
+                {formatMoney(selectedListingBasePrice)}
+              </p>
+            )}
+            <p className="mt-1 text-2xl font-black text-white">{priceLabel}</p>
+          </div>
 
-            return (
-              <button
-                key={listing.id}
-                type="button"
-                onMouseDown={stopCardNavigation}
-                onClick={(event) => {
-                  stopCardNavigation(event);
-                  onSelectListing(game.id, listing.id);
-                }}
-                className={`rounded-xl border px-2 py-2 transition ${
-                  selected
-                    ? listingIsOutOfStock
-                      ? "border-rose-400/70 bg-rose-500/10"
-                      : "border-slate-500 bg-slate-800/90"
-                    : listingIsOutOfStock
-                      ? "border-rose-500/40 bg-rose-500/5 hover:border-rose-400/60"
-                      : "border-slate-700 bg-slate-950/85 hover:border-slate-500"
-                }`}
-                title={listing.platform?.name || "Plataforma"}
-              >
-                <img
-                  src={resolvePlatformLogoUrl(listing.platform?.name)}
-                  alt={listing.platform?.name || "Plataforma"}
-                  className={`h-8 w-8 object-contain ${listingIsOutOfStock ? "opacity-55" : ""}`}
-                />
-              </button>
-            );
-          })}
+          {selectedListingHasOfferDiscount && (
+            <span className="shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-200">
+              -{selectedListingDiscountPercentage}%
+            </span>
+          )}
         </div>
 
         {selectedListingHasStockInfo && (
           <p
-            className={`mt-3 text-xs font-medium ${
+            className={`mt-3 text-xs font-semibold ${
               selectedListingIsOutOfStock ? "text-rose-200" : "text-emerald-200"
             }`}
           >
@@ -149,30 +149,6 @@ export default function ProductCard({
       </div>
 
       <div className="flex w-full flex-col gap-3">
-        <div className="flex w-full items-center justify-between gap-4">
-          <p className="text-sm text-gray-300">
-            {game.categories?.slice(0, 2).map((category) => category.name).join(" • ") ||
-              "Sem categoria"}
-          </p>
-          {selectedListingHasOfferDiscount ? (
-            <div className="text-right">
-              <p className="text-xs font-semibold text-emerald-200">
-                -{selectedListingDiscountPercentage}%
-              </p>
-              <p className="text-xs text-slate-500 line-through">
-                {formatMoney(selectedListingBasePrice)}
-              </p>
-              <p className="text-sm font-semibold text-white">
-                {formatMoney(selectedListingFinalPrice)}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm font-semibold text-white">
-              {selectedListing?.price ? formatMoney(Number(selectedListing.price)) : ""}
-            </p>
-          )}
-        </div>
-
         <button
           type="button"
           onMouseDown={stopCardNavigation}
@@ -185,22 +161,69 @@ export default function ProductCard({
             onAddToCart(game.id, selectedListing.id);
           }}
           disabled={!selectedListing || inCart || pendingCart || selectedListingIsOutOfStock}
-          className={`rounded-full px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-75 ${
+          className={`w-full rounded-full px-4 py-3 text-sm font-bold text-white transition disabled:opacity-75 ${
             selectedListingIsOutOfStock
               ? "cursor-not-allowed border border-rose-500/40 bg-rose-500/10 text-rose-100"
-              : "bg-blue-600 hover:bg-blue-500"
+              : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           {!selectedListing
-            ? "Escolha a plataforma"
+            ? "Escolha uma plataforma"
             : inCart
-              ? "No carrinho"
+              ? "Já está no carrinho"
               : selectedListingIsOutOfStock
                 ? "Sem estoque"
                 : pendingCart
                   ? "Adicionando..."
-                  : "Adicionar"}
+                  : "Adicionar ao carrinho"}
         </button>
+
+        <div className="rounded-2xl border border-slate-800/80 bg-black/15 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Plataforma
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {listings.map((listing) => {
+              const selected = selectedListing?.id === listing.id;
+              const listingIsOutOfStock =
+                Boolean(listing.stock) && getListingAvailableStock(listing) <= 0;
+
+              return (
+                <button
+                  key={listing.id}
+                  type="button"
+                  onMouseDown={stopCardNavigation}
+                  onClick={(event) => {
+                    stopCardNavigation(event);
+                    onSelectListing(game.id, listing.id);
+                  }}
+                  className={`rounded-xl border px-2 py-2 transition ${
+                    selected
+                      ? listingIsOutOfStock
+                        ? "border-rose-400/70 bg-rose-500/10"
+                        : "border-blue-400/70 bg-blue-500/15"
+                      : listingIsOutOfStock
+                        ? "border-rose-500/40 bg-rose-500/5 hover:border-rose-400/60"
+                        : "border-slate-700 bg-slate-950/85 hover:border-slate-500"
+                  }`}
+                  title={listing.platform?.name || "Plataforma"}
+                  aria-pressed={selected}
+                  aria-label={`Selecionar ${listing.platform?.name || "plataforma"}`}
+                >
+                  <img
+                    src={resolvePlatformLogoUrl(listing.platform?.name)}
+                    alt=""
+                    className={`h-8 w-8 object-contain ${listingIsOutOfStock ? "opacity-55" : ""}`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="border-t border-slate-800/80 pt-3 text-sm text-gray-300" style={clampTextStyle}>
+          {game.description}
+        </p>
 
         {feedback && (
           <p

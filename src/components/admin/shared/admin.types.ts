@@ -9,6 +9,14 @@ export type CategoryResponse = {
   name: string;
 };
 
+export type AdminPlatform = {
+  id: number;
+  name: string;
+  slug: string;
+  iconUrl?: string | null;
+  isActive?: boolean;
+};
+
 export type GameImage = {
   id: number;
   imageUrl?: string;
@@ -266,4 +274,3 @@ export type PlatformKeysState = {
 export type PlatformConfirmationState =
   | { type: "priceChange"; platformId: number }
   | { type: "removeKeys"; platformId: number };
-

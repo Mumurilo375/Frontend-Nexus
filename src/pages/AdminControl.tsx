@@ -9,6 +9,8 @@ import AdminOffers from "../components/admin/offers/AdminOffers";
 import AdminOrderDetails from "../components/admin/orders/AdminOrderDetails";
 import AdminOrders from "../components/admin/orders/AdminOrders";
 import AdminPriceHistory from "../components/admin/price-history/AdminPriceHistory";
+import AdminPlatformForm from "../components/admin/platforms/AdminPlatformForm";
+import AdminPlatforms from "../components/admin/platforms/AdminPlatforms";
 
 function matchAdminPath(pathname: string, path: string) {
   return Boolean(matchPath({ path, end: true }, pathname));
@@ -26,6 +28,10 @@ export default function AdminControl() {
   );
   const categoryEditMatch = matchPath(
     { path: "/admin/categories/:id/edit", end: true },
+    pathname,
+  );
+  const platformEditMatch = matchPath(
+    { path: "/admin/platforms/:id/edit", end: true },
     pathname,
   );
   const orderDetailsMatch = matchPath(
@@ -69,6 +75,18 @@ export default function AdminControl() {
     return <AdminCategories />;
   }
 
+  if (matchAdminPath(pathname, "/admin/platforms/new")) {
+    return <AdminPlatformForm />;
+  }
+
+  if (platformEditMatch) {
+    return <AdminPlatformForm id={platformEditMatch.params.id} />;
+  }
+
+  if (matchAdminPath(pathname, "/admin/platforms")) {
+    return <AdminPlatforms />;
+  }
+
   if (matchAdminPath(pathname, "/admin/price-history")) {
     return <AdminPriceHistory />;
   }
@@ -79,4 +97,3 @@ export default function AdminControl() {
 
   return <AdminDashboard />;
 }
-

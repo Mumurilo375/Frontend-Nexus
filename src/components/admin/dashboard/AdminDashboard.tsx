@@ -4,6 +4,7 @@ import { AdminLinkButton } from "../shared/adminShared";
 const sections = [
   { title: "Jogos", label: "Catálogo", description: "Cadastre, edite, exclua e abra os listings de cada jogo.", to: "/admin/games", cta: "Gerenciar jogos" },
   { title: "Categorias", label: "Organização", description: "Mantenha a classificação usada na loja e no admin.", to: "/admin/categories", cta: "Gerenciar categorias" },
+  { title: "Plataformas", label: "Catálogo", description: "Cadastre as plataformas disponíveis para os jogos e listings.", to: "/admin/platforms", cta: "Gerenciar plataformas" },
   { title: "Pedidos", label: "Operação", description: "Consulte todos os pedidos da loja com filtros e detalhe completo.", to: "/admin/orders", cta: "Ver pedidos" },
   { title: "Auditoria", label: "Preço", description: "Acompanhe o histórico do preço base de cada listing e quem alterou.", to: "/admin/price-history", cta: "Ver histórico" },
   { title: "Ofertas", label: "Promoções", description: "Cadastre promoções em grupo e acompanhe os jogos vinculados.", to: "/admin/ofertas", cta: "Gerenciar ofertas" },
@@ -29,4 +30,3 @@ export default function AdminDashboard() {
     </AdminLayout>
   );
 }
-

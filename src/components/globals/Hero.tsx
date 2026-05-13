@@ -33,7 +33,7 @@ function Hero() {
           </p>
 
           <Link
-            to="/loja"
+            to="/loja/2"
             className="mt-5 inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 sm:text-base"
           >
             Comprar agora

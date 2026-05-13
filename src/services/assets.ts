@@ -51,6 +51,10 @@ export function resolvePlatformLogoUrl(
   iconUrl?: string | null,
   fallback = defaultAssetFallback,
 ) {
+  if (String(iconUrl ?? "").trim()) {
+    return resolveAssetUrl(iconUrl, fallback);
+  }
+
   const normalizedPlatformName = normalizePlatformName(platformName);
 
   if (normalizedPlatformName.includes("steam")) {

@@ -47,7 +47,7 @@ function buildOfferGames(offer: OfferItem): Array<{ game: GameSummary; listings:
       id: listing.id,
       gameId,
       platformId: Number(listing.platform?.id ?? 0) || undefined,
-      isActive: listing.isActive !== false,
+      isActive: true,
       price: Number(listing.pricing?.finalPrice ?? listing.price ?? 0),
       stock: listing.stock,
       pricing: {
